@@ -45,32 +45,32 @@ const ASSETS = [
   // ── CIVIC ──────────────────────────────────────────────────────────────────
   {
     // Residential Building
-    src: 'https://raw.githubusercontent.com/justinm-g/quaternius-models/master/Ultimate%20City%20Pack/GLB/Residential_Building_A.glb',
+    src: 'https://static.poly.pizza/51c184d6-e633-49da-98b1-689d3a4a6789.glb', // Police Station A used as generic building
     dest: 'civic/housing.glb',
   },
   {
     // School
-    src: 'https://raw.githubusercontent.com/justinm-g/quaternius-models/master/Ultimate%20City%20Pack/GLB/School_A.glb',
+    src: 'https://static.poly.pizza/5ed9ad9d-ebd6-4eb8-9ea5-5232f8f55a61.glb',
     dest: 'civic/school.glb',
   },
   {
     // Shop
-    src: 'https://raw.githubusercontent.com/justinm-g/quaternius-models/master/Ultimate%20City%20Pack/GLB/Shop_A.glb',
+    src: 'https://static.poly.pizza/51c184d6-e633-49da-98b1-689d3a4a6789.glb',
     dest: 'stores/store.glb',
   },
   {
     // Police Station
-    src: 'https://raw.githubusercontent.com/justinm-g/quaternius-models/master/Ultimate%20City%20Pack/GLB/Police_Station_A.glb',
+    src: 'https://static.poly.pizza/51c184d6-e633-49da-98b1-689d3a4a6789.glb',
     dest: 'civic/police.glb',
   },
   {
-    // Parliament / Government
-    src: 'https://raw.githubusercontent.com/justinm-g/quaternius-models/master/Ultimate%20City%20Pack/GLB/Government_Building_A.glb',
-    dest: 'landmarks/parliament.glb',
+    // Hospital / Clinic
+    src: 'https://static.poly.pizza/a7d4bfa8-7ada-4646-a056-0c30116e7f15.glb',
+    dest: 'civic/hospital.glb',
   },
   {
     // Stadium
-    src: 'https://raw.githubusercontent.com/justinm-g/quaternius-models/master/Ultimate%20City%20Pack/GLB/Stadium_A.glb',
+    src: 'https://static.poly.pizza/018d7da5-2dcb-41d0-95cc-92ce84a27994.glb',
     dest: 'civic/stadium.glb',
   },
   // ── INDUSTRIAL ─────────────────────────────────────────────────────────────

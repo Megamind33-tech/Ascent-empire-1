@@ -187,10 +187,10 @@ export function createNationWorld(scene, shadows, state) {
     const airstrip = MeshBuilder.CreateGround('airstrip', { width: 220, height: 40 }, scene);
     airstrip.position.set(-260, .14, -240); airstrip.material = mats.airstrip; meshes.push(airstrip);
   }
-  const mine     = MeshBuilder.CreateBox('mine-zone',    { width: 50, depth: 50, height: 8  }, scene); mine.position.set(260, 4, 230);   mine.material = mats.industrial; meshes.push(mine);
-  const refinery = MeshBuilder.CreateBox('refinery-zone',{ width: 70, depth: 46, height: 14 }, scene); refinery.position.set(220, 7, -250); refinery.material = mats.industrial; meshes.push(refinery);
-  const barracks = MeshBuilder.CreateBox('barracks-zone',{ width: 54, depth: 36, height: 10 }, scene); barracks.position.set(-250, 5, 220); barracks.material = mats.dark; meshes.push(barracks);
-  const stadium  = MeshBuilder.CreateCylinder('stadium', { diameterTop: 48, diameterBottom: 58, height: 10, tessellation: 24 }, scene); stadium.position.set(120, 5, 160); stadium.material = mats.civic; meshes.push(stadium);
+  spawnInstitution(scene, shadows, 'mine',     new Vector3(260, 4, 230),   state);
+  spawnInstitution(scene, shadows, 'refinery', new Vector3(220, 7, -250), state);
+  spawnInstitution(scene, shadows, 'barracks', new Vector3(-250, 0.1, 220), state);
+  spawnInstitution(scene, shadows, 'stadium', new Vector3(120, 0.1, 160), state);
 
   // 🌲 Scatter Trees & Nature
   const treeType = nation.coastal ? 'palm' : (rand() > 0.5 ? 'birch' : 'pine');

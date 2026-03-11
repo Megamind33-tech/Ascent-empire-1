@@ -39,7 +39,8 @@ const MANIFEST = {
   // Dynamic objects
   car_a:    'vehicles/car_a.glb',
   car_b:    'vehicles/car_b.glb',
-  agent_a:  'people/agent_a.glb'
+  agent_a:  'people/agent_a.glb',
+  ship:     'landmarks/Building.glb' // Placeholder: use building as ship-base for now
 };
 
 const _containers = new Map();
@@ -119,6 +120,7 @@ export function getModelScale(key) {
     case 'birch': case 'palm': case 'pine': return 2.2;
     case 'agent_a': return 1.8;
     case 'car_a': case 'car_b': return 1.5;
+    case 'ship': return 2.5; 
     default: return 1.0;
   }
 }

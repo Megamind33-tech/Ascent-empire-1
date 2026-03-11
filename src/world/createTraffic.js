@@ -1,1 +1,108 @@
-import { MeshBuilder, StandardMaterial, Color3, Vector3 } from '@babylonjs/core';export function createTraffic(scene,shadows){const cars=[],agents=[],ships=[];const carMat=new StandardMaterial('carMat',scene);carMat.diffuseColor=new Color3(.16,.17,.19);for(let i=0;i<16;i++){const car=MeshBuilder.CreateBox(`car-${i}`,{width:3.2,height:1.4,depth:6.4},scene);const lane=i%2===0?-10:10;car.position=new Vector3(-220+i*20,1,lane*4);car.material=carMat;shadows.addShadowCaster(car);cars.push({mesh:car,speed:8+Math.random()*6,axis:i%2===0?'x':'z',dir:i%3===0?-1:1});}const agentMat=new StandardMaterial('agentMat',scene);agentMat.diffuseColor=new Color3(.22,.23,.24);for(let i=0;i<20;i++){const a=MeshBuilder.CreateCapsule(`agent-${i}`,{radius:.35,height:1.65},scene);a.position=new Vector3(-90+Math.random()*180,.9,-90+Math.random()*180);a.material=agentMat;agents.push({mesh:a,target:p(),speed:1+Math.random()*.8});}const shipMat=new StandardMaterial('shipMat',scene);shipMat.diffuseColor=new Color3(.28,.29,.31);for(let i=0;i<3;i++){const s=MeshBuilder.CreateBox(`ship-${i}`,{width:14,height:5,depth:34},scene);s.position=new Vector3(-330-i*40,7,-250+i*40);s.material=shipMat;ships.push({mesh:s,phase:i*.33});}return {update(dt,t){for(const c of cars){if(c.axis==='x'){c.mesh.position.x+=c.speed*c.dir*dt;if(c.mesh.position.x>260)c.mesh.position.x=-260;if(c.mesh.position.x<-260)c.mesh.position.x=260;}else{c.mesh.position.z+=c.speed*c.dir*dt;if(c.mesh.position.z>260)c.mesh.position.z=-260;if(c.mesh.position.z<-260)c.mesh.position.z=260;}}for(const person of agents){const d=person.target.subtract(person.mesh.position);d.y=0;if(d.lengthSquared()<4){person.target=p();continue;}d.normalize();person.mesh.position.addInPlace(d.scale(person.speed*dt));person.mesh.rotation.y=Math.atan2(d.x,d.z);}for(const s of ships){const cyc=((t*0.02)+s.phase)%1;if(cyc<0.33){s.mesh.position.x=-360+cyc*300;s.mesh.position.z=-250;s.mesh.rotation.y=0;}else if(cyc<0.66){s.mesh.position.x=-260;s.mesh.position.z=-250+(cyc-0.33)*20;s.mesh.rotation.y=.15;}else{s.mesh.position.x=-260-(cyc-0.66)*220;s.mesh.position.z=-244;s.mesh.rotation.y=Math.PI;}}}}}function p(){return new Vector3(-180+Math.random()*360,.9,-180+Math.random()*360)}
+import { MeshBuilder, StandardMaterial, Color3, Vector3 } from '@babylonjs/core';
+import { instantiateModel, getModelScale } from '../systems/assetLoader.js';
+
+export function createTraffic(scene,shadows){
+  const cars=[],agents=[],ships=[];
+  
+  // 🚗 Cars
+  for(let i=0;i<16;i++){
+    const type = i % 2 === 0 ? 'car_a' : 'car_b';
+    const car = instantiateModel(type, scene);
+    if (!car) continue;
+    
+    const lane = i % 2 === 0 ? -10 : 10;
+    car.position = new Vector3(-220 + i * 20, 0.1, lane * 4);
+    const s = getModelScale(type);
+    car.scaling.set(s, s, s);
+    car.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
+    
+    cars.push({
+      mesh: car,
+      speed: 8 + Math.random() * 6,
+      axis: i % 2 === 0 ? 'x' : 'z',
+      dir: i % 3 === 0 ? -1 : 1
+    });
+  }
+
+  // 🚶 Agents
+  for(let i=0;i<20;i++){
+    const a = instantiateModel('agent_a', scene);
+    if (!a) continue;
+    
+    a.position = new Vector3(-90 + Math.random() * 180, 0.1, -90 + Math.random() * 180);
+    const s = getModelScale('agent_a');
+    a.scaling.set(s, s, s);
+    a.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
+    
+    agents.push({
+      mesh: a,
+      target: p(),
+      speed: 1 + Math.random() * .8
+    });
+  }
+
+  // 🚢 Ships
+  for(let i=0;i<3;i++){
+    const s = instantiateModel('ship', scene);
+    if (!s) continue;
+    
+    s.position = new Vector3(-330 - i * 40, 0.1, -250 + i * 40);
+    const scale = getModelScale('ship');
+    s.scaling.set(scale, scale, scale);
+    s.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
+    
+    ships.push({
+      mesh: s,
+      phase: i * 0.33,
+      ship: true,
+      speed: 1.5,
+      dir: 1
+    });
+  }
+
+  return {
+    update(dt, t) {
+      // Logic remains same, but we reuse the state-based items if passed, 
+      // or internal ones for this local creation.
+      // (Simplified: using the local arrays created above)
+      const all = [...cars, ...agents, ...ships];
+      for (const item of all) {
+        if (item.ship) {
+          item.mesh.position.x += item.speed * item.dir * dt;
+          if (item.mesh.position.x > -120) item.dir = -1;
+          if (item.mesh.position.x < -520) item.dir = 1;
+          item.mesh.position.z += Math.sin(t * 0.15 + item.mesh.uniqueId) * dt * 0.8;
+          item.mesh.rotation.y = item.dir > 0 ? 0 : Math.PI;
+          continue;
+        }
+        
+        // Traffic movement
+        if (item.axis) {
+            if (item.axis === 'x') {
+              item.mesh.position.x += item.speed * item.dir * dt;
+              if (item.mesh.position.x > 260) item.mesh.position.x = -260;
+              if (item.mesh.position.x < -260) item.mesh.position.x = 260;
+              item.mesh.rotation.y = item.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+            } else {
+              item.mesh.position.z += item.speed * item.dir * dt;
+              if (item.mesh.position.z > 260) item.mesh.position.z = -260;
+              if (item.mesh.position.z < -260) item.mesh.position.z = 260;
+              item.mesh.rotation.y = item.dir > 0 ? 0 : Math.PI;
+            }
+        } else if (item.target) {
+            // Agent movement
+            const d = item.target.subtract(item.mesh.position);
+            d.y = 0;
+            if (d.lengthSquared() < 4) {
+              item.target = p();
+              continue;
+            }
+            d.normalize();
+            item.mesh.position.addInPlace(d.scale(item.speed * dt));
+            item.mesh.rotation.y = Math.atan2(d.x, d.z);
+        }
+      }
+    }
+  }
+}
+function p(){return new Vector3(-180+Math.random()*360,.9,-180+Math.random()*360)}
