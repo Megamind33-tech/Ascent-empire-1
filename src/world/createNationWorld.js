@@ -337,9 +337,30 @@ function sculptGround(ground, nation, rand) {
   for (let i = 0; i < positions.length; i += 3) {
     const x = positions[i], z = positions[i + 2]; let y = 0;
     const roadBand = Math.abs((Math.abs(x) % 120) - 60) < 12 || Math.abs((Math.abs(z) % 120) - 60) < 12;
-    if (Math.abs(x) < 280 && Math.abs(z) < 280) y = 0;
-    else if (!roadBand) { y += Math.sin((x + nation.seed) * .008) * 3.5 + Math.cos((z - nation.seed) * .007) * 3; y += Math.sin((x + z + nation.seed) * .004) * 5.5; }
-    if (nation.coastal) y -= Math.max(0, 18 - Math.abs(x + 340) * .05);
+    const cityDist = Math.max(Math.abs(x), Math.abs(z));
+
+    if (cityDist < 220) {
+      // Flat city core — buildings and roads live here
+      y = 0;
+    } else if (!roadBand) {
+      // Outskirts — organic rolling hills with multiple noise octaves
+      const blend = Math.min(1.0, (cityDist - 220) / 160); // smooth 0→1 from city edge outward
+      const hillBase = Math.sin((x + nation.seed) * 0.008) * 14
+                     + Math.cos((z - nation.seed) * 0.007) * 11
+                     + Math.sin((x + z + nation.seed) * 0.004) * 20;
+      // Mid-frequency detail for rocky/ridgeline feel
+      const hillDetail = Math.sin(x * 0.022 + nation.seed * 0.3) * 7
+                       + Math.cos(z * 0.018 - nation.seed * 0.2) * 6;
+      // High-frequency micro bumps
+      const microBump = Math.sin(x * 0.055) * 2.5 + Math.cos(z * 0.048) * 2.0;
+      y = blend * (hillBase + hillDetail + microBump);
+    }
+
+    if (nation.coastal) {
+      // Coastal slope dips down toward the sea corner
+      const coastDip = Math.max(0, 28 - Math.abs(x + 340) * 0.055);
+      y -= coastDip;
+    }
     positions[i + 1] = y;
   }
   ground.updateVerticesData('position', positions); ground.refreshBoundingInfo();
