@@ -15,11 +15,11 @@ export const CONFIG = {
     { title: 'President', reqLegitimacy: 90, reqInfluence: 120, campaignCost: 150000, unlockMessage: "The ultimate goal. Take the highest office by force of will." }
   ],
   laws: [
-    { id: 'SECURITY_ACT', title: 'Public Security Act', desc: 'Increases police presence but reduces individual liberties.', effects: { security: 15, legitimacy: -8, corruption: -5 }, cost: 5000, duration: 240 },
-    { id: 'SOCIAL_GRANTS', title: 'Universal Social Grants', desc: 'Financial support for the poor. Massive approval boost.', effects: { approval: 20, cashDelta: -50, education: 5 }, cost: 12000 },
-    { id: 'TRADE_LIBERAL', title: 'Market Liberalization', desc: 'Reduces taxes to attract corporations. Boosts cash flow.', effects: { cashDelta: 80, approval: -5, influence: 5 }, cost: 8000 },
-    { id: 'ENVIRONMENT_TAX', title: 'Carbon Tax Initiative', desc: 'Taxes heavy industry. Increases legitimacy globally.', effects: { legitimacy: 15, steel: -4, cashDelta: 30 }, cost: 6000 },
-    { id: 'MARTIAL_LAW', title: 'Emergency Martial Law', desc: 'Absolute security control. Extreme suppression.', effects: { security: 30, approval: -25, legitimacy: -20, corruption: 10 }, cost: 20000, duration: 120 }
+    { id: 'SECURITY_ACT', title: 'Public Security Act', desc: 'Increases police presence but reduces individual liberties.', effects: { security: 15, legitimacy: -8, corruption: -5 }, cost: 5000, duration: 240, minOffice: 1 },
+    { id: 'SOCIAL_GRANTS', title: 'Universal Social Grants', desc: 'Financial support for the poor. Massive approval boost.', effects: { approval: 20, cashDelta: -50, education: 5 }, cost: 12000, minOffice: 2 },
+    { id: 'TRADE_LIBERAL', title: 'Market Liberalization', desc: 'Reduces taxes to attract corporations. Boosts cash flow.', effects: { cashDelta: 80, approval: -5, influence: 5 }, cost: 8000, minOffice: 1 },
+    { id: 'ENVIRONMENT_TAX', title: 'Carbon Tax Initiative', desc: 'Taxes heavy industry. Increases legitimacy globally.', effects: { legitimacy: 15, steel: -4, cashDelta: 30 }, cost: 6000, minOffice: 2 },
+    { id: 'MARTIAL_LAW', title: 'Emergency Martial Law', desc: 'Absolute security control. Extreme suppression.', effects: { security: 30, approval: -25, legitimacy: -20, corruption: 10 }, cost: 20000, duration: 120, minOffice: 4 }
   ],
   nations: [
     { name:'Zambria', coastal:false, seed:11, tone:[0.44,0.47,0.43] },

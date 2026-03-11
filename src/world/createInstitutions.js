@@ -41,6 +41,7 @@ export function spawnInstitution(scene, shadows, type, point, state) {
     // Some assets are centered, some on floor.
     // For Quaternius/Kenney, we usually leave Y=0 as the ground if the model is set up correctly.
     mesh.position.y = 0.1; 
+    mesh.metadata = { type, onFire: false };
 
     // Metadata update for specific types
     if (type === 'housing')   { state.buildings.housing += 1;   state.population += 120; state.legitimacy += 0.6; }
@@ -51,7 +52,7 @@ export function spawnInstitution(scene, shadows, type, point, state) {
     if (type === 'dec')       { state.buildings.dec += 1;       state.security += 2;     state.legitimacy += 1; }
     if (type === 'mine')      { state.buildings.mines += 1;      state.steel += 8; }
     if (type === 'refinery')  { state.buildings.refineries += 1; state.fuel += 6; }
-    if (type === 'barracks')  { state.buildings.barracks += 1;  state.security += 3; }
+    if (type === 'barracks')  { state.buildings.barracks += 1;  state.security += 3;     state.influence += 8; }
     if (type === 'base')      { state.buildings.bases += 1;     state.security += 6;     state.influence += 1; }
     if (type === 'stadium')   { state.buildings.stadiums += 1;  state.approval += 2;     state.sportsPrestige += 3; }
 

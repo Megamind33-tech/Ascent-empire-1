@@ -44,76 +44,82 @@ const MODELS    = path.join(ROOT, 'public', 'assets', 'models');
 const ASSETS = [
   // ── CIVIC ──────────────────────────────────────────────────────────────────
   {
-    // Simple apartment block – used as the primary "housing" building
-    src: 'https://raw.githubusercontent.com/quaternius/ultimatecitypack/main/GLB/Residential_Building_A.glb',
+    // Residential Building
+    src: 'https://raw.githubusercontent.com/justinm-g/quaternius-models/master/Ultimate%20City%20Pack/GLB/Residential_Building_A.glb',
     dest: 'civic/housing.glb',
   },
   {
-    // School / civic center
-    src: 'https://raw.githubusercontent.com/quaternius/ultimatecitypack/main/GLB/School_A.glb',
+    // School
+    src: 'https://raw.githubusercontent.com/justinm-g/quaternius-models/master/Ultimate%20City%20Pack/GLB/School_A.glb',
     dest: 'civic/school.glb',
   },
   {
-    // Store / commercial unit
-    src: 'https://raw.githubusercontent.com/quaternius/ultimatecitypack/main/GLB/Shop_A.glb',
+    // Shop
+    src: 'https://raw.githubusercontent.com/justinm-g/quaternius-models/master/Ultimate%20City%20Pack/GLB/Shop_A.glb',
     dest: 'stores/store.glb',
   },
   {
-    // Police station
-    src: 'https://raw.githubusercontent.com/quaternius/ultimatecitypack/main/GLB/Police_Station_A.glb',
+    // Police Station
+    src: 'https://raw.githubusercontent.com/justinm-g/quaternius-models/master/Ultimate%20City%20Pack/GLB/Police_Station_A.glb',
     dest: 'civic/police.glb',
   },
   {
-    // Government / civic landmark
-    src: 'https://raw.githubusercontent.com/quaternius/ultimatecitypack/main/GLB/Government_Building_A.glb',
+    // Parliament / Government
+    src: 'https://raw.githubusercontent.com/justinm-g/quaternius-models/master/Ultimate%20City%20Pack/GLB/Government_Building_A.glb',
     dest: 'landmarks/parliament.glb',
   },
   {
     // Stadium
-    src: 'https://raw.githubusercontent.com/quaternius/ultimatecitypack/main/GLB/Stadium_A.glb',
+    src: 'https://raw.githubusercontent.com/justinm-g/quaternius-models/master/Ultimate%20City%20Pack/GLB/Stadium_A.glb',
     dest: 'civic/stadium.glb',
   },
   // ── INDUSTRIAL ─────────────────────────────────────────────────────────────
   {
-    src: 'https://raw.githubusercontent.com/quaternius/ultimatecitypack/main/GLB/Factory_A.glb',
+    // Mine (using Industrial Building)
+    src: 'https://raw.githubusercontent.com/justinm-g/quaternius-models/master/Ultimate%20City%20Pack/GLB/Industrial_Building_A.glb',
     dest: 'civic/mine.glb',
   },
   {
-    src: 'https://raw.githubusercontent.com/quaternius/ultimatecitypack/main/GLB/Factory_B.glb',
+    // Refinery (using Industrial Building B variant if possible, or just A)
+    src: 'https://raw.githubusercontent.com/justinm-g/quaternius-models/master/Ultimate%20City%20Pack/GLB/Industrial_Building_B.glb',
     dest: 'civic/refinery.glb',
   },
   {
-    src: 'https://raw.githubusercontent.com/quaternius/ultimatecitypack/main/GLB/Military_Base_A.glb',
+    // Barracks (using Military Base A)
+    src: 'https://raw.githubusercontent.com/justinm-g/quaternius-models/master/Ultimate%20City%20Pack/GLB/Military_Base_A.glb',
     dest: 'civic/barracks.glb',
   },
   {
-    src: 'https://raw.githubusercontent.com/quaternius/ultimatecitypack/main/GLB/Military_Base_B.glb',
+    // Base (using Military Base B)
+    src: 'https://raw.githubusercontent.com/justinm-g/quaternius-models/master/Ultimate%20City%20Pack/GLB/Military_Base_B.glb',
     dest: 'civic/base.glb',
   },
-  // ── GENERIC MULTI-STORY TOWERS (skyline instancing) ────────────────────────
+  // ── SKYLINE ────────────────────────────────────────────────────────────────
   {
-    src: 'https://raw.githubusercontent.com/quaternius/ultimatecitypack/main/GLB/Office_Building_A.glb',
+    src: 'https://raw.githubusercontent.com/justinm-g/quaternius-models/master/Ultimate%20City%20Pack/GLB/Office_Building_A.glb',
     dest: 'landmarks/tower_a.glb',
   },
   {
-    src: 'https://raw.githubusercontent.com/quaternius/ultimatecitypack/main/GLB/Office_Building_B.glb',
+    src: 'https://raw.githubusercontent.com/justinm-g/quaternius-models/master/Ultimate%20City%20Pack/GLB/Office_Building_B.glb',
     dest: 'landmarks/tower_b.glb',
   },
   // ── VEHICLES ───────────────────────────────────────────────────────────────
   {
-    src: 'https://raw.githubusercontent.com/quaternius/ultimatecitypack/main/GLB/Car_A.glb',
+    src: 'https://raw.githubusercontent.com/justinm-g/quaternius-models/master/Ultimate%20City%20Pack/GLB/Car_A.glb',
     dest: 'vehicles/car_a.glb',
   },
   {
-    src: 'https://raw.githubusercontent.com/quaternius/ultimatecitypack/main/GLB/Car_B.glb',
+    src: 'https://raw.githubusercontent.com/justinm-g/quaternius-models/master/Ultimate%20City%20Pack/GLB/SUV_A.glb',
     dest: 'vehicles/car_b.glb',
   },
   // ── PEOPLE ─────────────────────────────────────────────────────────────────
   {
-    src: 'https://raw.githubusercontent.com/quaternius/ultimatecitypack/main/GLB/Male_Casual_A.glb',
+    src: 'https://raw.githubusercontent.com/justinm-g/quaternius-models/master/Modular%20Characters/GLB/Casual_Male_A.glb',
     dest: 'people/agent_a.glb',
   },
 ];
+
+
 
 // ---------------------------------------------------------------------------
 // Helpers

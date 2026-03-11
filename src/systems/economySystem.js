@@ -10,7 +10,8 @@ export function runEconomyTick(state, dt){
   const upkeep = (state.buildings.police*.75 + (state.buildings.acc+state.buildings.dec)*.9 + state.buildings.bases*1.8 + state.buildings.barracks*.9);
   
   // Apply base economy (law modifiers are applied separately in careerSystem._applyLawModifiers)
-  state.cash += taxBase * dt;
+  const baseSalary = state.officeIndex === 0 ? 8 : (state.officeIndex * 20);
+  state.cash += (taxBase + baseSalary) * dt;
   state.cash -= upkeep * dt;
   
   state.research += (state.buildings.schools*.12 + state.buildings.stadiums*.05) * dt;
@@ -31,8 +32,19 @@ export function runEconomyTick(state, dt){
 export function performAction(state, action){ const c = CONFIG.economy; const placements = { buildHousing:['housing', c.housingCost], buildSchool:['school', c.schoolCost], buildStore:['store', c.storeCost], buildPolice:['police', c.policeCost], buildACC:['acc', c.accCost], buildDEC:['dec', c.decCost], buildMine:['mine', c.mineCost], buildRefinery:['refinery', c.refineryCost], buildBarracks:['barracks', c.barracksCost], buildBase:['base', c.baseCost], buildStadium:['stadium', c.stadiumCost] }; if(action==='save') return 'save'; if(action==='load') return 'load'; if(action==='extinguish'){ const burning = state.worldRefs.worldMeshes.find(m => m?.metadata?.onFire); if(!burning) return fail('No active fires detected.'); if(!spend(state, 800)) return fail('Not enough cash to deploy firefighters. (Cost: $800)'); extinguishMesh(burning); return ok('🚒 Firefighters dispatched. Fire suppressed.'); } if(placements[action]){ const [mode,cost]=placements[action]; if(!spend(state,cost)) return fail('Not enough cash.'); state.selectionMode = mode; return ok('Tap a valid build pad to place it.'); } if(action==='research'){ if(!spend(state,c.researchCost)) return fail('Not enough cash to fund research.'); state.research += 8; state.influence += 1.5; state.legitimacy += 1; return ok('Research funded.'); } if(action==='campaign'){ if(!spend(state,c.campaignCost)) return fail('Not enough cash to campaign.'); state.influence += 6; state.approval += 2; return ok('Campaign launched.'); } if(action==='travel'){ return travelToNextNation(state); }
   
   if(action==='legislation' || action==='parliament') {
-    const availableLaws = CONFIG.laws.filter(l => !state.enactedLaws.includes(l.id));
-    if (availableLaws.length === 0) return fail('No further laws can be passed at this stage.');
+    const availableLaws = CONFIG.laws.filter(law => {
+      const alreadyEnacted = state.enactedLaws.some(entry => entry.id === law.id);
+      const officeQualified = state.officeIndex >= (law.minOffice || 0);
+      return !alreadyEnacted && officeQualified;
+    });
+    
+    if (availableLaws.length === 0) {
+      const hasUnqualified = CONFIG.laws.some(law => {
+        const alreadyEnacted = state.enactedLaws.some(entry => entry.id === law.id);
+        return !alreadyEnacted && state.officeIndex < (law.minOffice || 0);
+      });
+      return fail(hasUnqualified ? 'You do not hold a high enough office to pass further legislation.' : 'No further laws can be passed at this stage.');
+    }
     
     openDecision(state, {
       title: 'NATIONAL PARLIAMENT',

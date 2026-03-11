@@ -45,6 +45,29 @@ export function runPoliticalTick(state, dt) {
   state.security += state.activeModifiers.securityDelta * dt;
   state.approval += state.activeModifiers.approvalDelta * dt;
 
+  // ── Rebel Insurgency Logic ──
+  // Strength grows when Legitimacy and Approval are low
+  const dissatisfaction = (100 - state.approval) + (100 - state.legitimacy);
+  const rebelGrowth = dissatisfaction > 120 ? (dissatisfaction - 120) * 0.005 : -0.05;
+  state.rebelStrength = Math.max(0, Math.min(100, state.rebelStrength + rebelGrowth * dt));
+
+  // Active Sabotage: Rebels ignite random buildings if strong enough
+  if (state.rebelStrength > 40 && Math.random() < (state.rebelStrength / 10000) * dt * 60) {
+    const targets = state.worldRefs?.worldMeshes?.filter(m => m?.metadata?.type && !m.metadata.onFire);
+    if (targets && targets.length > 0) {
+      const victim = targets[Math.floor(Math.random() * targets.length)];
+      import('../systems/physicsInteractionSystem.js').then(({ igniteMesh }) => igniteMesh(victim));
+      setMessage("⚠️ SABOTAGE: Rebel insurgents have set fire to a local building!");
+    }
+  }
+
+  // ── Ministerial Focus permanent bonuses ──
+  if (state.ministerialFocus === 'Security') {
+    state.security += 0.05 * dt; // Passive security growth
+  } else if (state.ministerialFocus === 'Social') {
+    state.approval += 0.02 * dt; // Passive approval growth
+  }
+
   // ── Event Emissions (threshold-based, not random spam) ─────────────────────
 
   // Corruption scandal (probabilistic, severity-weighted)

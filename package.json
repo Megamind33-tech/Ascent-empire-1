@@ -11,6 +11,7 @@
   "dependencies": {
     "@babylonjs/core": "^8.0.0",
     "@babylonjs/loaders": "^8.0.0",
+    "@babylonjs/materials": "^8.54.3",
     "@capacitor/android": "^8.2.0",
     "@dimforge/rapier3d-compat": "^0.19.0"
   },

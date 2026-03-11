@@ -1,102 +1,672 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-    <title>Ascent Realms</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Ascent Empire: Sovereign Evolution</title>
     <meta name="description" content="A realistic mobile-first political city builder built with Babylon.js and Rapier." />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/src/styles.css" />
-  </head>
-  <body>
-    <div id="app">
-      <canvas id="renderCanvas"></canvas>
-      <div id="setupOverlay">
-        <form id="setupForm" class="setup-card">
-          <h1>ASCENT REALMS</h1>
-          <p>Choose your identity, nation, and starting district.</p>
-          <label>Player Name<input id="playerName" type="text" maxlength="24" placeholder="Enter your name" /></label>
-          <label>Nation<select id="playerNation"></select></label>
-          <label>Starting Position<select id="playerStart"><option value="capital-core">Capital Core</option><option value="harbor-district">Harbor District</option><option value="industrial-belt">Industrial Belt</option><option value="civic-heights">Civic Heights</option></select></label>
-          <button type="submit">Start Ascent</button>
-        </form>
-      </div>
-      <div id="hud">
-        <div class="topbar glass">
-          <div class="brand">
-            <span class="brand-title">ASCENT REALMS</span>
-            <span class="brand-subtitle">City • Power • Influence</span>
-          </div>
-          <div class="stats">
-            <div class="stat"><span>Cash</span><strong id="cashValue">$0</strong></div>
-            <div class="stat"><span>Approval</span><strong id="approvalValue">50</strong></div>
-            <div class="stat"><span>Influence</span><strong id="influenceValue">0</strong></div>
-            <div class="stat"><span>Office</span><strong id="officeValue">Nobody</strong></div>
-            <div class="stat"><span>Nation</span><strong id="nationValue">Zambria</strong></div>
-            <div class="stat"><span>Passport</span><strong id="passportValue">none</strong></div>
-            <div class="stat"><span>Election In</span><strong id="electionTimerValue">5:00</strong></div>
-          </div>
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@400;600;700;900&family=Space+Grotesk:wght@300;500;700&display=swap');
+
+        :root {
+            --metal-bg: #05070a;
+            --panel-bg: rgba(10, 14, 20, 0.95);
+            --gold-leaf: linear-gradient(180deg, #fde68a 0%, #ca8a04 100%);
+            --war-red: #ff3e3e;
+            --terminal-cyan: #00f2ff;
+            --brushed-gold: #eab308;
+            --street-purple: #bf77ff;
+            --font-display: 'Cinzel', serif;
+            --font-ui: 'Inter', sans-serif;
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --neon-glow: 0 0 15px rgba(0, 242, 255, 0.3);
+        }
+
+        /* Visual Realism & Atmosphere */
+        .texture-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.05;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 9998;
+        }
+
+        .vignette {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 30%, rgba(0,0,0,0.9) 100%);
+            pointer-events: none;
+            z-index: 9997;
+        }
+
+        #renderCanvas {
+            position: absolute;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            display: block;
+            z-index: 0;
+            outline: none;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background-color: transparent;
+            color: #f0f6fc;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            font-family: var(--font-ui);
+        }
+
+        /* --- TACTICAL HUD --- */
+        #top-hud {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 80px;
+            padding: 0 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            border-bottom: 2px solid var(--glass-border);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .hud-group { display: flex; gap: 12px; }
+        
+        .stat-box {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            padding: 8px 16px;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            min-width: 110px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-box::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 3px; height: 100%;
+            background: var(--terminal-cyan);
+        }
+
+        .stat-box.gold::after { background: var(--brushed-gold); }
+        .stat-box.danger::after { background: var(--war-red); }
+
+        .stat-box label { font-size: 0.55rem; text-transform: uppercase; font-weight: 800; color: #8b949e; letter-spacing: 2px; }
+        .stat-box span { font-family: 'Space Grotesk'; font-weight: 700; font-size: 1.1rem; color: #fff; }
+
+        .rank-center {
+            text-align: center;
+            padding: 10px 50px;
+            background: linear-gradient(to bottom, #111, #000);
+            border: 1px solid var(--brushed-gold);
+            box-shadow: 0 0 30px rgba(234, 179, 8, 0.15);
+            clip-path: polygon(10% 0, 90% 0, 100% 100%, 0 100%);
+        }
+        .rank-center h2 { font-family: var(--font-display); font-size: 1.1rem; color: var(--brushed-gold); letter-spacing: 6px; text-transform: uppercase; white-space:nowrap; }
+        .rank-center small { display: block; font-size: 0.5rem; letter-spacing: 3px; color: #666; font-weight: 700; margin-top: 4px; text-transform:uppercase; }
+
+        /* --- THE NEWS TICKER --- */
+        #news-ticker {
+            position: absolute;
+            top: 80px; left: 0; right: 0;
+            height: 34px;
+            background: #000;
+            border-bottom: 1px solid rgba(234, 179, 8, 0.4);
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            z-index: 950;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+
+        #news-ticker::before {
+            content: 'NEWS FEED';
+            background: var(--brushed-gold);
+            color: #000;
+            font-weight: 900;
+            font-size: 0.6rem;
+            padding: 0 15px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            z-index: 2;
+            letter-spacing: 1px;
+        }
+
+        .ticker-wrap { display: flex; animation: ticker 40s linear infinite; }
+        .ticker-item { 
+            white-space: nowrap; 
+            padding-right: 120px; 
+            color: #eee; 
+            font-size: 0.8rem; 
+            font-weight: 600; 
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(255,255,255,0.2);
+        }
+        @keyframes ticker { 0% { transform: translateX(20px); } 100% { transform: translateX(-100%); } }
+
+        /* --- TRAYS --- */
+        .side-tray {
+            position: absolute;
+            top: 130px; bottom: 120px;
+            width: 400px;
+            background: var(--panel-bg);
+            border: 1px solid var(--glass-border);
+            transition: transform 0.6s cubic-bezier(0.2, 1, 0.3, 1);
+            z-index: 900;
+            backdrop-filter: blur(40px);
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+        }
+
+        @media (max-width: 800px) {
+            .side-tray { width: 300px; }
+            .tray-collapsed-left { transform: translateX(-300px) !important; }
+            .tray-collapsed-right { transform: translateX(300px) !important; }
+            .hud-group { display: none; } /* Hide some stats on very small screens if needed */
+        }
+
+        #tray-left { left: 0; border-right: 3px solid var(--brushed-gold); border-radius: 0 10px 10px 0; }
+        #tray-right { right: 0; border-left: 3px solid var(--terminal-cyan); border-radius: 10px 0 0 10px; }
+
+        .tray-collapsed-left { transform: translateX(-400px); }
+        .tray-collapsed-right { transform: translateX(400px); }
+
+        .tray-handle {
+            position: absolute;
+            top: 50%; width: 34px; height: 130px;
+            background: #000;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transform: translateY(-50%);
+            border: 1px solid var(--glass-border);
+            color: var(--brushed-gold);
+            transition: 0.3s;
+        }
+        .tray-handle:hover { background: #111; color: var(--terminal-cyan); }
+        #tray-left .tray-handle { right: -34px; border-radius: 0 8px 8px 0; }
+        #tray-right .tray-handle { left: -34px; border-radius: 8px 0 0 8px; }
+
+        .tray-scroll { padding: 30px; height: 100%; overflow-y: auto; }
+        .tray-scroll::-webkit-scrollbar { width: 4px; }
+        .tray-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
+
+        .tray-section-title { 
+            font-family: var(--font-display); 
+            font-size: 0.85rem; 
+            color: var(--brushed-gold); 
+            margin: 30px 0 15px; 
+            text-transform: uppercase; 
+            border-bottom: 2px solid rgba(255,255,255,0.05); 
+            padding-bottom: 10px; 
+            letter-spacing: 3px; 
+        }
+
+        /* --- CARDS --- */
+        .item-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.03), transparent);
+            border: 1px solid var(--glass-border);
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex; gap: 18px; align-items: center;
+            position: relative;
+        }
+        .item-card:hover { 
+            border-color: var(--terminal-cyan); 
+            background: rgba(255, 255, 255, 0.07);
+            transform: scale(1.02);
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.1);
+        }
+        .item-card.shady { border-left: 4px solid var(--war-red); }
+        .item-card.passport-card { border-left: 4px solid var(--terminal-cyan); }
+
+        .item-card.active-build {
+            border-color: var(--brushed-gold) !important;
+            background: rgba(234, 179, 8, 0.1) !important;
+        }
+        .item-card.locked { opacity: 0.4; pointer-events: none; filter: grayscale(1); }
+        .item-card.locked::after { content: '\f023'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; right: 20px; color: var(--war-red); }
+
+        .item-icon { 
+            width: 48px; height: 48px; 
+            background: #000; 
+            border: 1px solid rgba(255,255,255,0.1); 
+            border-radius: 4px; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 1.3rem; flex-shrink: 0; color: var(--terminal-cyan);
+            box-shadow: inset 0 0 10px rgba(0, 242, 255, 0.2);
+        }
+
+        .item-info h4 { font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 5px; }
+        .item-info p { font-size: 0.7rem; color: #999; line-height: 1.6; }
+
+        /* --- NAVIGATION --- */
+        #bottom-nav {
+            position: absolute;
+            bottom: 30px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 18px; z-index: 1000;
+        }
+        @media (max-width: 800px) {
+            #bottom-nav { gap: 8px; bottom: 20px; }
+            .nav-btn { width: 70px; height: 70px; }
+        }
+
+        .nav-btn {
+            width: 90px; height: 90px;
+            background: #000;
+            border: 1px solid var(--glass-border);
+            border-radius: 4px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.8);
+        }
+        .nav-btn:hover { border-color: var(--terminal-cyan); transform: translateY(-8px); }
+        .nav-btn i { font-size: 1.8rem; color: #555; margin-bottom: 8px; transition: 0.3s; }
+        .nav-btn span { font-size: 0.6rem; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; color: #555; }
+        .nav-btn.active { border-color: var(--brushed-gold); background: rgba(234, 179, 8, 0.05); }
+        .nav-btn.active i, .nav-btn.active span { color: var(--brushed-gold); text-shadow: 0 0 15px rgba(234, 179, 8, 0.4); }
+        .nav-btn.locked { opacity: 0.3; cursor: not-allowed; border-color: rgba(255, 62, 62, 0.3); }
+        .nav-btn.locked span::after { content: '\f023'; font-family: 'Font Awesome 6 Free'; font-weight: 900; margin-left: 5px; color: var(--war-red); }
+
+        /* --- MODALS --- */
+        .modal {
+            position: fixed;
+            inset: 0; background: rgba(0, 0, 0, 0.96);
+            display: none; align-items: center; justify-content: center;
+            z-index: 2000; backdrop-filter: blur(60px);
+        }
+        .modal-content {
+            width: 95%; max-width: 1200px; height: 85vh;
+            background: #05070a; border: 1px solid var(--brushed-gold);
+            display: flex; flex-direction: column;
+            box-shadow: 0 0 100px #000;
+            position: relative;
+        }
+        .modal-header { 
+            padding: 30px 40px; 
+            border-bottom: 1px solid rgba(255,255,255,0.05); 
+            display: flex; justify-content: space-between; align-items: center; 
+            background: rgba(255,255,255,0.01);
+        }
+        .modal-header h2 { font-family: var(--font-display); font-size: 1.6rem; color: var(--brushed-gold); text-transform: uppercase; letter-spacing: 5px; margin:0; }
+        .modal-body { flex: 1; overflow-y: auto; padding: 40px; display: grid; grid-template-columns: 280px 1fr; gap: 40px; }
+        
+        @media (max-width: 800px) {
+            .modal-body { grid-template-columns: 1fr; padding: 20px; }
+        }
+
+        .tab-menu { display: flex; flex-direction: column; gap: 10px; border-right: 1px solid rgba(255,255,255,0.05); padding-right: 20px; }
+        .tab-link { 
+            padding: 20px; background: #0a0e14; border: 1px solid transparent; 
+            color: #444; text-align: left; font-size: 0.75rem; font-weight: 900; 
+            text-transform: uppercase; cursor: pointer; transition: 0.2s; letter-spacing: 2px; 
+        }
+        .tab-link.active { background: var(--brushed-gold); color: #000; }
+
+        .btn-run { background: var(--brushed-gold); color: #000; border: none; padding: 18px; font-weight: 900; text-transform: uppercase; font-size: 0.85rem; cursor: pointer; border-radius: 2px; transition: 0.2s; }
+        .btn-run:hover { filter: brightness(1.2); transform: translateY(-3px); }
+
+        #toast-box {
+            position: fixed; bottom: 140px; left: 50%; transform: translateX(-50%);
+            display: flex; flex-direction: column; gap: 10px; z-index: 5000; pointer-events: none;
+        }
+
+        .toast {
+            background: #000; border: 1px solid var(--terminal-cyan);
+            padding: 12px 35px; color: #fff; font-size: 0.8rem; font-weight: 900;
+            text-transform: uppercase; letter-spacing: 1px;
+            animation: toast-in 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+        }
+        @keyframes toast-in { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* General Custom overrides for older elements */
+        .close-overlay, .close-ledger {
+            background: transparent; border: none; font-size: 1.5rem; color: var(--muted); cursor: pointer;
+        }
+        .close-overlay:hover, .close-ledger:hover { color: #fff; }
+
+        /* Setup forms inside modals */
+        .form-label { display:flex; flex-direction:column; gap:10px; font-weight:bold; color:var(--brushed-gold); text-transform:uppercase; font-size:0.8rem; letter-spacing:2px; }
+        .form-input { padding:15px; background:rgba(0,0,0,0.5); color:#fff; border:1px solid var(--glass-border); font-family:var(--font-ui); font-size:1rem; }
+        .form-input:focus { outline:none; border-color:var(--terminal-cyan); }
+
+        /* CIEMATIC: Victory Overlay */
+        .victory-flash {
+            position: fixed; inset: 0; background: radial-gradient(circle, rgba(234, 179, 8, 0.4) 0%, #000 100%);
+            z-index: 10000; display: flex; align-items: center; justify-content: center;
+            animation: v-flash 0.8s ease-out forwards; pointer-events: none;
+        }
+        .v-content { text-align: center; }
+        .v-content i { font-size: 5rem; color: var(--brushed-gold); margin-bottom: 20px; filter: drop-shadow(0 0 20px rgba(234, 179, 8, 0.6)); }
+        .v-content h1 { font-family: var(--font-display); font-size: 4rem; color: #fff; letter-spacing: 15px; margin: 0; }
+        .v-content p { font-size: 1rem; color: var(--brushed-gold); text-transform: uppercase; letter-spacing: 5px; opacity: 0.8; }
+        .victory-flash.fade-out { opacity: 0; transition: opacity 1s ease-in; }
+        @keyframes v-flash { from { opacity: 0; clip-path: inset(50% 0 50% 0); } to { opacity: 1; clip-path: inset(0 0 0 0); } }
+
+        /* EMPIRE OVERRIDE - FOR ENDGAME */
+        .empire-mode #top-hud { border-bottom: 3px solid var(--war-red); background: linear-gradient(to bottom, #2a0a0a, #000); }
+        .empire-mode .stat-box { border-color: var(--war-red); box-shadow: 0 0 10px rgba(220, 38, 38, 0.2); }
+        .empire-mode .rank-center h2 { color: var(--war-red) !important; text-shadow: 0 0 15px rgba(220, 38, 38, 0.5); }
+        .empire-mode .nav-btn.active { color: var(--war-red); border-color: var(--war-red); }
+        
+        #dominance-box { display: none; }
+        .empire-mode #dominance-box { display: flex; animation: slide-in 0.5s ease-out; }
+    </style>
+</head>
+<body>
+
+    <div class="texture-overlay"></div>
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+    
+    <canvas id="renderCanvas"></canvas>
+
+    <!-- SETUP OVERLAY (Game Start) -->
+    <div id="setupOverlay" class="modal" style="display:flex; z-index: 9999;">
+        <div class="modal-content" style="max-width: 500px; height: auto; margin: auto;">
+            <div class="modal-header"><h2>ASCENT REALMS</h2></div>
+            <div class="modal-body" style="grid-template-columns: 1fr; padding: 30px;">
+                <p style="color:var(--terminal-cyan); font-weight:bold; margin-bottom:10px;">Choose your identity, nation, and starting district.</p>
+                <form id="setupForm" style="display:flex; flex-direction:column; gap:20px;">
+                    <label class="form-label">Player Name
+                        <input id="playerName" class="form-input" type="text" maxlength="24" placeholder="Enter your name" />
+                    </label>
+                    <label class="form-label">Nation
+                        <select id="playerNation" class="form-input"></select>
+                    </label>
+                    <label class="form-label">Starting Position
+                        <select id="playerStart" class="form-input">
+                            <option value="capital-core">Capital Core</option>
+                            <option value="harbor-district">Harbor District</option>
+                            <option value="industrial-belt">Industrial Belt</option>
+                            <option value="civic-heights">Civic Heights</option>
+                        </select>
+                    </label>
+                    <button type="submit" class="btn-run" style="margin-top:10px;">START ASCENT</button>
+                </form>
+            </div>
         </div>
-        <div class="sidebar glass">
-          <button class="action-btn" data-action="buildHousing">Housing</button>
-          <button class="action-btn" data-action="buildSchool">Schools</button>
-          <button class="action-btn" data-action="buildStore">Stores</button>
-          <button class="action-btn" data-action="buildPolice">Police</button>
-          <button class="action-btn" data-action="buildACC">ACC</button>
-          <button class="action-btn" data-action="buildDEC">DEC</button>
-          <button class="action-btn" data-action="buildMine">Mines</button>
-          <button class="action-btn" data-action="buildRefinery">Refinery</button>
-          <button class="action-btn" data-action="buildBarracks">Barracks</button>
-          <button class="action-btn" data-action="buildBase">Base</button>
-          <button class="action-btn" data-action="buildStadium">Sports</button>
-          <button class="action-btn" data-action="research">Research</button>
-          <button class="action-btn" data-action="campaign">Campaign</button>
-          <button class="action-btn" data-action="travel">Travel</button>
-          <button class="action-btn" data-action="legislation">Legislation</button>
-          <button class="action-btn" data-action="press">Press Room</button>
-          <button class="action-btn" data-action="gazette">Gazette</button>
-          <button class="action-btn" data-action="career">Career Portal</button>
-          <button class="action-btn" data-action="save">Save</button>
-          <button class="action-btn" data-action="load">Load</button>
-          <button class="action-btn action-btn--danger" data-action="extinguish" title="Deploy firefighters ($800)">🔥 Extinguish</button>
-        </div>
-        <div class="bottom-panel glass">
-          <div class="resource-row">
-            <div class="pill">Population <strong id="populationValue">1000</strong></div>
-            <div class="pill">Food <strong id="foodValue">100</strong></div>
-            <div class="pill">Steel <strong id="steelValue">50</strong></div>
-            <div class="pill">Fuel <strong id="fuelValue">40</strong></div>
-            <div class="pill">Research <strong id="researchValue">0</strong></div>
-          </div>
-          <div class="message-box" id="messageBox">Welcome. Build legitimacy before chasing power.</div>
-        </div>
-        <div class="mobile-controls glass">
-          <button id="rotateLeftBtn" aria-label="Rotate Left">⟲</button>
-          <button id="zoomInBtn" aria-label="Zoom In">＋</button>
-          <button id="zoomOutBtn" aria-label="Zoom Out">－</button>
-          <button id="rotateRightBtn" aria-label="Rotate Right">⟳</button>
-          <button id="muteBtn" aria-label="Mute" title="Mute" style="grid-column:span 2">🔊</button>
-        </div>
-      </div>
-      <!-- Career Portal Overlay -->
-      <div id="careerPortal" class="overlay glass" style="display:none;">
-        <div class="overlay-card career-card">
-          <button class="close-overlay" data-overlay="careerPortal">×</button>
-          <h2>POLITICAL CAREER</h2>
-          <div id="careerDetails"></div>
-        </div>
-      </div>
-      <!-- Gazette Overlay -->
-      <div id="gazetteOverlay" class="overlay glass" style="display:none;">
-        <div class="overlay-card gazette-card">
-          <button class="close-overlay" data-overlay="gazetteOverlay">×</button>
-          <h2>NATIONAL GAZETTE</h2>
-          <div id="gazetteLaws"></div>
-        </div>
-      </div>
     </div>
+
+    <!-- TACTICAL HUD -->
+    <header id="top-hud">
+        <div class="hud-group">
+            <div class="stat-box gold" title="Cash">
+                <label>Treasury</label>
+                <span id="cashValue">$0</span>
+            </div>
+            <div class="stat-box" title="Influence">
+                <label>Influence</label>
+                <span id="influenceValue">0</span>
+            </div>
+        </div>
+
+        <div class="rank-center">
+            <small id="nationValue">Zambria</small>
+            <h2 id="officeValue">Nobody</h2>
+        </div>
+
+        <div class="hud-group">
+            <div class="stat-box" title="Approval">
+                <label>Approval</label>
+                <span id="approvalValue">50%</span>
+            </div>
+            <div id="rebel-box" class="stat-box danger" style="display:none;" title="Rebel Threat">
+                <label>Rebels</label>
+                <span id="rebelValue">0%</span>
+            </div>
+            <div id="loyalty-box" class="stat-box" style="border-color:var(--terminal-cyan); display:none;" title="Military Loyalty">
+                <label>Loyalty</label>
+                <span id="loyaltyValue">100%</span>
+            </div>
+            <div class="stat-box danger" title="Election Timer">
+                <label>Election In</label>
+                <span id="electionTimerValue">5:00</span>
+            </div>
+            <div id="dominance-box" class="stat-box" style="border-color:var(--war-red); color:var(--war-red);" title="World Dominance">
+                <label>Hegemony</label>
+                <span id="dominanceValue">0%</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- NEWS FEED TICKER -->
+    <div id="news-ticker">
+        <div class="ticker-wrap" id="ticker-content">
+            <span class="ticker-item">GLOBAL: SUPPLY CHAIN DISRUPTIONS REPORTED IN SECTOR 8...</span>
+            <span class="ticker-item">LOCAL: NEW LABOR CONTRACTS AVAILABLE AT CITY INFRASTRUCTURE HUB...</span>
+            <span class="ticker-item">POLITICS: UPCOMING MAYORAL DEBATES SCHEDULED FOR AUTUMN CYCLE...</span>
+            <span class="ticker-item">STREET: GANG ACTIVITY SPIKES IN INDUSTRIAL ZONES...</span>
+        </div>
+    </div>
+
+    <!-- LEFT COMMAND TRAY -->
+    <aside id="tray-left" class="side-tray tray-collapsed-left">
+        <div class="tray-handle" onclick="toggleTray('tray-left')"><i class="fas fa-layer-group"></i></div>
+        <div class="tray-scroll">
+            
+            <h3 class="tray-section-title">Identity & Assets</h3>
+            <div class="item-card passport-card">
+                <div class="item-icon"><i class="fas fa-passport"></i></div>
+                <div class="item-info">
+                    <h4>Passport Level</h4>
+                    <p id="passportValue">none</p>
+                </div>
+            </div>
+
+            <h3 class="tray-section-title">Civilian Construction</h3>
+            <div class="item-card action-btn" data-action="buildHousing">
+                <div class="item-icon"><i class="fas fa-home"></i></div>
+                <div class="item-info"><h4>Housing</h4><p>Expand residential zones.</p></div>
+            </div>
+            <div class="item-card action-btn" data-action="buildSchool">
+                <div class="item-icon"><i class="fas fa-school"></i></div>
+                <div class="item-info"><h4>Schools</h4><p>Increase district education.</p></div>
+            </div>
+            <div class="item-card action-btn" data-action="buildStore">
+                <div class="item-icon"><i class="fas fa-store"></i></div>
+                <div class="item-info"><h4>Stores</h4><p>Commercial revenue flow.</p></div>
+            </div>
+            <div class="item-card action-btn" data-action="buildPolice">
+                <div class="item-icon"><i class="fas fa-shield-alt"></i></div>
+                <div class="item-info"><h4>Police Station</h4><p>Maintain local order.</p></div>
+            </div>
+            <div class="item-card action-btn locked" data-action="buildStadium" data-min-office="2">
+                <div class="item-icon"><i class="fas fa-futbol"></i></div>
+                <div class="item-info"><h4>Stadium</h4><p>Major approval boost.</p></div>
+            </div>
+
+            <h3 class="tray-section-title">Infrastructure & Mining</h3>
+            <div class="item-card action-btn locked" data-action="buildMine" data-min-office="1">
+                <div class="item-icon"><i class="fas fa-hammer"></i></div>
+                <div class="item-info"><h4>Mines</h4><p>Extract steel & resources.</p></div>
+            </div>
+            <div class="item-card action-btn locked" data-action="buildRefinery" data-min-office="1">
+                <div class="item-icon"><i class="fas fa-industry"></i></div>
+                <div class="item-info"><h4>Refinery</h4><p>Process fuel & materials.</p></div>
+            </div>
+
+            <h3 class="tray-section-title">Military Command</h3>
+            <div class="item-card action-btn" data-action="buildBarracks">
+                <div class="item-icon"><i class="fas fa-campground"></i></div>
+                <div class="item-info"><h4>Barracks</h4><p>Train military units.</p></div>
+            </div>
+            <div class="item-card action-btn locked" data-action="buildBase" data-min-office="3">
+                <div class="item-icon"><i class="fas fa-fighter-jet"></i></div>
+                <div class="item-info"><h4>Base</h4><p>Advanced operations.</p></div>
+            </div>
+            <div class="item-card action-btn locked" data-action="buildACC" data-min-office="3">
+                <div class="item-icon"><i class="fas fa-satellite-dish"></i></div>
+                <div class="item-info"><h4>Air Control</h4><p>Air traffic monitoring.</p></div>
+            </div>
+            <div class="item-card action-btn locked" data-action="buildDEC" data-min-office="3">
+                <div class="item-icon"><i class="fas fa-radar"></i></div>
+                <div class="item-info"><h4>Defense Network</h4><p>Missile defense systems.</p></div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- RIGHT INTEL TRAY -->
+    <aside id="tray-right" class="side-tray tray-collapsed-right">
+        <div class="tray-handle" onclick="toggleTray('tray-right')"><i class="fas fa-broadcast-tower"></i></div>
+        <div class="tray-scroll">
+            <h3 class="tray-section-title">Empire Resources</h3>
+            <div class="item-card">
+                <div class="item-icon"><i class="fas fa-users"></i></div>
+                <div class="item-info"><h4>Population</h4><p id="populationValue">1000</p></div>
+            </div>
+            <div class="item-card">
+                <div class="item-icon"><i class="fas fa-seedling"></i></div>
+                <div class="item-info"><h4>Food Reserves</h4><p id="foodValue">100</p></div>
+            </div>
+            <div class="item-card">
+                <div class="item-icon"><i class="fas fa-cube"></i></div>
+                <div class="item-info"><h4>Steel</h4><p id="steelValue">50</p></div>
+            </div>
+            <div class="item-card">
+                <div class="item-icon"><i class="fas fa-gas-pump"></i></div>
+                <div class="item-info"><h4>Fuel</h4><p id="fuelValue">40</p></div>
+            </div>
+            <div class="item-card">
+                <div class="item-icon"><i class="fas fa-microchip"></i></div>
+                <div class="item-info"><h4>Research</h4><p id="researchValue">0</p></div>
+            </div>
+
+            <h3 class="tray-section-title">Emergency Action</h3>
+            <div class="item-card action-btn action-btn--danger shady" data-action="extinguish">
+                <div class="item-icon" style="color:var(--war-red);"><i class="fas fa-fire-extinguisher"></i></div>
+                <div class="item-info"><h4 style="color:var(--war-red)">Extinguish Fire</h4><p>Deploy firefighters ($800)</p></div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- NAVIGATION -->
+    <nav id="bottom-nav">
+        <div class="nav-btn action-btn active" data-action="travel" onclick="setNav(this)">
+            <i class="fas fa-plane"></i>
+            <span>Travel</span>
+        </div>
+        <div class="nav-btn action-btn" data-action="research" onclick="setNav(this)">
+            <i class="fas fa-flask"></i>
+            <span>Research</span>
+        </div>
+        <div class="nav-btn action-btn" data-action="career" onclick="setNav(this)">
+            <i class="fas fa-id-badge"></i>
+            <span>Career</span>
+        </div>
+        <div class="nav-btn action-btn locked" data-action="legislation" data-min-office="1" onclick="setNav(this)">
+            <i class="fas fa-gavel"></i>
+            <span>Council</span>
+        </div>
+        <div class="nav-btn action-btn" data-action="gazette" onclick="setNav(this)">
+            <i class="fas fa-newspaper"></i>
+            <span>Gazette</span>
+        </div>
+        <div class="nav-btn action-btn locked" data-action="press" data-min-office="2" onclick="setNav(this)">
+            <i class="fas fa-microphone"></i>
+            <span>Press</span>
+        </div>
+        <div class="nav-btn action-btn locked" data-action="campaign" data-min-office="1" onclick="setNav(this)">
+            <i class="fas fa-bullhorn"></i>
+            <span>Campaign</span>
+        </div>
+    </nav>
+    
+    <div style="position:absolute; right:20px; bottom:120px; display:flex; gap:10px; z-index:1000; flex-direction:column;">
+        <button class="action-btn btn-run" data-action="save" style="border-radius:4px; padding:10px; font-size:0.7rem; justify-content:center;">💾 Save</button>
+        <button class="action-btn btn-run" data-action="load" style="border-radius:4px; padding:10px; font-size:0.7rem; justify-content:center;">📂 Load</button>
+    </div>
+
+    <div style="position:absolute; left:20px; bottom:120px; display:grid; grid-template-columns:1fr 1fr; gap:10px; z-index:1000;">
+        <button id="rotateLeftBtn" class="btn-run" style="border-radius:4px; padding:10px; font-size: 1.2rem;">⟲</button>
+        <button id="zoomInBtn" class="btn-run" style="border-radius:4px; padding:10px; font-size: 1.2rem;">＋</button>
+        <button id="zoomOutBtn" class="btn-run" style="border-radius:4px; padding:10px; font-size: 1.2rem;">－</button>
+        <button id="rotateRightBtn" class="btn-run" style="border-radius:4px; padding:10px; font-size: 1.2rem;">⟳</button>
+        <button id="muteBtn" class="btn-run" style="border-radius:4px; padding:10px; font-size: 1.2rem; grid-column:span 2;">🔊</button>
+    </div>
+
+    <!-- MODAL: CAREER -->
+    <div id="careerPortal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header"><h2>Sovereign Hierarchy</h2><i class="fas fa-times close-overlay" data-overlay="careerPortal"></i></div>
+            <div class="modal-body">
+                <div id="careerDetails" style="grid-column: span 2;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: GAZETTE -->
+    <div id="gazetteOverlay" class="modal">
+        <div class="modal-content">
+            <div class="modal-header"><h2>National Gazette</h2><i class="fas fa-times close-overlay" data-overlay="gazetteOverlay"></i></div>
+            <div class="modal-body">
+                <div id="gazetteLaws" style="grid-column: span 2;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: LEDGER -->
+    <div id="ledgerOverlay" class="modal">
+        <div class="modal-content">
+            <div class="modal-header"><h2>Economic Ledger</h2><i class="fas fa-times close-ledger"></i></div>
+            <div class="modal-body">
+                <div id="ledgerContent" style="grid-column: span 2; background:rgba(0,0,0,0.5); padding:20px; border-radius:10px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-box"></div>
+
     <script type="module" src="/src/main.js"></script>
-  </body>
+
+    <script>
+        function toggleTray(id) { 
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.toggle(id === 'tray-left' ? 'tray-collapsed-left' : 'tray-collapsed-right'); 
+            }
+        }
+        function setNav(btn) { 
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); 
+            btn.classList.add('active'); 
+        }
+
+        function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
+        window.onclick = function(e) { if(e.target.classList.contains('modal') && e.target.id !== 'setupOverlay') closeModals(); }
+
+        document.querySelectorAll('.close-overlay').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.getAttribute('data-overlay');
+                if(id) document.getElementById(id).style.display = 'none';
+            });
+        });
+
+        const cl = document.querySelector('.close-ledger');
+        if(cl) {
+            cl.addEventListener('click', () => {
+                document.getElementById('ledgerOverlay').style.display = 'none';
+            });
+        }
+    </script>
+</body>
 </html>

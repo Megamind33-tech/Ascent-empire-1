@@ -71,6 +71,7 @@ export function createNationWorld(scene, shadows, state) {
     parliament.scaling.set(s, s, s);
     parliament.position.set(0, 0.1, -96);
     parliament.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
+    parliament.metadata = { type: 'parliament', onFire: false };
     meshes.push(parliament);
   }
 
@@ -80,6 +81,7 @@ export function createNationWorld(scene, shadows, state) {
     police.scaling.set(s, s, s);
     police.position.set(-88, 0.1, -86);
     police.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
+    police.metadata = { type: 'police', onFire: false };
     meshes.push(police);
   }
 

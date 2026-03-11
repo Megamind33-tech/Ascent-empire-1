@@ -1,7 +1,7 @@
 import { CONFIG } from '../config.js';
 export function createGameState() {
   return {
-    playerName: 'Player', startDistrict: 'capital-core', cash: 20000, approval: 50, influence: 0, officeIndex: 0, population: 1000, food: 100, steel: 50, fuel: 60, research: 0, sportsPrestige: 0,
+    playerName: 'Player', startDistrict: 'capital-core', cash: 1000, approval: 50, influence: 0, officeIndex: 0, population: 1000, food: 100, steel: 50, fuel: 60, research: 0, sportsPrestige: 0,
     legitimacy: 12, corruption: 8, security: 20, education: 12, diplomaticAccess: 0,
     passportLevel: 'none', currentNationIndex: 0, unlockedTravel: [0], selectionMode: null, pendingTravelIndex: null, pendingWorldReload: false,
     electionTimer: 300, gameStatus: 'playing', gamePaused: false,
@@ -9,6 +9,21 @@ export function createGameState() {
     enactedLaws: [], // Array of { id, timestamp, expiresAt }
     activeModifiers: { cashDelta: 0, approvalDelta: 0, legitimacyDelta: 0, corruptionDelta: 0, securityDelta: 0 },
     nextOfficeGoal: null, // Tracks current target office for progression
+    ministerialFocus: null, // 'Economy', 'Security', or 'Social'
+    hasTakenMinisterialOath: false,
+    
+    // 🏛️ Sovereign/Endgame Stats
+    constitutionalIntegrity: 100, // 0 (Dictatorship) to 100 (Stable Democracy)
+    worldDominance: 0,            // 0 to 100 (Global Hegemony)
+    oppositionStability: 80,      // Below 30 = Protracted Riots/Strikes
+    lastPresidentialElectionTime: 0,
+    regimeType: 'Republic',       // 'Republic' or 'Empire'
+    
+    // ⚔️ Conflict & Insurgency
+    militaryLoyalty: 100,         // 0 to 100
+    rebelStrength: 0,             // 0 to 100 (Triggers sabotage)
+    isAtWar: false,               // Global state flag
+    warTarget: null,              // Name of country under attack
 
     // 📣 Media & Sentiment
     mediaSentiment: 50, // 0 (Hostile) to 100 (State-Controlled Supportive)

@@ -21,6 +21,8 @@ import { updateCareer } from './systems/careerSystem.js';
 import { initAssetLoader } from './systems/assetLoader.js';
 import { initOverlayClosers } from './ui/gazetteCareerUI.js';
 import { initMediaSystem, updateMedia } from './systems/mediaSystem.js';
+import { initLedgerUI } from './ui/EconomicLedger.js';
+import { runEventTick } from './systems/eventSystem.js';
 
 
 
@@ -41,6 +43,7 @@ async function bootstrap(){
   initDecisionHooks(state);
   initOverlayClosers();
   initMediaSystem(state);
+  initLedgerUI();
   createPlayerMarker(scene, shadows);
 
 
@@ -57,8 +60,14 @@ async function bootstrap(){
   initHUD(state, async (action)=>{ const result=performAction(state, action); if(result==='save'){ await saveGame(state); } else if(result==='load'){ const ok = await loadGame(state); if(ok){ buildNation(); } } updateHUD(state); }, (a)=>handleCameraAction(camera,a));
   initSetupOverlay(state, ()=>{ initAudio(); buildNation(); });
   setMessage('Build your base. Legitimacy comes before mobility, and mobility comes before power.');
-  window.addEventListener('resumeGame', () => state.gamePaused = false);
-  let last=performance.now();
+    window.addEventListener('resumeGame', () => state.gamePaused = false);
+    
+    // Developer tool for forcing events from console
+    import('./ui/hud.js').then(({ triggerDebugEvent }) => {
+        window.debugEvent = () => triggerDebugEvent(state);
+    });
+
+    let last=performance.now();
   engine.runRenderLoop(()=>{
     const now=performance.now();
     const dt=Math.min(.05,(now-last)*.001);
@@ -67,6 +76,10 @@ async function bootstrap(){
       stepRapier(world, dt);
       runEconomyTick(state, dt);
       runPoliticalTick(state, dt);
+      
+      // Dynamic Events Evaluation
+      runEventTick(state, dt);
+
       npcSystem.update(dt);
       checkpoints.update(dt);
       updatePhysicsInteractions(state, dt);
