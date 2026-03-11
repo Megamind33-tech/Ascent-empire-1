@@ -106,21 +106,21 @@ export function getAssetContainer(key) {
  */
 export function getModelScale(key) {
   switch (key) {
-    case 'housing': return 2.8;
-    case 'school': return 2.5;
-    case 'store': return 2.4;
-    case 'police': case 'acc': case 'dec': return 2.5;
-    case 'parliament': return 4.2;
-    case 'stadium': return 5.0;
-    case 'mine': case 'refinery': return 3.2;
-    case 'barracks': case 'base': return 3.5;
-    case 'tower_a': case 'tower_b': return 0.5; // Building.glb might be large
-    case 'billboard': return 2.0;
-    case 'farm': return 1.5;
-    case 'birch': case 'palm': case 'pine': return 2.2;
-    case 'agent_a': return 1.8;
-    case 'car_a': case 'car_b': return 1.5;
-    case 'ship': return 2.5; 
+    case 'housing': return 1.6;
+    case 'school': return 1.5;
+    case 'store': return 1.4;
+    case 'police': case 'acc': case 'dec': return 1.5;
+    case 'parliament': return 2.8;
+    case 'stadium': return 3.2;
+    case 'mine': case 'refinery': return 2.0;
+    case 'barracks': case 'base': return 2.2;
+    case 'tower_a': case 'tower_b': return 0.32; // Building.glb is large — keep towers proportional to city scale
+    case 'billboard': return 1.2;
+    case 'farm': return 1.0;
+    case 'birch': case 'palm': case 'pine': return 1.5;
+    case 'agent_a': return 1.0;
+    case 'car_a': case 'car_b': return 0.9;
+    case 'ship': return 1.8;
     default: return 1.0;
   }
 }
