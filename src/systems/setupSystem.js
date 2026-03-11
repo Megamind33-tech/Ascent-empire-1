@@ -1,2 +1,56 @@
 import { CONFIG } from '../config.js';
-export function initSetupOverlay(state, onStart){ const overlay=document.getElementById('setupOverlay'); const form=document.getElementById('setupForm'); const nationSelect=document.getElementById('playerNation'); const districtSelect=document.getElementById('playerStart'); form.addEventListener('submit',(event)=>{ event.preventDefault(); state.playerName = document.getElementById('playerName').value.trim() || 'Player'; state.currentNationIndex = Number(nationSelect.value); state.startDistrict = districtSelect.value; state.nations[state.currentNationIndex].visits += 1; overlay.style.display='none'; onStart(); }); }
+export function initSetupOverlay(state, onStart){
+  const overlay=document.getElementById('setupOverlay');
+  const form=document.getElementById('setupForm');
+
+  if (!form || !overlay) {
+    console.error('[Setup] Form or overlay element not found!');
+    return;
+  }
+
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    try {
+      // Get fresh form values from DOM every time
+      const playerNameInput = document.getElementById('playerName');
+      const nationSelect = document.getElementById('playerNation');
+      const districtSelect = document.getElementById('playerStart');
+
+      if (!playerNameInput || !nationSelect || !districtSelect) {
+        console.error('[Setup] One or more form elements missing!');
+        return;
+      }
+
+      // Validate and set state
+      const playerName = playerNameInput.value.trim() || 'Player';
+      const nationIndex = Number(nationSelect.value);
+      const startDistrict = districtSelect.value;
+
+      // Validate nation index is in range
+      if (nationIndex < 0 || nationIndex >= state.nations.length) {
+        console.error('[Setup] Invalid nation index:', nationIndex);
+        return;
+      }
+
+      // Set state properties
+      state.playerName = playerName;
+      state.currentNationIndex = nationIndex;
+      state.startDistrict = startDistrict;
+
+      // Increment visits counter
+      state.nations[nationIndex].visits += 1;
+
+      // Clear form before hiding
+      form.reset();
+
+      // Hide overlay
+      overlay.style.display = 'none';
+
+      // Proceed with game start
+      onStart();
+    } catch (err) {
+      console.error('[Setup] Error during form submission:', err);
+    }
+  });
+}
