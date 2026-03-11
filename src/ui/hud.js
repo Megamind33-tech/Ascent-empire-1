@@ -60,8 +60,28 @@ export function initHUD(state, actionHandler, cameraHandler) {
       }
 
       playUIClick();
-      actionHandler(btn.dataset.action);
+      const action = btn.dataset.action;
+      if (action === 'gazette') {
+        renderGazette(state);
+        el('gazetteOverlay').style.display = 'flex';
+      } else if (action === 'career') {
+        renderCareer(state);
+        el('careerPortal').style.display = 'flex';
+      } else if (action === 'travel') {
+        openTravelPortal(state, actionHandler);
+      } else {
+        actionHandler(action);
+      }
       _updateActiveBtn(state);
+    });
+  });
+
+  // Overlay closing
+  document.querySelectorAll('.close-overlay').forEach(btn => {
+    btn.addEventListener('click', () => {
+      playUIClick();
+      const overlayId = btn.dataset.overlay;
+      if (overlayId) el(overlayId).style.display = 'none';
     });
   });
 
@@ -275,3 +295,112 @@ export function triggerVictoryOverlay(state) {
 
 /** Called from main.js after construction so audio fires in HUD layer */
 export { playConstruction };
+
+// ── Overlay Renderers ──
+
+function renderGazette(state) {
+  const container = el('gazetteLaws');
+  if (!container) return;
+  if (state.enactedLaws.length === 0) {
+    container.innerHTML = '<p class="gazette-empty">The National Gazette is currently empty. Your legislative legacy starts with your first enacted policy.</p>';
+    return;
+  }
+  container.innerHTML = state.enactedLaws.map(law => `
+    <div class="gazette-entry">
+      <div class="gazette-law-title">${law.title}</div>
+      <div class="gazette-law-desc">${law.description}</div>
+      <div class="gazette-law-timer">Enacted on Day ${Math.floor(state.elapsedGameTime / 60)}</div>
+    </div>
+  `).join('');
+}
+
+function renderCareer(state) {
+  const container = el('careerDetails');
+  if (!container) return;
+  
+  const offices = CONFIG.politics.offices;
+  const currentIdx = state.officeIndex;
+
+  let html = `
+    <div class="career-stat">
+      <label>NAME</label>
+      <div class="value">${state.playerName}</div>
+    </div>
+    <div class="career-stat">
+      <label>CURRENT OFFICE</label>
+      <div class="value">${offices[currentIdx]}</div>
+    </div>
+    <div class="career-timeline">
+  `;
+
+  offices.forEach((office, i) => {
+    let status = 'locked';
+    if (i < currentIdx) status = 'reached';
+    else if (i === currentIdx) status = 'next';
+
+    html += `
+      <div class="career-step">
+        <div class="step-marker ${status}">${i + 1}</div>
+        <div class="step-info">
+          <div class="step-title ${status}">${office.toUpperCase()}</div>
+          <div class="step-msg">${status === 'reached' ? 'Successfully held office.' : status === 'next' ? 'Current objective.' : 'Future goal.'}</div>
+          ${status === 'next' ? `
+            <div class="career-reqs">
+                <span class="${state.approval > 50 ? 'req-ok' : 'req-fail'}">Approval > 50%</span>
+                <span class="${state.legitimacy > 10 ? 'req-ok' : 'req-fail'}">Legitimacy > 10</span>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  });
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function openTravelPortal(state, actionHandler) {
+  const modal = el('travelPortal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  playUIClick();
+
+  const list = el('travelList');
+  if (!list) return;
+  list.innerHTML = '';
+
+  state.nations.forEach((nation, index) => {
+    const card = document.createElement('div');
+    card.className = `item-card ${index === state.currentNationIndex ? 'active-build' : ''}`;
+    
+    const threshold = nation.coastal ? 36 : 18;
+    const isLocked = index !== 0 && state.legitimacy < threshold;
+    if (isLocked) card.classList.add('locked');
+
+    card.innerHTML = `
+      <div class="item-icon" style="color:${isLocked ? '#444' : 'var(--terminal-cyan)'}">
+        <i class="fas ${nation.coastal ? 'fa-ship' : 'fa-mountain'}"></i>
+      </div>
+      <div class="item-info">
+        <h4>${nation.name} ${index === state.currentNationIndex ? '(Current)' : ''}</h4>
+        <p>${nation.coastal ? 'Coastal Nation' : 'Inland Territory'}</p>
+        <p style="font-size:0.6rem; color:var(--brushed-gold); margin-top:5px;">
+          ${isLocked ? `🔒 Requires ${threshold} Legitimacy` : '✓ Passport Valid'}
+        </p>
+      </div>
+    `;
+
+    card.addEventListener('click', () => {
+      if (isLocked) {
+        setMessage(`Cannot travel to ${nation.name}: Insufficient Legitimacy.`);
+        import('../systems/audioSystem.js').then(({ playApprovalDrop }) => playApprovalDrop());
+        return;
+      }
+      playUIClick();
+      actionHandler({ type: 'travel', index: index });
+      modal.style.display = 'none';
+    });
+
+    list.appendChild(card);
+  });
+}

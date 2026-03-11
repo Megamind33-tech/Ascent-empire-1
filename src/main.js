@@ -10,7 +10,7 @@ import { createTimeSystem } from './systems/timeSystem.js';
 import { createNPCSystem } from './systems/npcSystem.js';
 import { runPoliticalTick } from './systems/politicalSystem.js';
 import { runEconomyTick, performAction } from './systems/economySystem.js';
-import { bindPlacementInput } from './systems/input.js';
+import { bindPlacementInput, updateCameraNavigation } from './systems/input.js';
 import { initSetupOverlay } from './systems/setupSystem.js';
 import { saveGame, loadGame, startAutoCheckpoints } from './systems/saveSystem.js';
 import { subscribeInteractions, updatePhysicsInteractions, igniteMesh } from './systems/physicsInteractionSystem.js';
@@ -57,7 +57,35 @@ async function bootstrap(){
   const timeSystem=createTimeSystem(scene,sun,hemi,moonLight,skyController);
   const npcSystem=createNPCSystem(state);
   const checkpoints = startAutoCheckpoints(state);
-  initHUD(state, async (action)=>{ const result=performAction(state, action); if(result==='save'){ await saveGame(state); } else if(result==='load'){ const ok = await loadGame(state); if(ok){ buildNation(); } } updateHUD(state); }, (a)=>handleCameraAction(camera,a));
+  initHUD(state, async (action)=>{ 
+    if(action.type === 'travel'){
+      handleTravel(action.index);
+    } else {
+      const result=performAction(state, action); 
+      if(result==='save'){ await saveGame(state); } 
+      else if(result==='load'){ const ok = await loadGame(state); if(ok){ buildNation(); } } 
+    }
+    updateHUD(state); 
+  }, (a)=>handleCameraAction(camera,a));
+
+  function handleTravel(index){
+    const target = state.nations[index];
+    if(index === state.currentNationIndex) return;
+    
+    // Check passport requirements
+    const threshold = target.coastal ? 36 : 18; // Example logic: coastal needs higher passport
+    const currentLegitimacy = state.legitimacy;
+    
+    if(currentLegitimacy < threshold && index !== 0){
+      setMessage(`Travel Denied: ${target.name} requires level ${threshold} legitimacy (Passport).`);
+      return;
+    }
+    
+    state.currentNationIndex = index;
+    state.pendingWorldReload = true;
+    setMessage(`Traveling to ${target.name}...`);
+    saveGame(state);
+  }
   initSetupOverlay(state, ()=>{ initAudio(); buildNation(); });
   setMessage('Build your base. Legitimacy comes before mobility, and mobility comes before power.');
     window.addEventListener('resumeGame', () => state.gamePaused = false);
@@ -89,6 +117,7 @@ async function bootstrap(){
       if(nationRuntime) nationRuntime.update(dt, now*.001);
       timeSystem.update();
       updateHUD(state);
+      updateCameraNavigation(camera, dt);
     }
     scene.render();
   });
