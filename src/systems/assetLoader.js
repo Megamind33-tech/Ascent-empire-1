@@ -106,21 +106,21 @@ export function getAssetContainer(key) {
  */
 export function getModelScale(key) {
   switch (key) {
-    case 'housing': return 0.0019;
-    case 'school': return 0.0018;
-    case 'store': return 0.0017;
-    case 'police': case 'acc': case 'dec': return 0.0018;
-    case 'parliament': return 0.0034;
-    case 'stadium': return 0.0038;
-    case 'mine': case 'refinery': return 0.0024;
-    case 'barracks': case 'base': return 0.0026;
-    case 'tower_a': case 'tower_b': return 0.0004;
-    case 'billboard': return 0.036; // billboards already sized correctly — untouched
-    case 'farm': return 0.0012;
-    case 'birch': case 'palm': case 'pine': return 0.0018;
-    case 'agent_a': return 0.0012;
-    case 'car_a': case 'car_b': return 0.0011;
-    case 'ship': return 0.0022;
-    default: return 0.0012;
+    case 'housing': return 0.048;
+    case 'school': return 0.045;
+    case 'store': return 0.042;
+    case 'police': case 'acc': case 'dec': return 0.045;
+    case 'parliament': return 0.084;
+    case 'stadium': return 0.096;
+    case 'mine': case 'refinery': return 0.060;
+    case 'barracks': case 'base': return 0.066;
+    case 'tower_a': case 'tower_b': return 0.010;
+    case 'billboard': return 0.036; // untouched
+    case 'farm': return 0.030;
+    case 'birch': case 'palm': case 'pine': return 0.045;
+    case 'agent_a': return 0.030;
+    case 'car_a': case 'car_b': return 0.027;
+    case 'ship': return 0.054;
+    default: return 0.030;
   }
 }

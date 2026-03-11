@@ -215,21 +215,49 @@ export function createNationWorld(scene, shadows, state) {
     }
   }
 
-  // 🌲 Scatter Trees & Nature
+  // 🌲 Trees lined along road edges (not on the road surface)
   const treeType = nation.coastal ? 'palm' : (rand() > 0.5 ? 'birch' : 'pine');
-  for (let i = 0; i < 40; i++) {
-    const tree = instantiateModel(treeType, scene);
-    if (tree) {
-      const tx = -280 + rand() * 560;
-      const tz = -280 + rand() * 560;
-      // Avoid center roads
-      if (Math.abs(tx) < 40 && Math.abs(tz) < 40) continue;
-      tree.position.set(tx, 0.1, tz);
-      const s = 0.00216 + rand() * 0.0018;
-      tree.scaling.set(s, s, s);
-      tree.rotation.y = rand() * Math.PI * 2;
-      tree.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
-      meshes.push(tree);
+  const roadPositions = [-240, -120, 0, 120, 240]; // road centre lines
+  const ROAD_EDGE   = 14;  // place trees this far from road centre (road half-width ≈ 11)
+  const TREE_GAP    = 38;  // spacing between trees along the road
+  const INTER_CLEAR = 24;  // clear zone around each intersection
+
+  // Returns true if `coord` falls within the intersection clear zone of any road
+  const nearIntersection = (coord) => roadPositions.some(r => Math.abs(coord - r) < INTER_CLEAR);
+
+  for (const rPos of roadPositions) {
+    for (const side of [-1, 1]) {
+      const offset = rPos + side * ROAD_EDGE;
+
+      // Line of trees running alongside a Z-direction road (road at x=rPos)
+      for (let z = -255; z <= 255; z += TREE_GAP) {
+        if (nearIntersection(z)) continue;   // skip intersections
+        if (rand() > 0.65) continue;         // natural gaps
+        const tree = instantiateModel(treeType, scene);
+        if (tree) {
+          tree.position.set(offset, 0.1, z);
+          const s = 0.00216 + rand() * 0.0018;
+          tree.scaling.set(s, s, s);
+          tree.rotation.y = rand() * Math.PI * 2;
+          tree.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
+          meshes.push(tree);
+        }
+      }
+
+      // Line of trees running alongside an X-direction road (road at z=rPos)
+      for (let x = -255; x <= 255; x += TREE_GAP) {
+        if (nearIntersection(x)) continue;
+        if (rand() > 0.65) continue;
+        const tree = instantiateModel(treeType, scene);
+        if (tree) {
+          tree.position.set(x, 0.1, offset);
+          const s = 0.00216 + rand() * 0.0018;
+          tree.scaling.set(s, s, s);
+          tree.rotation.y = rand() * Math.PI * 2;
+          tree.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
+          meshes.push(tree);
+        }
+      }
     }
   }
 
@@ -247,7 +275,7 @@ export function createNationWorld(scene, shadows, state) {
     if (farm) {
       farm.position.set(200 + rand() * 80, 0.1, 150 + rand() * 100);
       farm.rotation.y = rand() * Math.PI * 2;
-      const s = 0.0024;
+      const s = 0.030;
       farm.scaling.set(s, s, s);
       // Apply a unique tint colour to this farm's child meshes
       const [r, g, b] = farmPalette[i % farmPalette.length];
