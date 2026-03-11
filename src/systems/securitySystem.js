@@ -37,20 +37,33 @@ export function signData(data) {
  */
 export function verifyData(signedJson) {
     try {
-        const envelope = JSON.parse(signedJson);
-        if (!envelope.d || !envelope.s) return null;
-        
-        const json = JSON.stringify(envelope.d);
-        const expected = createChecksum(json);
-        
-        if (envelope.s !== expected) {
-            console.error('[Security] Save data integrity check failed!');
+        if (!signedJson || typeof signedJson !== 'string') {
+            console.error('[Security] Invalid signed JSON - not a string:', typeof signedJson);
             return null;
         }
-        
+
+        const envelope = JSON.parse(signedJson);
+        if (!envelope || typeof envelope !== 'object') {
+            console.error('[Security] Invalid envelope structure');
+            return null;
+        }
+
+        if (!envelope.d || envelope.s === undefined) {
+            console.error('[Security] Envelope missing data (d) or signature (s)');
+            return null;
+        }
+
+        const json = JSON.stringify(envelope.d);
+        const expected = createChecksum(json);
+
+        if (envelope.s !== expected) {
+            console.error('[Security] Save data integrity check failed! Expected:', expected, 'Got:', envelope.s);
+            return null;
+        }
+
         return envelope.d;
     } catch (e) {
-        console.error('[Security] Failed to parse signed data:', e);
+        console.error('[Security] Failed to parse or verify signed data:', e.message);
         return null;
     }
 }
