@@ -130,17 +130,23 @@ export function createNationWorld(scene, shadows, state) {
   }
   state.worldRefs.constructionAnchors = anchors; meshes.push(...anchors);
 
-  // ── Traffic (cars) ────────────────────────────────────────────────────────
+  // ── Traffic (diverse vehicles — all 9 types cycle through the fleet) ──────
+  const VEHICLE_TYPES = ['car_a','car_b','car_c','car_model','bus','gtr','police_car','suv','sports_car'];
   const traffic = [];
   for (let i = 0; i < CONFIG.mobile.maxDynamicCars; i++) {
-    const carType = i % 2 === 0 ? 'car_a' : 'car_b';
+    const carType = VEHICLE_TYPES[i % VEHICLE_TYPES.length];
     const carModel = instantiateModel(carType, scene);
     if (carModel) {
       const s = getModelScale(carType);
       carModel.scaling.set(s, s, s);
-      carModel.position.set(-240 + i * 26, 0.4, i % 2 === 0 ? -40 : 40);
+      // Spread vehicles across the road grid; buses and SUVs use a slightly
+      // raised Y so they sit flush on the road surface (ground is y≈0).
+      const roadZ = i % 2 === 0 ? -40 : 40;
+      carModel.position.set(-240 + i * 26, 0.4, roadZ);
       carModel.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
-      traffic.push({ mesh: carModel, axis: i % 2 === 0 ? 'x' : 'z', dir: i % 3 === 0 ? -1 : 1, speed: 8 + rand() * 6, passengers: 0 });
+      // Buses are slower; sports/GTR faster
+      const baseSpeed = carType === 'bus' ? 5 : (carType === 'gtr' || carType === 'sports_car') ? 14 : 8;
+      traffic.push({ mesh: carModel, axis: i % 2 === 0 ? 'x' : 'z', dir: i % 3 === 0 ? -1 : 1, speed: baseSpeed + rand() * 4, passengers: 0 });
       meshes.push(carModel);
     }
   }
@@ -187,36 +193,88 @@ export function createNationWorld(scene, shadows, state) {
     const airstrip = MeshBuilder.CreateGround('airstrip', { width: 220, height: 40 }, scene);
     airstrip.position.set(-260, .14, -240); airstrip.material = mats.airstrip; meshes.push(airstrip);
   }
-  // Place world-decoration buildings visually only — do NOT use spawnInstitution here.
-  // spawnInstitution increments state.buildings counters; since createNationWorld runs on
-  // every travel/reload, using it here would inflate building counts and income on every trip.
+  // ── Static world decorations ─────────────────────────────────────────────
+  // These are purely visual — do NOT use spawnInstitution() here, as that
+  // increments state.buildings counters on every world reload.
+  //
+  // Positions keep buildings ~2% of city width (≈36 units footprint) and
+  // avoid the road grid (roads run at x/z = 0, ±120, ±240).
+  //
+  // Y = 0.1 places the model pivot flush on the ground plane for all
+  // assets whose origin is at their base (standard for Kenney / Quaternius packs).
+
   const _worldDecorations = [
-    { key: 'mine',     pos: new Vector3(260,  0.1,  230) },
-    { key: 'refinery', pos: new Vector3(220,  0.1, -250) },
-    { key: 'barracks', pos: new Vector3(-250, 0.1,  220) },
-    { key: 'stadium',  pos: new Vector3(120,  0.1,  160) },
+    // Industrial outskirts
+    { key: 'mine',          pos: new Vector3( 260,  0.1,  230) },
+    { key: 'refinery',      pos: new Vector3( 220,  0.1, -250) },
+    { key: 'barracks',      pos: new Vector3(-250,  0.1,  220) },
+    { key: 'stadium',       pos: new Vector3( 130,  0.1,  155) },
+
+    // Civic downtown (between road bands, clear of parliament & police)
+    { key: 'hospital',      pos: new Vector3( 100,  0.1,  -55) },
+    { key: 'police_station',pos: new Vector3(  82,  0.1,   65) },
+    { key: 'bar',           pos: new Vector3(-105,  0.1,   65) },
+
+    // Rural zone (east outskirts, beyond x=180)
+    { key: 'cottage',       pos: new Vector3( 235,  0.1,   80) },
+    { key: 'greenhouse',    pos: new Vector3( 205,  0.1,   55) },
+    { key: 'rural_farm',    pos: new Vector3( 245,  0.1,  -30) },
+    { key: 'corn_maze',     pos: new Vector3( 240,  0.1,   25) },
+
+    // Bridge over the z=120 road corridor
+    { key: 'bridge',        pos: new Vector3(   0,  0.1,  130), rotY: Math.PI / 2 },
+
+    // Road detail pieces near the main grid (decorative, not blocking traffic)
+    { key: 'road_seg',      pos: new Vector3(  60,  0.08,    0) },
+    { key: 'road_bits',     pos: new Vector3( -60,  0.08,    0) },
+    { key: 'road_3',        pos: new Vector3(   0,  0.08,   60) },
+
+    // Stop signs at key cross-road corners
+    { key: 'stop_sign',     pos: new Vector3(  55,  0.1,  125) },
+    { key: 'stop_sign',     pos: new Vector3( -55,  0.1,  125) },
+    { key: 'stop_sign',     pos: new Vector3( 115,  0.1,    5) },
+    { key: 'stop_sign',     pos: new Vector3(-115,  0.1,    5) },
+
+    // Small decorative cats scattered in the city centre
+    { key: 'cat',           pos: new Vector3(  20,  0.1,   10) },
+    { key: 'cat',           pos: new Vector3( -30,  0.1,   25) },
+    { key: 'cat',           pos: new Vector3(  45,  0.1,  -28) },
   ];
-  for (const { key, pos } of _worldDecorations) {
+
+  // Waterfall — inland nations only (coastal maps have the sea edge)
+  if (!nation.coastal) {
+    _worldDecorations.push({ key: 'waterfall', pos: new Vector3(-230, 0.1, 100) });
+  }
+
+  for (const { key, pos, rotY } of _worldDecorations) {
     const dm = instantiateModel(key, scene);
     if (dm) {
       const s = getModelScale(key);
       dm.scaling.set(s, s, s);
       dm.position.copyFrom(pos);
+      if (rotY !== undefined) dm.rotation.y = rotY;
       dm.metadata = { type: key, onFire: false };
-      dm.getChildMeshes().forEach(c => { c.receiveShadows = true; shadows.addShadowCaster(c); });
+      // Only cast shadows for sizeable objects; skip tiny props to save GPU bandwidth
+      const skipShadow = key === 'stop_sign' || key === 'cat' || key === 'road_bits';
+      if (!skipShadow) {
+        dm.getChildMeshes().forEach(c => { c.receiveShadows = true; shadows.addShadowCaster(c); });
+      } else {
+        dm.getChildMeshes().forEach(c => { c.receiveShadows = true; });
+      }
       meshes.push(dm);
     }
   }
 
-  // 🌲 Scatter Trees & Nature
-  const treeType = nation.coastal ? 'palm' : (rand() > 0.5 ? 'birch' : 'pine');
+  // 🌲 Scatter Trees & Nature (mixed types for visual variety)
+  const primaryTree = nation.coastal ? 'palm' : (rand() > 0.5 ? 'birch' : 'pine');
+  const secondaryTree = nation.coastal ? 'birch' : 'pine';
   for (let i = 0; i < 40; i++) {
+    const treeType = i % 5 === 0 ? secondaryTree : primaryTree;
     const tree = instantiateModel(treeType, scene);
     if (tree) {
       const tx = -280 + rand() * 560;
       const tz = -280 + rand() * 560;
-      // Avoid center roads
-      if (Math.abs(tx) < 40 && Math.abs(tz) < 40) continue;
+      if (Math.abs(tx) < 40 && Math.abs(tz) < 40) continue; // avoid centre plaza
       tree.position.set(tx, 0.1, tz);
       const s = 0.54 + rand() * 0.45;
       tree.scaling.set(s, s, s);
@@ -226,12 +284,12 @@ export function createNationWorld(scene, shadows, state) {
     }
   }
 
-  // 🚜 Add Farmland models
+  // 🚜 Farmland cluster (landmark farm models)
   for (let i = 0; i < 6; i++) {
     const farm = instantiateModel('farm', scene);
     if (farm) {
       farm.position.set(200 + rand() * 80, 0.1, 150 + rand() * 100);
-      farm.scaling.set(0.60, 0.60, 0.60);
+      farm.scaling.setAll(0.60);
       farm.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
       meshes.push(farm);
     }
