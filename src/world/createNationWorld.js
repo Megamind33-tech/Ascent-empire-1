@@ -51,7 +51,7 @@ export function createNationWorld(scene, shadows, state) {
       if (bb) {
         bb.position.set(a + (a > 0 ? 15 : -15), 0.1, a + 12);
         bb.rotation.y = a > 0 ? Math.PI / 2 : -Math.PI / 2;
-        bb.scaling.set(0.45, 0.45, 0.45);
+        const bs = getModelScale('billboard'); bb.scaling.set(bs, bs, bs);
         bb.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
         meshes.push(bb);
       }
@@ -276,7 +276,8 @@ export function createNationWorld(scene, shadows, state) {
       const tz = -280 + rand() * 560;
       if (Math.abs(tx) < 40 && Math.abs(tz) < 40) continue; // avoid centre plaza
       tree.position.set(tx, 0.1, tz);
-      const s = 0.54 + rand() * 0.45;
+      const baseS = getModelScale(treeType);
+      const s = baseS * (0.9 + rand() * 0.2); // ±10 % variation per tree
       tree.scaling.set(s, s, s);
       tree.rotation.y = rand() * Math.PI * 2;
       tree.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
@@ -289,7 +290,7 @@ export function createNationWorld(scene, shadows, state) {
     const farm = instantiateModel('farm', scene);
     if (farm) {
       farm.position.set(200 + rand() * 80, 0.1, 150 + rand() * 100);
-      farm.scaling.setAll(0.60);
+      farm.scaling.setAll(getModelScale('farm'));
       farm.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
       meshes.push(farm);
     }

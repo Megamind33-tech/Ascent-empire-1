@@ -147,68 +147,75 @@ export function getAssetContainer(key) {
  * Vehicles are intentionally smaller (≈ 20 units) for realism.
  * Small decorative props (cat, stop sign) are proportionally tiny.
  */
+/**
+ * All scale values are calibrated so each model's rendered footprint is
+ * approximately 2 % of the city width (CONFIG.world.size = 1800 → target ≈ 36 units).
+ * Professional GLB assets from Sketchfab / Quaternius are typically 1 000–3 000
+ * Babylon units natively, so a scale of ~0.01–0.02 maps them to that target.
+ * Vehicles are intentionally ~half the building footprint for realism.
+ */
 export function getModelScale(key) {
   switch (key) {
     // ── Civic ──────────────────────────────────────────────────────────────
-    case 'housing':        return 0.48;
-    case 'school':         return 0.45;
+    case 'housing':        return 0.0096;
+    case 'school':         return 0.009;
     case 'police':
     case 'acc':
-    case 'dec':            return 0.45;
-    case 'police_station': return 0.45;
-    case 'hospital':       return 0.54;
-    case 'parliament':     return 0.84;
-    case 'stadium':        return 0.96;
+    case 'dec':            return 0.009;
+    case 'police_station': return 0.009;
+    case 'hospital':       return 0.0108;
+    case 'parliament':     return 0.0168;
+    case 'stadium':        return 0.0192;
     case 'mine':
-    case 'refinery':       return 0.60;
+    case 'refinery':       return 0.012;
     case 'barracks':
-    case 'base':           return 0.66;
-    case 'corn_maze':      return 0.48;
-    case 'cat':            return 0.18;  // small decorative animal
+    case 'base':           return 0.0132;
+    case 'corn_maze':      return 0.0096;
+    case 'cat':            return 0.0036;
 
     // ── Stores ─────────────────────────────────────────────────────────────
-    case 'store':          return 0.42;
-    case 'bar':            return 0.42;
+    case 'store':          return 0.0084;
+    case 'bar':            return 0.0084;
 
     // ── Landmarks ──────────────────────────────────────────────────────────
     case 'tower_a':
-    case 'tower_b':        return 0.096; // Building.glb is very large natively
-    case 'billboard':      return 0.36;
-    case 'farm':           return 0.30;
-    case 'bridge':         return 0.72;
+    case 'tower_b':        return 0.002;  // Building.glb is very large natively
+    case 'billboard':      return 0.0072;
+    case 'farm':           return 0.006;
+    case 'bridge':         return 0.0144;
     case 'road_seg':
-    case 'road_3':         return 0.54;
-    case 'road_bits':      return 0.36;
-    case 'stop_sign':      return 0.24;
-    case 'waterfall':      return 0.66;
+    case 'road_3':         return 0.0108;
+    case 'road_bits':      return 0.0072;
+    case 'stop_sign':      return 0.0048;
+    case 'waterfall':      return 0.0132;
 
     // ── Trees ──────────────────────────────────────────────────────────────
     case 'birch':
     case 'palm':
-    case 'pine':           return 0.45;
+    case 'pine':           return 0.009;
 
     // ── Rural ──────────────────────────────────────────────────────────────
-    case 'cottage':        return 0.42;
-    case 'rural_farm':     return 0.48;
-    case 'greenhouse':     return 0.42;
+    case 'cottage':        return 0.0084;
+    case 'rural_farm':     return 0.0096;
+    case 'greenhouse':     return 0.0084;
 
-    // ── Vehicles (smaller than buildings) ──────────────────────────────────
+    // ── Vehicles ───────────────────────────────────────────────────────────
     case 'car_a':
     case 'car_b':
     case 'car_c':
     case 'car_model':
     case 'gtr':
-    case 'sports_car':     return 0.27;
-    case 'police_car':     return 0.27;
-    case 'suv':            return 0.30;
-    case 'bus':            return 0.33;
+    case 'sports_car':     return 0.0054;
+    case 'police_car':     return 0.0054;
+    case 'suv':            return 0.006;
+    case 'bus':            return 0.0066;
 
     // ── People ─────────────────────────────────────────────────────────────
-    case 'agent_a':        return 0.30;
+    case 'agent_a':        return 0.006;
 
     // ── Ship ───────────────────────────────────────────────────────────────
-    case 'ship':           return 0.54;
+    case 'ship':           return 0.0108;
 
-    default:               return 0.30;
+    default:               return 0.006;
   }
 }
