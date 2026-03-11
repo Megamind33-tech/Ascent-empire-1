@@ -12,12 +12,16 @@
  * still works for look-around.
  */
 
+import { Vector3 } from '@babylonjs/core';
+
 const ZOOM_SENSITIVITY = 0.008;   // radius change per pixel of pinch delta
 const ROTATE_SENSITIVITY = 0.005; // radians per pixel of two-finger twist delta
+const PAN_SENSITIVITY = 0.45;     // panning speed multiplier
 
 export function initMobileControls(canvas, camera) {
   let lastDist = 0;
   let lastAngle = 0;
+  let lastMidpoint = { x: 0, y: 0 };
   let activeTouches = [];
 
   function getTouches(e) {
@@ -34,11 +38,16 @@ export function initMobileControls(canvas, camera) {
     return Math.atan2(b.clientY - a.clientY, b.clientX - a.clientX);
   }
 
+  function getMidpoint(a, b) {
+    return { x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 };
+  }
+
   canvas.addEventListener('touchstart', (e) => {
     activeTouches = getTouches(e);
     if (activeTouches.length === 2) {
       lastDist  = dist(activeTouches[0], activeTouches[1]);
       lastAngle = angle(activeTouches[0], activeTouches[1]);
+      lastMidpoint = getMidpoint(activeTouches[0], activeTouches[1]);
       // Prevent Babylon from consuming two-finger as orbit
       e.preventDefault();
     }
@@ -51,6 +60,7 @@ export function initMobileControls(canvas, camera) {
 
       const newDist  = dist(touches[0], touches[1]);
       const newAngle = angle(touches[0], touches[1]);
+      const newMidpoint = getMidpoint(touches[0], touches[1]);
 
       // ── Pinch zoom ──
       const deltaDist = lastDist - newDist;
@@ -62,13 +72,32 @@ export function initMobileControls(canvas, camera) {
 
       // ── Two-finger rotation ──
       const deltaAngle = newAngle - lastAngle;
-      // Clamp to avoid large jumps from angle wrap-around
       if (Math.abs(deltaAngle) < 0.3) {
         camera.alpha += deltaAngle * ROTATE_SENSITIVITY * 18;
       }
 
+      // ── Two-finger panning ──
+      const dx = newMidpoint.x - lastMidpoint.x;
+      const dy = newMidpoint.y - lastMidpoint.y;
+      
+      const currentAlpha = camera.alpha;
+      const dirF = new Vector3(Math.cos(currentAlpha), 0, Math.sin(currentAlpha));
+      const dirR = new Vector3(Math.cos(currentAlpha + Math.PI/2), 0, Math.sin(currentAlpha + Math.PI/2));
+      
+      // Map screen delta to world movement
+      // dy (Y screen) maps to Zoom/Forward (dirF), dx (X screen) maps to Strafe (dirR)
+      camera.target.addInPlace(dirF.scale(dy * PAN_SENSITIVITY));
+      camera.target.addInPlace(dirR.scale(-dx * PAN_SENSITIVITY));
+
+      // Clamp target
+      const limit = 800;
+      camera.target.x = Math.max(-limit, Math.min(limit, camera.target.x));
+      camera.target.z = Math.max(-limit, Math.min(limit, camera.target.z));
+      camera.target.y = 18;
+
       lastDist  = newDist;
       lastAngle = newAngle;
+      lastMidpoint = newMidpoint;
     }
   }, { passive: false });
 
@@ -79,6 +108,7 @@ export function initMobileControls(canvas, camera) {
       lastAngle = 0;
     }
   }, { passive: true });
+}
 
   // ── Smooth momentum on pinch end ──
   // (Babylon's own inertia handles rotation, so we only need to ensure
