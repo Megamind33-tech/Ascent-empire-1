@@ -22,29 +22,59 @@ export function destroyWorld(state) {
 }
 
 export function createNationWorld(scene, shadows, state) {
-  destroyWorld(state);
-  const nation  = state.nations[state.currentNationIndex];
-  const rand    = seeded(nation.seed + nation.visits * 7);
-  const meshes  = [];
-  const cleanupFns = [];
-  const tone    = new Color3(...CONFIG.nations[state.currentNationIndex].tone);
-  const mats    = materials(scene, tone);
+  try {
+    // Validate inputs
+    if (!scene) {
+      console.error('[CreateNationWorld] Scene is null');
+      return null;
+    }
+    if (!state || !state.nations || state.currentNationIndex >= state.nations.length) {
+      console.error('[CreateNationWorld] Invalid state or nation index');
+      return null;
+    }
 
-  // ── Ground ─────────────────────────────────────────────────────────────────
-  const ground = MeshBuilder.CreateGround('ground', { width: CONFIG.world.size, height: CONFIG.world.size, subdivisions: 70 }, scene);
-  sculptGround(ground, nation, rand);
-  ground.material = mats.ground;
-  ground.receiveShadows = true;
-  // Ground is NOT buildable — only construction pads are valid placement targets
-  ground.metadata = {};
-  meshes.push(ground);
+    destroyWorld(state);
+    const nation  = state.nations[state.currentNationIndex];
+    const rand    = seeded(nation.seed + nation.visits * 7);
+    const meshes  = [];
+    const cleanupFns = [];
+    const tone    = new Color3(...CONFIG.nations[state.currentNationIndex].tone);
+    const mats    = materials(scene, tone);
+
+    if (!mats || !mats.ground) {
+      console.error('[CreateNationWorld] Materials failed to create');
+      return null;
+    }
+
+    // ── Ground ─────────────────────────────────────────────────────────────────
+    const ground = MeshBuilder.CreateGround('ground', { width: CONFIG.world.size, height: CONFIG.world.size, subdivisions: 70 }, scene);
+    if (!ground) {
+      console.error('[CreateNationWorld] Failed to create ground mesh');
+      return null;
+    }
+    sculptGround(ground, nation, rand);
+    ground.material = mats.ground;
+    ground.receiveShadows = true;
+    // Ground is NOT buildable — only construction pads are valid placement targets
+    ground.metadata = {};
+    meshes.push(ground);
 
   // ── Roads ──────────────────────────────────────────────────────────────────
   for (let a = -240; a <= 240; a += 120) {
     const rz = MeshBuilder.CreateGround(`road-z-${a}`, { width: 560, height: 22 }, scene);
-    rz.position.set(0, .12, a); rz.material = mats.road; rz.receiveShadows = true; meshes.push(rz);
+    if (rz && mats.road) {
+      rz.position.set(0, .12, a);
+      rz.material = mats.road;
+      rz.receiveShadows = true;
+      meshes.push(rz);
+    }
     const rx = MeshBuilder.CreateGround(`road-x-${a}`, { width: 22, height: 560 }, scene);
-    rx.position.set(a, .12, 0); rx.material = mats.road; rx.receiveShadows = true; meshes.push(rx);
+    if (rx && mats.road) {
+      rx.position.set(a, .12, 0);
+      rx.material = mats.road;
+      rx.receiveShadows = true;
+      meshes.push(rx);
+    }
 
     // 🏙️ Add Billboards near road intersections
     if (Math.abs(a) > 60 && rand() > 0.4) {
@@ -127,9 +157,15 @@ export function createNationWorld(scene, shadows, state) {
   const padPositions = [[-150,-120],[-110,-120],[-70,-120],[-30,-120],[10,-120],[50,-120],[90,-120],[130,-120],[-150,120],[-110,120],[-70,120],[-30,120],[10,120],[50,120],[90,120],[130,120],[-180,-20],[180,-20],[-180,20],[180,20],[-180,60],[180,60],[-180,-60],[180,-60]];
   for (const [x, z] of padPositions) {
     const pad = MeshBuilder.CreateGround(`pad-${x}-${z}`, { width: 20, height: 20 }, scene);
-    pad.position.set(x, .18, z); pad.material = mats.anchor; pad.metadata = { buildable: true }; anchors.push(pad);
+    if (pad && mats.anchor) {
+      pad.position.set(x, .18, z);
+      pad.material = mats.anchor;
+      pad.metadata = { buildable: true };
+      anchors.push(pad);
+      meshes.push(pad);
+    }
   }
-  state.worldRefs.constructionAnchors = anchors; meshes.push(...anchors);
+  state.worldRefs.constructionAnchors = anchors;
 
   // ── Traffic (cars) ────────────────────────────────────────────────────────
   const traffic = [];
@@ -173,20 +209,34 @@ export function createNationWorld(scene, shadows, state) {
   // ── Coastal / inland features ─────────────────────────────────────────────
   if (nation.coastal) {
     const sea = MeshBuilder.CreateGround('sea', { width: 880, height: 880, subdivisions: 24 }, scene);
-    sea.position.set(-450, CONFIG.world.waterLevel, -450);
-    sea.material = mats.water;
-    sea.metadata = { isWater: true };   // ←  death zone marker
-    meshes.push(sea);
+    if (sea && mats.water) {
+      sea.position.set(-450, CONFIG.world.waterLevel, -450);
+      sea.material = mats.water;
+      sea.metadata = { isWater: true };
+      meshes.push(sea);
+    }
     const port = MeshBuilder.CreateGround('port', { width: 180, height: 80 }, scene);
-    port.position.set(-230, 4.1, -220); port.material = mats.port; meshes.push(port);
+    if (port && mats.port) {
+      port.position.set(-230, 4.1, -220);
+      port.material = mats.port;
+      meshes.push(port);
+    }
     for (let i = 0; i < 3; i++) {
       const ship = MeshBuilder.CreateBox(`ship-${i}`, { width: 18, height: 8, depth: 54 }, scene);
-      ship.position.set(-380 + i * 80, 8, -290 + i * 30); ship.material = mats.ship; meshes.push(ship);
-      traffic.push({ mesh: ship, axis: 'x', dir: i % 2 === 0 ? 1 : -1, speed: 2 + rand() * 1.4, min: -520, max: -120, ship: true, passengers: 0 });
+      if (ship && mats.ship) {
+        ship.position.set(-380 + i * 80, 8, -290 + i * 30);
+        ship.material = mats.ship;
+        meshes.push(ship);
+        traffic.push({ mesh: ship, axis: 'x', dir: i % 2 === 0 ? 1 : -1, speed: 2 + rand() * 1.4, min: -520, max: -120, ship: true, passengers: 0 });
+      }
     }
   } else {
     const airstrip = MeshBuilder.CreateGround('airstrip', { width: 220, height: 40 }, scene);
-    airstrip.position.set(-260, .14, -240); airstrip.material = mats.airstrip; meshes.push(airstrip);
+    if (airstrip && mats.airstrip) {
+      airstrip.position.set(-260, .14, -240);
+      airstrip.material = mats.airstrip;
+      meshes.push(airstrip);
+    }
   }
   spawnInstitution(scene, shadows, 'mine',     new Vector3(260, 0.1, 230),  state);
   spawnInstitution(scene, shadows, 'refinery', new Vector3(220, 0.1, -250), state);
@@ -247,6 +297,7 @@ export function createNationWorld(scene, shadows, state) {
   cleanupFns.push(() => { off('PROTEST', _onProtest); off('SCANDAL', _onScandal); });
 
   state.worldRefs.cleanupFns = cleanupFns;
+  state.worldRefs.worldMeshes = meshes;
 
   return {
     update(dt, t) {
@@ -315,6 +366,10 @@ export function createNationWorld(scene, shadows, state) {
       }
     }
   };
+  } catch (err) {
+    console.error('[CreateNationWorld] Fatal error:', err);
+    return null;
+  }
 }
 
 function sculptGround(ground, nation, rand) {
