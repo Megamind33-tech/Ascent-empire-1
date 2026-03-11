@@ -2,10 +2,12 @@
  * assetLoader.js — Centralized Model Loading & Instancing
  * ========================================================
  * Pre-loads all GLB assets into AssetContainers.
- * This allows us to clone meshes cheaply and reuse materials across the city.
+ * Clones meshes cheaply and reuses materials across the city.
  *
- * Scale target: models are sized so their footprint is ~2% of the city width
- * (1800 * 0.02 = 36 units). Vehicles are proportionally smaller (~20 units).
+ * Scale values are calibrated against the working build (673be3c) where the
+ * camera radius is 190 and buildings sit on 20×20 construction pads.
+ * Tree models (Birch/Palm/Pine) are natively ~3 000 units and need ~0.003.
+ * Building models are natively ~300 units and need ~0.04–0.07.
  */
 
 import { SceneLoader, AssetContainer, AbstractMesh } from '@babylonjs/core';
@@ -14,8 +16,7 @@ import "@babylonjs/loaders/glTF";
 const ASSET_PATH = 'assets/models/';
 
 /**
- * Manifest defining all available models.
- * Every file under public/assets/models/ is registered here.
+ * Manifest — every GLB under public/assets/models/ is registered here.
  */
 const MANIFEST = {
   // ── Civic buildings ────────────────────────────────────────────────────────
@@ -31,16 +32,16 @@ const MANIFEST = {
   base:           'civic/base.glb',
   corn_maze:      'civic/corn_maze-01_glb-compressed.glb',
   cat:            'civic/3danimate_cat_glb-compressed-compressed.glb',
-  acc:            'civic/police.glb',   // reuse police as anti-corruption office
-  dec:            'civic/police.glb',   // reuse police as defence ministry
+  acc:            'civic/police.glb',
+  dec:            'civic/police.glb',
 
   // ── Stores ────────────────────────────────────────────────────────────────
   store:          'stores/store.glb',
   bar:            'stores/Bar.glb',
 
   // ── Landmarks & structures ────────────────────────────────────────────────
-  parliament:     'landmarks/Building.glb', // parliament.glb absent — use Building
-  tower_a:        'landmarks/Building.glb', // 660-byte placeholder → use Building
+  parliament:     'landmarks/Building.glb',
+  tower_a:        'landmarks/Building.glb',
   tower_b:        'landmarks/Building.glb',
   billboard:      'landmarks/Billboard.glb',
   farm:           'landmarks/Farm (1) (1).glb',
@@ -80,11 +81,9 @@ const MANIFEST = {
 const _containers = new Map();
 
 /**
- * Initialize the loader and fetch all assets in the manifest.
- * Failed assets fall back to null; callers gracefully skip or use primitives.
+ * Initialize the loader — deduplicate identical paths so each GLB is fetched once.
  */
 export async function initAssetLoader(scene) {
-  // Deduplicate paths so identical GLBs are only fetched once.
   const pathToKeys = new Map();
   for (const [key, path] of Object.entries(MANIFEST)) {
     if (!pathToKeys.has(path)) pathToKeys.set(path, []);
@@ -99,7 +98,6 @@ export async function initAssetLoader(scene) {
     } catch (err) {
       console.warn(`[AssetLoader] Failed to load ${path}: ${err.message}. Callers will use primitives.`);
     }
-    // All keys that share the same path get the same container (or null).
     for (const key of keys) _containers.set(key, container);
   });
 
@@ -108,8 +106,7 @@ export async function initAssetLoader(scene) {
 }
 
 /**
- * Instantiate a model from the loaded containers.
- * Returns the root TransformNode, or null if the asset is unavailable.
+ * Instantiate a model clone from the loaded containers.
  */
 export function instantiateModel(key, scene) {
   const container = _containers.get(key);
@@ -125,97 +122,90 @@ export function instantiateModel(key, scene) {
   if (root) {
     root.getChildMeshes().forEach(m => {
       m.receiveShadows = true;
-      // Only enable Babylon mesh-level collision on objects a player might walk into.
-      // Purely decorative models (vegetation, signs, etc.) skip this to save CPU.
       m.checkCollisions = false;
     });
   }
   return root;
 }
 
-/**
- * Access the underlying AssetContainer directly (useful for ThinInstances).
- */
 export function getAssetContainer(key) {
   return _containers.get(key);
 }
 
 /**
- * Returns the uniform scale factor that makes a model occupy ~2% of the city
- * width (target footprint ≈ 36 units in a 1 800-unit world).
+ * Scale values calibrated against the working 673be3c build.
  *
- * Vehicles are intentionally smaller (≈ 20 units) for realism.
- * Small decorative props (cat, stop sign) are proportionally tiny.
- */
-/**
- * All scale values are calibrated so each model's rendered footprint is
- * approximately 2 % of the city width (CONFIG.world.size = 1800 → target ≈ 36 units).
- * Professional GLB assets from Sketchfab / Quaternius are typically 1 000–3 000
- * Babylon units natively, so a scale of ~0.01–0.02 maps them to that target.
- * Vehicles are intentionally ~half the building footprint for realism.
+ * Reference: camera radius 190, construction pads 20×20 units,
+ * roads 22 units wide spaced at 120 units.
+ *
+ * Native model sizes (approx):
+ *   Building.glb  ≈ 1 000 units  → 0.010 gives ~10 u  (towers/skyline)
+ *   civic/*.glb   ≈ 300 units    → 0.048 gives ~14 u  (buildings)
+ *   Tree GLBs     ≈ 3 300 units  → 0.003 gives ~10 u  (vegetation)
+ *   car/people    ≈ 200 units    → 0.027 gives ~5 u   (dynamic objects)
  */
 export function getModelScale(key) {
   switch (key) {
-    // ── Civic ──────────────────────────────────────────────────────────────
-    case 'housing':        return 0.0096;
-    case 'school':         return 0.009;
+    // ── Civic buildings ───────────────────────────────────────────────────
+    case 'housing':        return 0.048;
+    case 'school':         return 0.045;
     case 'police':
     case 'acc':
-    case 'dec':            return 0.009;
-    case 'police_station': return 0.009;
-    case 'hospital':       return 0.0108;
-    case 'parliament':     return 0.0168;
-    case 'stadium':        return 0.0192;
+    case 'dec':            return 0.045;
+    case 'police_station': return 0.045;
+    case 'hospital':       return 0.054;
+    case 'parliament':     return 0.059;
+    case 'stadium':        return 0.067;
     case 'mine':
-    case 'refinery':       return 0.012;
+    case 'refinery':       return 0.060;
     case 'barracks':
-    case 'base':           return 0.0132;
-    case 'corn_maze':      return 0.0096;
-    case 'cat':            return 0.0036;
+    case 'base':           return 0.066;
+    case 'corn_maze':      return 0.048;   // not spawned in world
+    case 'cat':            return 0.018;
 
-    // ── Stores ─────────────────────────────────────────────────────────────
-    case 'store':          return 0.0084;
-    case 'bar':            return 0.0084;
+    // ── Stores ────────────────────────────────────────────────────────────
+    case 'store':          return 0.042;
+    case 'bar':            return 0.042;
 
-    // ── Landmarks ──────────────────────────────────────────────────────────
+    // ── Landmarks ─────────────────────────────────────────────────────────
     case 'tower_a':
-    case 'tower_b':        return 0.002;  // Building.glb is very large natively
-    case 'billboard':      return 0.0072;
-    case 'farm':           return 0.006;
-    case 'bridge':         return 0.0144;
+    case 'tower_b':        return 0.010;   // Building.glb — native ~1 000 u
+    case 'billboard':      return 0.045;
+    case 'farm':           return 0.030;
+    case 'bridge':         return 0.072;
     case 'road_seg':
-    case 'road_3':         return 0.0108;
-    case 'road_bits':      return 0.0072;
-    case 'stop_sign':      return 0.0048;
-    case 'waterfall':      return 0.0132;
+    case 'road_3':         return 0.054;
+    case 'road_bits':      return 0.036;
+    case 'stop_sign':      return 0.024;
+    case 'waterfall':      return 0.066;
 
-    // ── Trees ──────────────────────────────────────────────────────────────
+    // ── Trees (natively ~3 300 u — much larger than buildings) ────────────
     case 'birch':
     case 'palm':
-    case 'pine':           return 0.009;
+    case 'pine':           return 0.003;
 
-    // ── Rural ──────────────────────────────────────────────────────────────
-    case 'cottage':        return 0.0084;
-    case 'rural_farm':     return 0.0096;
-    case 'greenhouse':     return 0.0084;
+    // ── Rural ─────────────────────────────────────────────────────────────
+    case 'cottage':        return 0.042;
+    case 'rural_farm':     return 0.048;
+    case 'greenhouse':     return 0.042;
 
-    // ── Vehicles ───────────────────────────────────────────────────────────
+    // ── Vehicles ──────────────────────────────────────────────────────────
     case 'car_a':
     case 'car_b':
     case 'car_c':
     case 'car_model':
     case 'gtr':
-    case 'sports_car':     return 0.0054;
-    case 'police_car':     return 0.0054;
-    case 'suv':            return 0.006;
-    case 'bus':            return 0.0066;
+    case 'sports_car':     return 0.027;
+    case 'police_car':     return 0.027;
+    case 'suv':            return 0.030;
+    case 'bus':            return 0.033;
 
-    // ── People ─────────────────────────────────────────────────────────────
-    case 'agent_a':        return 0.006;
+    // ── People ────────────────────────────────────────────────────────────
+    case 'agent_a':        return 0.030;
 
-    // ── Ship ───────────────────────────────────────────────────────────────
-    case 'ship':           return 0.0108;
+    // ── Ship ──────────────────────────────────────────────────────────────
+    case 'ship':           return 0.054;
 
-    default:               return 0.006;
+    default:               return 0.030;
   }
 }

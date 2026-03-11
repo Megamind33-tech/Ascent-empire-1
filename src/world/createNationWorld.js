@@ -82,7 +82,7 @@ export function createNationWorld(scene, shadows, state) {
   if (parliament) {
     const s = getModelScale('parliament');
     parliament.scaling.set(s, s, s);
-    parliament.position.set(0, 0.1, -96);
+    parliament.position.set(45, 0, -90);  // offset from x=0 road centre
     parliament.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
     parliament.metadata = { type: 'parliament', onFire: false };
     meshes.push(parliament);
@@ -92,7 +92,7 @@ export function createNationWorld(scene, shadows, state) {
   if (police) {
     const s = getModelScale('police');
     police.scaling.set(s, s, s);
-    police.position.set(-88, 0.1, -86);
+    police.position.set(-60, 0, -60);     // away from road edges
     police.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
     police.metadata = { type: 'police', onFire: false };
     meshes.push(police);
@@ -203,47 +203,49 @@ export function createNationWorld(scene, shadows, state) {
   // Y = 0.1 places the model pivot flush on the ground plane for all
   // assets whose origin is at their base (standard for Kenney / Quaternius packs).
 
+  // Road bands: roads at x/z = 0, ±120, ±240. Half-width = 11.
+  // NO building may have its centre within ±15 units of a road centre line.
   const _worldDecorations = [
-    // Industrial outskirts
-    { key: 'mine',          pos: new Vector3( 260,  0.1,  230) },
-    { key: 'refinery',      pos: new Vector3( 220,  0.1, -250) },
-    { key: 'barracks',      pos: new Vector3(-250,  0.1,  220) },
-    { key: 'stadium',       pos: new Vector3( 130,  0.1,  155) },
+    // Industrial outskirts (between road bands, inside city bounds)
+    { key: 'mine',          pos: new Vector3( 200, 0.1,  200) },
+    { key: 'refinery',      pos: new Vector3( 200, 0.1, -200) },
+    { key: 'barracks',      pos: new Vector3(-200, 0.1,  200) },
+    { key: 'stadium',       pos: new Vector3( 170, 0.1,  170) },
 
-    // Civic downtown (between road bands, clear of parliament & police)
-    { key: 'hospital',      pos: new Vector3( 100,  0.1,  -55) },
-    { key: 'police_station',pos: new Vector3(  82,  0.1,   65) },
-    { key: 'bar',           pos: new Vector3(-105,  0.1,   65) },
+    // Civic downtown (between road bands)
+    { key: 'hospital',      pos: new Vector3(  80, 0.1,  -55) },
+    { key: 'police_station',pos: new Vector3(  80, 0.1,   55) },
+    { key: 'bar',           pos: new Vector3( -80, 0.1,   55) },
 
-    // Rural zone (east outskirts, beyond x=180)
-    { key: 'cottage',       pos: new Vector3( 235,  0.1,   80) },
-    { key: 'greenhouse',    pos: new Vector3( 205,  0.1,   55) },
-    { key: 'rural_farm',    pos: new Vector3( 245,  0.1,  -30) },
-    // corn_maze omitted — photorealistic scan model has no origin bounds and fills the viewport
+    // Rural zone (between x=131..229 band, away from roads)
+    { key: 'cottage',       pos: new Vector3( 180, 0.1,   80) },
+    { key: 'greenhouse',    pos: new Vector3( 160, 0.1,   55) },
+    { key: 'rural_farm',    pos: new Vector3( 180, 0.1,  -55) },
+    // corn_maze omitted — photorealistic scan model fills viewport at any scale
 
-    // Bridge over the z=120 road corridor
-    { key: 'bridge',        pos: new Vector3(   0,  0.1,  130), rotY: Math.PI / 2 },
+    // Bridge over the z=120 road corridor (intentionally on road)
+    { key: 'bridge',        pos: new Vector3(  45, 0.1,  130), rotY: Math.PI / 2 },
 
-    // Road detail pieces near the main grid (decorative, not blocking traffic)
-    { key: 'road_seg',      pos: new Vector3(  60,  0.08,    0) },
-    { key: 'road_bits',     pos: new Vector3( -60,  0.08,    0) },
-    { key: 'road_3',        pos: new Vector3(   0,  0.08,   60) },
+    // Road detail pieces — decorative, intentionally on/near road surfaces
+    { key: 'road_seg',      pos: new Vector3(  60, 0.08,    0) },
+    { key: 'road_bits',     pos: new Vector3( -60, 0.08,    0) },
+    { key: 'road_3',        pos: new Vector3(  40, 0.08,   60) },
 
-    // Stop signs at key cross-road corners
-    { key: 'stop_sign',     pos: new Vector3(  55,  0.1,  125) },
-    { key: 'stop_sign',     pos: new Vector3( -55,  0.1,  125) },
-    { key: 'stop_sign',     pos: new Vector3( 115,  0.1,    5) },
-    { key: 'stop_sign',     pos: new Vector3(-115,  0.1,    5) },
+    // Stop signs at road-edge corners (just outside road band)
+    { key: 'stop_sign',     pos: new Vector3(  14, 0.1,  133) },
+    { key: 'stop_sign',     pos: new Vector3( -14, 0.1,  133) },
+    { key: 'stop_sign',     pos: new Vector3( 133, 0.1,   14) },
+    { key: 'stop_sign',     pos: new Vector3(-133, 0.1,   14) },
 
-    // Small decorative cats scattered in the city centre
-    { key: 'cat',           pos: new Vector3(  20,  0.1,   10) },
-    { key: 'cat',           pos: new Vector3( -30,  0.1,   25) },
-    { key: 'cat',           pos: new Vector3(  45,  0.1,  -28) },
+    // Decorative cats — between road bands
+    { key: 'cat',           pos: new Vector3(  30, 0.1,   25) },
+    { key: 'cat',           pos: new Vector3( -30, 0.1,   25) },
+    { key: 'cat',           pos: new Vector3(  45, 0.1,  -28) },
   ];
 
-  // Waterfall — inland nations only (coastal maps have the sea edge)
+  // Waterfall — inland nations only; position between x=-131..-229 band
   if (!nation.coastal) {
-    _worldDecorations.push({ key: 'waterfall', pos: new Vector3(-230, 0.1, 100) });
+    _worldDecorations.push({ key: 'waterfall', pos: new Vector3(-180, 0.1, 80) });
   }
 
   for (const { key, pos, rotY } of _worldDecorations) {
@@ -276,8 +278,10 @@ export function createNationWorld(scene, shadows, state) {
       const tz = -280 + rand() * 560;
       if (Math.abs(tx) < 40 && Math.abs(tz) < 40) continue; // avoid centre plaza
       tree.position.set(tx, 0.1, tz);
+      // Tree GLBs are natively ~3 300 units; getModelScale returns 0.003.
+      // Add ±40 % variation so not every tree is the same size.
       const baseS = getModelScale(treeType);
-      const s = baseS * (0.9 + rand() * 0.2); // ±10 % variation per tree
+      const s = baseS * (0.72 + rand() * 0.6);
       tree.scaling.set(s, s, s);
       tree.rotation.y = rand() * Math.PI * 2;
       tree.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
