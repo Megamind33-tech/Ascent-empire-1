@@ -293,8 +293,12 @@
             position: fixed;
             inset: 0; background: rgba(0, 0, 0, 0.96);
             display: none; align-items: center; justify-content: center;
-            z-index: 2000; backdrop-filter: blur(60px);
+            z-index: 2000;
+            /* backdrop-filter removed — 60px blur was causing mobile GPU stalls
+               that made the first tap on any button go unregistered */
         }
+        /* Light blur only for in-game modals (not setup) */
+        .modal:not(#setupOverlay) { backdrop-filter: blur(8px); }
         .modal-content {
             width: 95%; max-width: 1200px; height: 85vh;
             background: #05070a; border: 1px solid var(--brushed-gold);
@@ -323,8 +327,9 @@
         }
         .tab-link.active { background: var(--brushed-gold); color: #000; }
 
-        .btn-run { background: var(--brushed-gold); color: #000; border: none; padding: 18px; font-weight: 900; text-transform: uppercase; font-size: 0.85rem; cursor: pointer; border-radius: 2px; transition: 0.2s; }
+        .btn-run { background: var(--brushed-gold); color: #000; border: none; padding: 18px; font-weight: 900; text-transform: uppercase; font-size: 0.85rem; cursor: pointer; border-radius: 2px; transition: 0.2s; touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; }
         .btn-run:hover { filter: brightness(1.2); transform: translateY(-3px); }
+        .btn-run:active { filter: brightness(0.9); transform: translateY(0); }
 
         #toast-box {
             position: fixed; bottom: 140px; left: 50%; transform: translateX(-50%);

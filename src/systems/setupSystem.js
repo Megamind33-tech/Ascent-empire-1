@@ -8,6 +8,18 @@ export function initSetupOverlay(state, onStart){
     return;
   }
 
+  // On mobile, the browser waits up to 300 ms after a touch before firing
+  // 'click' / 'submit', making the button feel unresponsive.
+  // Listening on 'touchend' fires immediately and we then call requestSubmit()
+  // which runs all native validation before the submit handler below.
+  const submitBtn = form.querySelector('[type="submit"]');
+  if (submitBtn) {
+    submitBtn.addEventListener('touchend', (e) => {
+      e.preventDefault(); // stop the subsequent mouse-event chain
+      form.requestSubmit();
+    }, { passive: false });
+  }
+
   form.addEventListener('submit', (event) => {
     event.preventDefault();
 
