@@ -109,3 +109,4 @@ export function initMobileControls(canvas, camera) {
     }
   }, { passive: true });
 }
+
