@@ -2,7 +2,6 @@ import { Color3, MeshBuilder, StandardMaterial, Vector3, Matrix } from '@babylon
 import { CONFIG } from '../config.js';
 import { on, off, getRecentEvents } from '../systems/eventBus.js';
 import { instantiateModel, getModelScale } from '../systems/assetLoader.js';
-import { spawnInstitution } from './createInstitutions.js';
 
 // ── World boundary configs ────────────────────────────────────────────────────
 const WALL_HALF  = 300;  // Half-extent of the play area (px)
@@ -188,10 +187,26 @@ export function createNationWorld(scene, shadows, state) {
     const airstrip = MeshBuilder.CreateGround('airstrip', { width: 220, height: 40 }, scene);
     airstrip.position.set(-260, .14, -240); airstrip.material = mats.airstrip; meshes.push(airstrip);
   }
-  spawnInstitution(scene, shadows, 'mine',     new Vector3(260, 0.1, 230),  state);
-  spawnInstitution(scene, shadows, 'refinery', new Vector3(220, 0.1, -250), state);
-  spawnInstitution(scene, shadows, 'barracks', new Vector3(-250, 0.1, 220), state);
-  spawnInstitution(scene, shadows, 'stadium', new Vector3(120, 0.1, 160), state);
+  // Place world-decoration buildings visually only — do NOT use spawnInstitution here.
+  // spawnInstitution increments state.buildings counters; since createNationWorld runs on
+  // every travel/reload, using it here would inflate building counts and income on every trip.
+  const _worldDecorations = [
+    { key: 'mine',     pos: new Vector3(260,  0.1,  230) },
+    { key: 'refinery', pos: new Vector3(220,  0.1, -250) },
+    { key: 'barracks', pos: new Vector3(-250, 0.1,  220) },
+    { key: 'stadium',  pos: new Vector3(120,  0.1,  160) },
+  ];
+  for (const { key, pos } of _worldDecorations) {
+    const dm = instantiateModel(key, scene);
+    if (dm) {
+      const s = getModelScale(key);
+      dm.scaling.set(s, s, s);
+      dm.position.copyFrom(pos);
+      dm.metadata = { type: key, onFire: false };
+      dm.getChildMeshes().forEach(c => { c.receiveShadows = true; shadows.addShadowCaster(c); });
+      meshes.push(dm);
+    }
+  }
 
   // 🌲 Scatter Trees & Nature
   const treeType = nation.coastal ? 'palm' : (rand() > 0.5 ? 'birch' : 'pine');

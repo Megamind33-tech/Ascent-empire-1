@@ -2,7 +2,7 @@
  * careerSystem.js — Political Ambition & Legislation
  * ==================================================
  * Handles:
- *  1. Qualication checks for rising through ranks.
+ *  1. Qualification checks for rising through ranks.
  *  2. Legislative process (Enacting Laws from CONFIG).
  *  3. Continuous effect application of laws.
  */
@@ -233,7 +233,7 @@ export function enactLaw(state, lawId) {
   if (!law || isEnacted) return;
 
   if (state.cash < law.cost) {
-    setMessage(`🚫 INSIDE CAPITAL: Not enough funds ($${law.cost.toLocaleString()}) to enact this act.`);
+    setMessage(`🚫 INSUFFICIENT CAPITAL: Not enough funds ($${law.cost.toLocaleString()}) to enact this act.`);
     return;
   }
 

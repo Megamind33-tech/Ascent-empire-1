@@ -23,11 +23,10 @@ export function openEconomicLedger(state) {
     { label: 'Law Modifiers', value: state.activeModifiers.cashDelta }
   ].filter(i => Math.abs(i.value) > 0.1);
 
+  // Upkeep values mirror economySystem.js runEconomyTick exactly so the ledger stays accurate
   const expenseDetails = [
     { label: 'Police/Security Upkeep', value: state.buildings.police * 0.75 + state.buildings.acc * 0.9 + state.buildings.dec * 0.9 },
-    { label: 'Military Base Maintenance', value: state.buildings.bases * 1.8 + state.buildings.barracks * 0.9 },
-    { label: 'School Funding', value: state.buildings.schools * 0.3 },
-    { label: 'Stadium Maintenance', value: state.buildings.stadiums * 0.5 }
+    { label: 'Military Base Maintenance', value: state.buildings.bases * 1.8 + state.buildings.barracks * 0.9 }
   ].filter(i => i.value > 0.1);
 
   const totalIncome = incomeDetails.reduce((a, b) => a + b.value, 0);

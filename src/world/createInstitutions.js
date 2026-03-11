@@ -27,7 +27,6 @@ function spawnConstructionBurst(scene, position) {
 }
 
 export function spawnInstitution(scene, shadows, type, point, state) {
-  const mat = new StandardMaterial(`${type}-mat-${Date.now()}`, scene);
   let mesh;
 
   // Try loading GLB first
@@ -60,6 +59,7 @@ export function spawnInstitution(scene, shadows, type, point, state) {
     mesh.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
   } else {
     // Fallback to primitive boxes if asset is missing
+    const mat = new StandardMaterial(`${type}-mat-${Date.now()}`, scene);
     switch (type) {
       case 'housing':   mat.diffuseColor = new Color3(0.56, 0.57, 0.6);  mesh = MeshBuilder.CreateBox(`housing-${Date.now()}`, { width: 16, depth: 16, height: 20 }, scene); mesh.position = new Vector3(point.x, 10, point.z); state.buildings.housing += 1; state.population += 120; state.legitimacy += 0.6; break;
       case 'school':    mat.diffuseColor = new Color3(0.52, 0.49, 0.43); mesh = MeshBuilder.CreateBox(`school-${Date.now()}`, { width: 24, depth: 18, height: 10 }, scene); mesh.position = new Vector3(point.x, 5, point.z); state.buildings.schools += 1; state.education += 3; state.approval += 1.2; break;
@@ -77,8 +77,7 @@ export function spawnInstitution(scene, shadows, type, point, state) {
     mesh.material = mat;
     shadows.addShadowCaster(mesh);
   }
-  mesh.receiveShadows=true;
-  shadows.addShadowCaster(mesh);
+  mesh.receiveShadows = true;
   state.worldRefs.worldMeshes.push(mesh);
 
   // Add Compound Rapier Collider
