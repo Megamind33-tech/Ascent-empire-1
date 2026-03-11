@@ -177,7 +177,7 @@ async function bootstrap(){
     scene.render();
   });
 }
-function createPlayerMarker(scene, shadows){ const marker=MeshBuilder.CreateCylinder('playerHQ',{diameterTop:7,diameterBottom:9,height:10,tessellation:12},scene); marker.position=new Vector3(0,5,24); const mat=new StandardMaterial('playerHQMat',scene); mat.diffuseColor=new Color3(.6,.58,.54); marker.material=mat; marker.receiveShadows=true; shadows.addShadowCaster(marker); }
+function createPlayerMarker(scene, shadows){ const marker=MeshBuilder.CreateCylinder('playerHQ',{diameterTop:7,diameterBottom:9,height:10,tessellation:12},scene); marker.position=new Vector3(40,5,40); const mat=new StandardMaterial('playerHQMat',scene); mat.diffuseColor=new Color3(.6,.58,.54); marker.material=mat; marker.receiveShadows=true; shadows.addShadowCaster(marker); }
 function handleCameraAction(camera, action){ if(action==='left') camera.alpha -= .14; else if(action==='right') camera.alpha += .14; else if(action==='zoomIn') camera.radius = Math.max(camera.lowerRadiusLimit, camera.radius - 18); else if(action==='zoomOut') camera.radius = Math.min(camera.upperRadiusLimit, camera.radius + 18); }
 function capitalize(v){ return v.charAt(0).toUpperCase() + v.slice(1); }
 bootstrap().catch((err)=>{

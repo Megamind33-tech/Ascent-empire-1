@@ -1,7 +1,7 @@
-import { Color3, MeshBuilder, StandardMaterial, Vector3, Matrix } from '@babylonjs/core';
+import { Color3, MeshBuilder, StandardMaterial, Texture, Vector3, Matrix } from '@babylonjs/core';
 import { CONFIG } from '../config.js';
 import { on, off, getRecentEvents } from '../systems/eventBus.js';
-import { instantiateModel, getModelScale } from '../systems/assetLoader.js';
+import { instantiateModel, getModelScale, getAssetContainer } from '../systems/assetLoader.js';
 
 // ── World boundary configs ────────────────────────────────────────────────────
 const WALL_HALF  = 300;  // Half-extent of the play area (px)
@@ -38,12 +38,21 @@ export function createNationWorld(scene, shadows, state) {
   ground.metadata = {};
   meshes.push(ground);
 
-  // ── Roads ──────────────────────────────────────────────────────────────────
+  // ── Roads (asphalt material from Road.glb, fallback to dark gray) ──────────
+  // Extract the material from the Road GLB so roads use the real asphalt texture
+  // provided by the user. Falls back to the flat dark-gray procedural mat.
+  const roadContainer = getAssetContainer('road_seg');
+  let asphaltMat = mats.road; // default
+  if (roadContainer && roadContainer.materials && roadContainer.materials.length > 0) {
+    asphaltMat = roadContainer.materials[0];
+    asphaltMat.freeze(); // freeze for GPU performance — road mat never changes
+  }
+
   for (let a = -240; a <= 240; a += 120) {
-    const rz = MeshBuilder.CreateGround(`road-z-${a}`, { width: 560, height: 22 }, scene);
-    rz.position.set(0, .12, a); rz.material = mats.road; rz.receiveShadows = true; meshes.push(rz);
-    const rx = MeshBuilder.CreateGround(`road-x-${a}`, { width: 22, height: 560 }, scene);
-    rx.position.set(a, .12, 0); rx.material = mats.road; rx.receiveShadows = true; meshes.push(rx);
+    const rz = MeshBuilder.CreateGround(`road-z-${a}`, { width: 560, height: 22, subdivisions: 2 }, scene);
+    rz.position.set(0, .12, a); rz.material = asphaltMat; rz.receiveShadows = true; meshes.push(rz);
+    const rx = MeshBuilder.CreateGround(`road-x-${a}`, { width: 22, height: 560, subdivisions: 2 }, scene);
+    rx.position.set(a, .12, 0); rx.material = asphaltMat; rx.receiveShadows = true; meshes.push(rx);
 
     // 🏙️ Add Billboards near road intersections
     if (Math.abs(a) > 60 && rand() > 0.4) {
@@ -130,25 +139,63 @@ export function createNationWorld(scene, shadows, state) {
   }
   state.worldRefs.constructionAnchors = anchors; meshes.push(...anchors);
 
-  // ── Traffic (diverse vehicles — all 9 types cycle through the fleet) ──────
+  // ── Traffic — vehicles placed on and constrained to real road centre-lines ──
+  // Roads run at x/z = 0, ±120, ±240.  Each road has two lanes offset ±4 units
+  // from centre so opposing traffic doesn't overlap.
+  //
+  // Horizontal roads (z = constant) → vehicles travel along the X axis.
+  // Vertical roads   (x = constant) → vehicles travel along the Z axis.
+  const ROAD_CENTRES = [-240, -120, 0, 120, 240];
   const VEHICLE_TYPES = ['car_a','car_b','car_c','car_model','bus','gtr','police_car','suv','sports_car'];
+
+  // Build a flat list of lane slots: alternating horizontal / vertical roads
+  // so we get good coverage across the entire grid.
+  const laneSlots = [];
+  for (const c of ROAD_CENTRES) {
+    laneSlots.push({ axis: 'x', centre: c }); // horizontal road: travel in X
+    laneSlots.push({ axis: 'z', centre: c }); // vertical road:   travel in Z
+  }
+
   const traffic = [];
   for (let i = 0; i < CONFIG.mobile.maxDynamicCars; i++) {
     const carType = VEHICLE_TYPES[i % VEHICLE_TYPES.length];
     const carModel = instantiateModel(carType, scene);
-    if (carModel) {
-      const s = getModelScale(carType);
-      carModel.scaling.set(s, s, s);
-      // Spread vehicles across the road grid; buses and SUVs use a slightly
-      // raised Y so they sit flush on the road surface (ground is y≈0).
-      const roadZ = i % 2 === 0 ? -40 : 40;
-      carModel.position.set(-240 + i * 26, 0.4, roadZ);
-      carModel.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
-      // Buses are slower; sports/GTR faster
-      const baseSpeed = carType === 'bus' ? 5 : (carType === 'gtr' || carType === 'sports_car') ? 14 : 8;
-      traffic.push({ mesh: carModel, axis: i % 2 === 0 ? 'x' : 'z', dir: i % 3 === 0 ? -1 : 1, speed: baseSpeed + rand() * 4, passengers: 0 });
-      meshes.push(carModel);
+    if (!carModel) continue;
+
+    const s = getModelScale(carType);
+    carModel.scaling.set(s, s, s);
+
+    const slot  = laneSlots[i % laneSlots.length];
+    const dir   = i % 2 === 0 ? 1 : -1;
+    // Right-hand traffic: dir>0 uses lane offset -4, dir<0 uses +4
+    const lane  = dir > 0 ? -4 : 4;
+    // Spread start positions along the road so cars don't all bunch together
+    const along = -240 + ((i * 53) % 480);
+
+    if (slot.axis === 'x') {
+      // Horizontal road: z = constant + lane, move along X
+      carModel.position.set(along, 0.4, slot.centre + lane);
+      carModel.rotation.y = dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+    } else {
+      // Vertical road: x = constant + lane, move along Z
+      carModel.position.set(slot.centre + lane, 0.4, along);
+      carModel.rotation.y = dir > 0 ? 0 : Math.PI;
     }
+
+    carModel.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
+    const baseSpeed = carType === 'bus' ? 5
+                    : (carType === 'gtr' || carType === 'sports_car') ? 14
+                    : 8;
+    traffic.push({
+      mesh: carModel,
+      axis: slot.axis,
+      roadCentre: slot.centre,
+      lane,
+      dir,
+      speed: baseSpeed + rand() * 4,
+      passengers: 0,
+    });
+    meshes.push(carModel);
   }
   state.worldRefs.traffic = traffic;
 
@@ -341,15 +388,18 @@ export function createNationWorld(scene, shadows, state) {
         }
         if (item.axis === 'x') {
           item.mesh.position.x += item.speed * item.dir * dt;
-          if (item.mesh.position.x >  260) item.mesh.position.x = -260;
-          if (item.mesh.position.x < -260) item.mesh.position.x =  260;
-          // Face direction of travel along X-axis
+          // Wrap at road ends
+          if (item.mesh.position.x >  264) item.mesh.position.x = -264;
+          if (item.mesh.position.x < -264) item.mesh.position.x =  264;
+          // Clamp to lane — prevents physics drift off the road
+          item.mesh.position.z = item.roadCentre + item.lane;
           item.mesh.rotation.y = item.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
         } else {
           item.mesh.position.z += item.speed * item.dir * dt;
-          if (item.mesh.position.z >  260) item.mesh.position.z = -260;
-          if (item.mesh.position.z < -260) item.mesh.position.z =  260;
-          // Face direction of travel along Z-axis
+          if (item.mesh.position.z >  264) item.mesh.position.z = -264;
+          if (item.mesh.position.z < -264) item.mesh.position.z =  264;
+          // Clamp to lane
+          item.mesh.position.x = item.roadCentre + item.lane;
           item.mesh.rotation.y = item.dir > 0 ? 0 : Math.PI;
         }
       }
