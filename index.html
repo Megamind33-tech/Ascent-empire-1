@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+    <title>Ascent Realms</title>
+    <meta name="description" content="A realistic mobile-first political city builder built with Babylon.js and Rapier." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="renderCanvas"></canvas>
+      <div id="setupOverlay">
+        <form id="setupForm" class="setup-card">
+          <h1>ASCENT REALMS</h1>
+          <p>Choose your identity, nation, and starting district.</p>
+          <label>Player Name<input id="playerName" type="text" maxlength="24" placeholder="Enter your name" /></label>
+          <label>Nation<select id="playerNation"></select></label>
+          <label>Starting Position<select id="playerStart"><option value="capital-core">Capital Core</option><option value="harbor-district">Harbor District</option><option value="industrial-belt">Industrial Belt</option><option value="civic-heights">Civic Heights</option></select></label>
+          <button type="submit">Start Ascent</button>
+        </form>
+      </div>
+      <div id="hud">
+        <div class="topbar glass">
+          <div class="brand">
+            <span class="brand-title">ASCENT REALMS</span>
+            <span class="brand-subtitle">City • Power • Influence</span>
+          </div>
+          <div class="stats">
+            <div class="stat"><span>Cash</span><strong id="cashValue">$0</strong></div>
+            <div class="stat"><span>Approval</span><strong id="approvalValue">50</strong></div>
+            <div class="stat"><span>Influence</span><strong id="influenceValue">0</strong></div>
+            <div class="stat"><span>Office</span><strong id="officeValue">Nobody</strong></div>
+            <div class="stat"><span>Nation</span><strong id="nationValue">Zambria</strong></div>
+            <div class="stat"><span>Passport</span><strong id="passportValue">none</strong></div>
+            <div class="stat"><span>Election In</span><strong id="electionTimerValue">5:00</strong></div>
+          </div>
+        </div>
+        <div class="sidebar glass">
+          <button class="action-btn" data-action="buildHousing">Housing</button>
+          <button class="action-btn" data-action="buildSchool">Schools</button>
+          <button class="action-btn" data-action="buildStore">Stores</button>
+          <button class="action-btn" data-action="buildPolice">Police</button>
+          <button class="action-btn" data-action="buildACC">ACC</button>
+          <button class="action-btn" data-action="buildDEC">DEC</button>
+          <button class="action-btn" data-action="buildMine">Mines</button>
+          <button class="action-btn" data-action="buildRefinery">Refinery</button>
+          <button class="action-btn" data-action="buildBarracks">Barracks</button>
+          <button class="action-btn" data-action="buildBase">Base</button>
+          <button class="action-btn" data-action="buildStadium">Sports</button>
+          <button class="action-btn" data-action="research">Research</button>
+          <button class="action-btn" data-action="campaign">Campaign</button>
+          <button class="action-btn" data-action="travel">Travel</button>
+          <button class="action-btn" data-action="legislation">Legislation</button>
+          <button class="action-btn" data-action="press">Press Room</button>
+          <button class="action-btn" data-action="gazette">Gazette</button>
+          <button class="action-btn" data-action="career">Career Portal</button>
+          <button class="action-btn" data-action="save">Save</button>
+          <button class="action-btn" data-action="load">Load</button>
+          <button class="action-btn action-btn--danger" data-action="extinguish" title="Deploy firefighters ($800)">🔥 Extinguish</button>
+        </div>
+        <div class="bottom-panel glass">
+          <div class="resource-row">
+            <div class="pill">Population <strong id="populationValue">1000</strong></div>
+            <div class="pill">Food <strong id="foodValue">100</strong></div>
+            <div class="pill">Steel <strong id="steelValue">50</strong></div>
+            <div class="pill">Fuel <strong id="fuelValue">40</strong></div>
+            <div class="pill">Research <strong id="researchValue">0</strong></div>
+          </div>
+          <div class="message-box" id="messageBox">Welcome. Build legitimacy before chasing power.</div>
+        </div>
+        <div class="mobile-controls glass">
+          <button id="rotateLeftBtn" aria-label="Rotate Left">⟲</button>
+          <button id="zoomInBtn" aria-label="Zoom In">＋</button>
+          <button id="zoomOutBtn" aria-label="Zoom Out">－</button>
+          <button id="rotateRightBtn" aria-label="Rotate Right">⟳</button>
+          <button id="muteBtn" aria-label="Mute" title="Mute" style="grid-column:span 2">🔊</button>
+        </div>
+      </div>
+      <!-- Career Portal Overlay -->
+      <div id="careerPortal" class="overlay glass" style="display:none;">
+        <div class="overlay-card career-card">
+          <button class="close-overlay" data-overlay="careerPortal">×</button>
+          <h2>POLITICAL CAREER</h2>
+          <div id="careerDetails"></div>
+        </div>
+      </div>
+      <!-- Gazette Overlay -->
+      <div id="gazetteOverlay" class="overlay glass" style="display:none;">
+        <div class="overlay-card gazette-card">
+          <button class="close-overlay" data-overlay="gazetteOverlay">×</button>
+          <h2>NATIONAL GAZETTE</h2>
+          <div id="gazetteLaws"></div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

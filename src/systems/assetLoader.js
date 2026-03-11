@@ -1,0 +1,116 @@
+/**
+ * assetLoader.js — Centralized Model Loading & Instancing
+ * ========================================================
+ * Pre-loads all GLB assets into AssetContainers.
+ * This allows us to clone meshes cheaply and reuse materials across the city.
+ */
+
+import { SceneLoader, AssetContainer, AbstractMesh } from '@babylonjs/core';
+import "@babylonjs/loaders/glTF";
+
+const ASSET_PATH = 'assets/models/';
+
+/**
+ * Manifest defining all available models.
+ * Keys match the IDs used by createInstitutions.js and other world generators.
+ */
+const MANIFEST = {
+  // Buildings
+  housing:  'civic/housing.glb',
+  school:   'civic/school.glb',
+  store:    'stores/store.glb',
+  police:   'civic/police.glb',
+  parliament: 'landmarks/parliament.glb',
+  stadium:  'civic/stadium.glb',
+  mine:     'civic/mine.glb',
+  refinery: 'civic/refinery.glb',
+  barracks: 'civic/barracks.glb',
+  base:     'civic/base.glb',
+  acc:      'civic/police.glb', // Fallback/Reuse
+  dec:      'civic/police.glb', // Fallback/Reuse
+  tower_a:  'landmarks/tower_a.glb',
+  tower_b:  'landmarks/tower_b.glb',
+
+  // Dynamic objects
+  car_a:    'vehicles/car_a.glb',
+  car_b:    'vehicles/car_b.glb',
+  agent_a:  'people/agent_a.glb'
+};
+
+const _containers = new Map();
+
+/**
+ * Initialize the loader and fetch all assets in the manifest.
+ * @returns Promise that resolves when all critical assets are ready.
+ */
+export async function initAssetLoader(scene) {
+  const promises = Object.entries(MANIFEST).map(async ([key, path]) => {
+    try {
+      const container = await SceneLoader.LoadAssetContainerAsync(ASSET_PATH, path, scene);
+      _containers.set(key, container);
+      console.log(`[AssetLoader] Loaded: ${key} (${path})`);
+    } catch (err) {
+      console.warn(`[AssetLoader] Failed to load ${key}: ${err.message}. Falling back to cube.`);
+      // Add a null entry — callers will fallback to primitives
+      _containers.set(key, null);
+    }
+  });
+
+  await Promise.all(promises);
+  return true;
+}
+
+/**
+ * Instantiate a model from the loaded containers.
+ * @param {string} key - Manifest key
+ * @param {import("@babylonjs/core").Scene} scene
+ * @returns {AbstractMesh|null} The root mesh of the instantiated model
+ */
+export function instantiateModel(key, scene) {
+  const container = _containers.get(key);
+  if (!container) return null;
+
+  // Instantiate the container into the scene
+  const entries = container.instantiateModelsToScene(
+    (name) => `${key}-${name}-${Date.now()}`,
+    false, // do not clone materials
+    { doNotRecurse: false }
+  );
+
+  const root = entries.rootNodes[0];
+  if (root) {
+    root.getChildMeshes().forEach(m => {
+      m.receiveShadows = true;
+      m.checkCollisions = true; // Optimization: Enable collisions for interaction
+    });
+  }
+
+  return root;
+}
+
+/**
+ * Access the underlying AssetContainer directly (useful for ThinInstances)
+ */
+export function getAssetContainer(key) {
+  return _containers.get(key);
+}
+
+/**
+ * Helper to get the scale of a model so it fits the game's unit expectations.
+ */
+export function getModelScale(key) {
+  switch (key) {
+    case 'housing': return 2.8;
+    case 'school': return 2.5;
+    case 'store': return 2.4;
+    case 'police': case 'acc': case 'dec': return 2.5;
+    case 'parliament': return 4.2;
+    case 'stadium': return 5.0;
+    case 'mine': case 'refinery': return 3.2;
+    case 'barracks': case 'base': return 3.5;
+    case 'tower_a': case 'tower_b': return 3.0;
+    case 'agent_a': return 1.8;
+    case 'car_a': case 'car_b': return 1.5;
+    default: return 1.0;
+  }
+}

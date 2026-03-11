@@ -1,0 +1,14 @@
+.agents/
+node_modules/
+dist/
+.env
+*.log
+.DS_Store
+android/
+ios/
+.vscode/
+.idea/
+.gemini/
+*.tmp
+node_modules
+node_modules
