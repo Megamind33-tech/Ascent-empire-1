@@ -28,8 +28,13 @@ const MANIFEST = {
   base:     'civic/base.glb',
   acc:      'civic/police.glb', // Fallback/Reuse
   dec:      'civic/police.glb', // Fallback/Reuse
-  tower_a:  'landmarks/tower_a.glb',
-  tower_b:  'landmarks/tower_b.glb',
+  tower_a:  'landmarks/Building.glb', // Use the 125kb building instead of 660b placeholder
+  tower_b:  'landmarks/Building.glb',
+  billboard: 'landmarks/Billboard.glb',
+  farm:     'landmarks/Farm (1) (1).glb',
+  birch:    'landmarks/Birch Trees.glb',
+  palm:     'landmarks/Palm Trees (1).glb',
+  pine:     'landmarks/Pine Trees.glb',
 
   // Dynamic objects
   car_a:    'vehicles/car_a.glb',
@@ -108,7 +113,10 @@ export function getModelScale(key) {
     case 'stadium': return 5.0;
     case 'mine': case 'refinery': return 3.2;
     case 'barracks': case 'base': return 3.5;
-    case 'tower_a': case 'tower_b': return 3.0;
+    case 'tower_a': case 'tower_b': return 0.5; // Building.glb might be large
+    case 'billboard': return 2.0;
+    case 'farm': return 1.5;
+    case 'birch': case 'palm': case 'pine': return 2.2;
     case 'agent_a': return 1.8;
     case 'car_a': case 'car_b': return 1.5;
     default: return 1.0;

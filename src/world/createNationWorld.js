@@ -44,6 +44,18 @@ export function createNationWorld(scene, shadows, state) {
     rz.position.set(0, .12, a); rz.material = mats.road; rz.receiveShadows = true; meshes.push(rz);
     const rx = MeshBuilder.CreateGround(`road-x-${a}`, { width: 22, height: 560 }, scene);
     rx.position.set(a, .12, 0); rx.material = mats.road; rx.receiveShadows = true; meshes.push(rx);
+
+    // 🏙️ Add Billboards near road intersections
+    if (Math.abs(a) > 60 && rand() > 0.4) {
+      const bb = instantiateModel('billboard', scene);
+      if (bb) {
+        bb.position.set(a + (a > 0 ? 15 : -15), 0.1, a + 12);
+        bb.rotation.y = a > 0 ? Math.PI / 2 : -Math.PI / 2;
+        bb.scaling.set(1.5, 1.5, 1.5);
+        bb.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
+        meshes.push(bb);
+      }
+    }
   }
 
   // ── Skyline (Buildings) ──────────────────────────────────────────────────
@@ -59,6 +71,7 @@ export function createNationWorld(scene, shadows, state) {
         tower.scaling.set(s, s, s);
         tower.position.set(x, 0.1, z);
         tower.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
+        tower.metadata = { type: 'skyline', onFire: false }; // Can catch fire
         meshes.push(tower);
       }
     }
@@ -178,6 +191,35 @@ export function createNationWorld(scene, shadows, state) {
   const refinery = MeshBuilder.CreateBox('refinery-zone',{ width: 70, depth: 46, height: 14 }, scene); refinery.position.set(220, 7, -250); refinery.material = mats.industrial; meshes.push(refinery);
   const barracks = MeshBuilder.CreateBox('barracks-zone',{ width: 54, depth: 36, height: 10 }, scene); barracks.position.set(-250, 5, 220); barracks.material = mats.dark; meshes.push(barracks);
   const stadium  = MeshBuilder.CreateCylinder('stadium', { diameterTop: 48, diameterBottom: 58, height: 10, tessellation: 24 }, scene); stadium.position.set(120, 5, 160); stadium.material = mats.civic; meshes.push(stadium);
+
+  // 🌲 Scatter Trees & Nature
+  const treeType = nation.coastal ? 'palm' : (rand() > 0.5 ? 'birch' : 'pine');
+  for (let i = 0; i < 40; i++) {
+    const tree = instantiateModel(treeType, scene);
+    if (tree) {
+      const tx = -280 + rand() * 560;
+      const tz = -280 + rand() * 560;
+      // Avoid center roads
+      if (Math.abs(tx) < 40 && Math.abs(tz) < 40) continue;
+      tree.position.set(tx, 0.1, tz);
+      const s = 1.8 + rand() * 1.5;
+      tree.scaling.set(s, s, s);
+      tree.rotation.y = rand() * Math.PI * 2;
+      tree.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
+      meshes.push(tree);
+    }
+  }
+
+  // 🚜 Add Farmland models
+  for (let i = 0; i < 6; i++) {
+    const farm = instantiateModel('farm', scene);
+    if (farm) {
+      farm.position.set(200 + rand() * 80, 0.1, 150 + rand() * 100);
+      farm.scaling.set(2.0, 2.0, 2.0);
+      farm.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
+      meshes.push(farm);
+    }
+  }
 
   state.worldRefs.worldMeshes  = meshes;
 
