@@ -1,4 +1,4 @@
-import { Color3, MeshBuilder, StandardMaterial, Vector3, Matrix } from '@babylonjs/core';
+import { Color3, MeshBuilder, StandardMaterial, Vector3, Matrix, Color4 } from '@babylonjs/core';
 import { CONFIG } from '../config.js';
 import { on, off, getRecentEvents } from '../systems/eventBus.js';
 import { instantiateModel, getModelScale } from '../systems/assetLoader.js';
@@ -58,10 +58,13 @@ export function createNationWorld(scene, shadows, state) {
     }
   }
 
-  // ── Skyline (Buildings) ──────────────────────────────────────────────────
-  for (let x = -220; x <= 220; x += 32) {
-    for (let z = -220; z <= 220; z += 32) {
-      if (Math.abs((x + 14) % 120 - 60) < 18 || Math.abs((z + 14) % 120 - 60) < 18) continue;
+  // ── Skyline (Buildings) — aligned to 30-unit grid, clear of 22-unit-wide roads ──
+  for (let x = -210; x <= 210; x += 30) {
+    for (let z = -210; z <= 210; z += 30) {
+      // Skip cells that fall within a road corridor (roads at multiples of 120, ±11 units wide)
+      const nearRoadX = Math.abs(((x % 120) + 120) % 120 - 60) < 16;
+      const nearRoadZ = Math.abs(((z % 120) + 120) % 120 - 60) < 16;
+      if (nearRoadX || nearRoadZ) continue;
       if (rand() > CONFIG.mobile.skylineDensity) continue;
 
       const type = rand() > 0.5 ? 'tower_a' : 'tower_b';
@@ -69,9 +72,11 @@ export function createNationWorld(scene, shadows, state) {
       if (tower) {
         const s = getModelScale(type) * (0.8 + rand() * 0.4);
         tower.scaling.set(s, s, s);
-        tower.position.set(x, 0.1, z);
+        // Slight jitter within the cell to break uniformity, but stay on-grid
+        tower.position.set(x + rand() * 6 - 3, 0, z + rand() * 6 - 3);
+        tower.rotation.y = Math.round(rand() * 3) * (Math.PI / 2); // snap to 0/90/180/270°
         tower.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
-        tower.metadata = { type: 'skyline', onFire: false }; // Can catch fire
+        tower.metadata = { type: 'skyline', onFire: false };
         meshes.push(tower);
       }
     }
@@ -82,7 +87,8 @@ export function createNationWorld(scene, shadows, state) {
   if (parliament) {
     const s = getModelScale('parliament');
     parliament.scaling.set(s, s, s);
-    parliament.position.set(0, 0.1, -96);
+    parliament.position.set(0, 0, -90);   // centred on grid, clear of road at z=0
+    parliament.rotation.y = 0;
     parliament.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
     parliament.metadata = { type: 'parliament', onFire: false };
     meshes.push(parliament);
@@ -92,7 +98,8 @@ export function createNationWorld(scene, shadows, state) {
   if (police) {
     const s = getModelScale('police');
     police.scaling.set(s, s, s);
-    police.position.set(-88, 0.1, -86);
+    police.position.set(-90, 0, -90);    // snapped to 30-unit grid
+    police.rotation.y = 0;
     police.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
     police.metadata = { type: 'police', onFire: false };
     meshes.push(police);
@@ -218,7 +225,7 @@ export function createNationWorld(scene, shadows, state) {
       // Avoid center roads
       if (Math.abs(tx) < 40 && Math.abs(tz) < 40) continue;
       tree.position.set(tx, 0.1, tz);
-      const s = 0.054 + rand() * 0.045;
+      const s = 0.00216 + rand() * 0.0018;
       tree.scaling.set(s, s, s);
       tree.rotation.y = rand() * Math.PI * 2;
       tree.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
@@ -226,13 +233,31 @@ export function createNationWorld(scene, shadows, state) {
     }
   }
 
-  // 🚜 Add Farmland models
+  // 🚜 Add Farmland models — diverse colours per farm
+  const farmPalette = [
+    [0.82, 0.55, 0.28], // warm wheat
+    [0.58, 0.72, 0.38], // fresh crop green
+    [0.74, 0.62, 0.42], // dry earth
+    [0.48, 0.65, 0.55], // irrigated field
+    [0.91, 0.78, 0.48], // sunlit straw
+    [0.55, 0.48, 0.36], // dark soil
+  ];
   for (let i = 0; i < 6; i++) {
     const farm = instantiateModel('farm', scene);
     if (farm) {
       farm.position.set(200 + rand() * 80, 0.1, 150 + rand() * 100);
-      farm.scaling.set(0.060, 0.060, 0.060);
-      farm.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
+      farm.rotation.y = rand() * Math.PI * 2;
+      const s = 0.0024;
+      farm.scaling.set(s, s, s);
+      // Apply a unique tint colour to this farm's child meshes
+      const [r, g, b] = farmPalette[i % farmPalette.length];
+      const farmMat = new StandardMaterial(`farm-mat-${i}`, scene);
+      farmMat.diffuseColor  = new Color3(r, g, b);
+      farmMat.specularColor = new Color3(0.04, 0.04, 0.04);
+      farm.getChildMeshes().forEach(m => {
+        m.material = farmMat;
+        shadows.addShadowCaster(m);
+      });
       meshes.push(farm);
     }
   }
