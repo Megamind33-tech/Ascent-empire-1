@@ -109,8 +109,3 @@ export function initMobileControls(canvas, camera) {
     }
   }, { passive: true });
 }
-
-  // ── Smooth momentum on pinch end ──
-  // (Babylon's own inertia handles rotation, so we only need to ensure
-  //  radius clamps are respected after gesture ends.)
-}
