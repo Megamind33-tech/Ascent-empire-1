@@ -51,7 +51,7 @@ export function createNationWorld(scene, shadows, state) {
       if (bb) {
         bb.position.set(a + (a > 0 ? 15 : -15), 0.1, a + 12);
         bb.rotation.y = a > 0 ? Math.PI / 2 : -Math.PI / 2;
-        bb.scaling.set(0.45, 0.45, 0.45);
+        bb.scaling.set(0.15, 0.15, 0.15);
         bb.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
         meshes.push(bb);
       }
@@ -218,7 +218,7 @@ export function createNationWorld(scene, shadows, state) {
       // Avoid center roads
       if (Math.abs(tx) < 40 && Math.abs(tz) < 40) continue;
       tree.position.set(tx, 0.1, tz);
-      const s = 0.54 + rand() * 0.45;
+      const s = 0.18 + rand() * 0.15;
       tree.scaling.set(s, s, s);
       tree.rotation.y = rand() * Math.PI * 2;
       tree.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
@@ -231,7 +231,7 @@ export function createNationWorld(scene, shadows, state) {
     const farm = instantiateModel('farm', scene);
     if (farm) {
       farm.position.set(200 + rand() * 80, 0.1, 150 + rand() * 100);
-      farm.scaling.set(0.60, 0.60, 0.60);
+      farm.scaling.set(0.20, 0.20, 0.20);
       farm.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
       meshes.push(farm);
     }
