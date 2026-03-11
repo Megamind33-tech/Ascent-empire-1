@@ -58,13 +58,13 @@ export function createNationWorld(scene, shadows, state) {
     }
   }
 
-  // ── Skyline (Buildings) — aligned to 30-unit grid, clear of 22-unit-wide roads ──
+  // ── Skyline (Buildings) — aligned to 30-unit grid, clear of all roads ──
+  const _roadCentres = [-240, -120, 0, 120, 240];
   for (let x = -210; x <= 210; x += 30) {
     for (let z = -210; z <= 210; z += 30) {
-      // Skip cells that fall within a road corridor (roads at multiples of 120, ±11 units wide)
-      const nearRoadX = Math.abs(((x % 120) + 120) % 120 - 60) < 16;
-      const nearRoadZ = Math.abs(((z % 120) + 120) % 120 - 60) < 16;
-      if (nearRoadX || nearRoadZ) continue;
+      // Skip any cell whose centre falls within 16 units of a road centre line
+      if (_roadCentres.some(r => Math.abs(x - r) < 16)) continue;
+      if (_roadCentres.some(r => Math.abs(z - r) < 16)) continue;
       if (rand() > CONFIG.mobile.skylineDensity) continue;
 
       const type = rand() > 0.5 ? 'tower_a' : 'tower_b';
@@ -197,11 +197,12 @@ export function createNationWorld(scene, shadows, state) {
   // Place world-decoration buildings visually only — do NOT use spawnInstitution here.
   // spawnInstitution increments state.buildings counters; since createNationWorld runs on
   // every travel/reload, using it here would inflate building counts and income on every trip.
+  // Positions chosen to sit between road corridors (roads at 0,±120,±240; edges at ±11 each)
   const _worldDecorations = [
-    { key: 'mine',     pos: new Vector3(260,  0.1,  230) },
-    { key: 'refinery', pos: new Vector3(220,  0.1, -250) },
-    { key: 'barracks', pos: new Vector3(-250, 0.1,  220) },
-    { key: 'stadium',  pos: new Vector3(120,  0.1,  160) },
+    { key: 'mine',     pos: new Vector3( 200, 0.1,  200) }, // between x=131–229, z=131–229
+    { key: 'refinery', pos: new Vector3( 200, 0.1, -200) }, // between x=131–229, z=-(131–229)
+    { key: 'barracks', pos: new Vector3(-200, 0.1,  200) }, // between x=-(131–229), z=131–229
+    { key: 'stadium',  pos: new Vector3( 170, 0.1,  170) }, // away from x=120 road
   ];
   for (const { key, pos } of _worldDecorations) {
     const dm = instantiateModel(key, scene);
