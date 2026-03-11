@@ -110,8 +110,8 @@ export function getModelScale(key) {
     case 'school': return 0.045;
     case 'store': return 0.042;
     case 'police': case 'acc': case 'dec': return 0.045;
-    case 'parliament': return 0.084;
-    case 'stadium': return 0.096;
+    case 'parliament': return 0.059;  // 2.1% of original 2.8
+    case 'stadium': return 0.067;     // 2.1% of original 3.2
     case 'mine': case 'refinery': return 0.060;
     case 'barracks': case 'base': return 0.066;
     case 'tower_a': case 'tower_b': return 0.010;

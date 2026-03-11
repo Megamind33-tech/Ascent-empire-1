@@ -87,7 +87,7 @@ export function createNationWorld(scene, shadows, state) {
   if (parliament) {
     const s = getModelScale('parliament');
     parliament.scaling.set(s, s, s);
-    parliament.position.set(0, 0, -90);   // centred on grid, clear of road at z=0
+    parliament.position.set(45, 0, -90);  // offset from x=0 road centre (road half-width=11)
     parliament.rotation.y = 0;
     parliament.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
     parliament.metadata = { type: 'parliament', onFire: false };
