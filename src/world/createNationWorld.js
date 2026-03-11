@@ -98,7 +98,7 @@ export function createNationWorld(scene, shadows, state) {
   if (police) {
     const s = getModelScale('police');
     police.scaling.set(s, s, s);
-    police.position.set(-90, 0, -90);    // snapped to 30-unit grid
+    police.position.set(-60, 0, -60);    // moved away from road edges
     police.rotation.y = 0;
     police.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
     police.metadata = { type: 'police', onFire: false };
