@@ -34,14 +34,7 @@ async function bootstrap(){
 
   const bootFlow = createBootFlow({
     onRetry3D: () => window.location.reload(),
-    onCompatibilityMode: () => {
-      bootFlow.setState(BOOT_STATES.compatibility_mode, {
-        detail: 'Running strategy command view for unsupported devices.'
-      });
-      mountCompatibilityMode({
-        reason: 'Your device cannot initialize full Babylon.js 3D rendering, but core strategy systems remain available.'
-      });
-    }
+    onCompatibilityMode: () => activateCompatibilityMode(bootFlow, 'Your device cannot initialize full Babylon.js 3D rendering, but core strategy systems remain available.')
   });
 
   try {
@@ -49,9 +42,7 @@ async function bootstrap(){
     const support = await detectGraphicsSupport();
 
     if (!support.webglSupported && !support.webgpuSupported) {
-      bootFlow.setState(BOOT_STATES.compatibility_mode, {
-        detail: 'WebGL and WebGPU are unavailable in this browser/runtime.'
-      });
+      activateCompatibilityMode(bootFlow, 'WebGL and WebGPU are unavailable in this browser/runtime. Running 2D strategy mode.');
       return;
     }
 
@@ -235,6 +226,14 @@ async function bootstrap(){
       detail: `Unable to start full 3D mode. ${err.message || 'Unknown initialization issue.'}`
     });
   }
+}
+
+
+function activateCompatibilityMode(bootFlow, reason) {
+  bootFlow.setState(BOOT_STATES.compatibility_mode, {
+    detail: reason
+  });
+  mountCompatibilityMode({ reason });
 }
 
 async function detectGraphicsSupport() {
