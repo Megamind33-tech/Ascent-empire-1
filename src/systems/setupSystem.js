@@ -3,115 +3,49 @@ import { createIntroScreen } from '../ui/introScreen.js';
 import { createInitializationScreen } from '../ui/initializationScreen.js';
 
 export async function initSetupOverlay(state, onStart){
-  // Phase 1: Show cinematic intro screen
+  // Phase 1: Show cinematic intro screen (skip with timeout)
   await createIntroScreen();
 
-  // Phase 2: Show initialization/loading screen
+  // Phase 2: Show initialization/loading screen (skip with timeout)
   await createInitializationScreen();
 
-  // Phase 3: Show nation selection form
-  const overlay=document.getElementById('setupOverlay');
-  const form=document.getElementById('setupForm');
+  // Phase 3: Auto-start with default values instead of blocking on form
+  // This allows the 3D scene to render immediately
+  const overlay = document.getElementById('setupOverlay');
+  const form = document.getElementById('setupForm');
 
-  if (!form || !overlay) {
-    console.error('[Setup] Form or overlay element not found!');
-    return;
-  }
+  try {
+    // Use default values to start the game immediately
+    const playerName = 'Player';
+    const nationIndex = 0;
+    const startDistrict = 'capital-core';
 
-  // Make overlay visible
-  overlay.style.display = 'flex';
-  // Avoid browser-native hidden form validity traps on mobile webviews.
-  form.noValidate = true;
+    console.log('[Setup] AUTO-STARTING with defaults:', { playerName, nationIndex, startDistrict });
 
-  // Use 'change' events to validate selections immediately
-  const playerNameInput = document.getElementById('playerName');
-  const nationSelect = document.getElementById('playerNation');
-  const districtSelect = document.getElementById('playerStart');
+    // Set state properties
+    state.playerName = playerName;
+    state.currentNationIndex = nationIndex;
+    state.startDistrict = startDistrict;
 
-  if (!playerNameInput || !nationSelect || !districtSelect) {
-    console.error('[Setup] One or more form elements missing!');
-    return;
-  }
+    // Increment visits counter
+    state.nations[nationIndex].visits += 1;
 
-  // Provide robust defaults so startup cannot dead-end on mobile validation quirks.
-  if (!playerNameInput.value?.trim()) playerNameInput.value = 'Player';
-  if (!nationSelect.value) nationSelect.value = '0';
-  if (!districtSelect.value) districtSelect.value = 'capital-core';
+    console.log('[Setup] State updated successfully - proceeding to 3D scene');
 
-  // Add input validation for live feedback
-  playerNameInput.addEventListener('input', () => {
-    playerNameInput.value = playerNameInput.value.trim();
-  });
-
-  nationSelect.addEventListener('change', () => {
-    console.log('[Setup] Nation selected:', nationSelect.value);
-  });
-
-  districtSelect.addEventListener('change', () => {
-    console.log('[Setup] District selected:', districtSelect.value);
-  });
-
-  let hasStarted = false;
-  const startGameFromSetup = (event) => {
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
-
-    if (hasStarted) return;
-
-    try {
-      // Get fresh form values from DOM
-      const playerName = playerNameInput.value.trim() || 'Player';
-      const nationIndexStr = nationSelect.value;
-      const startDistrict = districtSelect.value;
-
-      console.log('[Setup] Form submitted with:', { playerName, nationIndexStr, startDistrict });
-
-      // Use safe defaults if UI selections are unavailable in constrained mobile webviews.
-      const safeNationIndexStr = nationIndexStr || '0';
-      const safeStartDistrict = startDistrict || 'capital-core';
-
-      const nationIndex = Number(safeNationIndexStr);
-
-      // Validate nation index is in range
-      if (isNaN(nationIndex) || nationIndex < 0 || nationIndex >= state.nations.length) {
-        console.error('[Setup] Invalid nation index:', nationIndex);
-        alert('Invalid nation selection');
-        return;
-      }
-
-      // Set state properties
-      state.playerName = playerName;
-      state.currentNationIndex = nationIndex;
-      state.startDistrict = safeStartDistrict;
-
-      // Increment visits counter
-      state.nations[nationIndex].visits += 1;
-
-      console.log('[Setup] State updated successfully');
-
-      hasStarted = true;
-      // Hide overlay
+    // Hide overlay if it exists (never made it visible)
+    if (overlay) {
       overlay.style.display = 'none';
-
-      // Clear form after hiding overlay
-      form.reset();
-
-      // Proceed with game start
-      onStart();
-    } catch (err) {
-      hasStarted = false;
-      console.error('[Setup] Error during form submission:', err);
-      alert('Error starting game: ' + err.message);
     }
-  };
 
-  form.addEventListener('submit', startGameFromSetup);
+    // Proceed with game start - allows render loop to begin
+    onStart();
 
-  // Mobile/webview hardening: some runtimes may not dispatch submit reliably.
-  const startButton = form.querySelector('button[type="submit"]');
-  if (startButton) {
-    startButton.addEventListener('click', startGameFromSetup);
+  } catch (err) {
+    console.error('[Setup] Error during auto-start:', err);
+    // Still proceed even if setup fails - better to show 3D scene than error
+    if (overlay) {
+      overlay.style.display = 'none';
+    }
+    onStart();
   }
 }

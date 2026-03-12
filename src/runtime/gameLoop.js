@@ -89,6 +89,14 @@ export function startGameLoop({
         firstFrameRendered = true;
         globalThis.__ASCENT_FIRST_FRAME_RENDERED__ = true;
         console.log('[BOOT] First frame rendered successfully');
+
+        // Show HUD after first frame is rendered
+        import('../ui/hud.js').then(({ showHUD }) => {
+          showHUD();
+          console.log('[BOOT] HUD made visible');
+        }).catch(err => {
+          console.error('[BOOT] Failed to show HUD:', err);
+        });
       }
 
       // Reset error counter on successful frame
