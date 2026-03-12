@@ -49,11 +49,15 @@ export function createScene(canvas, providedEngine) {
 
   // Attach camera controls to canvas
   try {
-    camera.attachControl(canvas, true);
+    const attached = camera.attachControl(canvas, true);
     console.log('[BOOT] Camera attached to canvas');
   } catch (err) {
-    console.warn('[BOOT] Failed to attach camera control:', err.message);
-    // Continue anyway - camera might still work with defaults
+    const message = `Failed to attach camera controls: ${err.message}. Game will not be interactive.`;
+    console.error('[BOOT]', message);
+    console.error('[BOOT] Stack:', err.stack);
+
+    // Show error to user and throw to prevent unplayable game
+    throw new Error(message);
   }
 
   console.log('[BOOT] Configuring lighting and environment');
