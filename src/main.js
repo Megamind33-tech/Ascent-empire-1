@@ -51,6 +51,9 @@ async function bootstrap(){
     // Don't throw - game can run without mobile controls
   }
 
+  // Setup camera keyboard shortcuts
+  setupCameraKeyboardShortcuts(camera);
+
   const { RAPIER, world } = await createRapierWorld();
   state.worldRefs.rapier = RAPIER; state.worldRefs.rapierWorld = world;
   createFixedBox(world, RAPIER, {x:0,y:-2,z:0}, {x:900,y:2,z:900});
@@ -195,7 +198,15 @@ async function bootstrap(){
   });
 }
 function createPlayerMarker(scene, shadows){ const marker=MeshBuilder.CreateCylinder('playerHQ',{diameterTop:7,diameterBottom:9,height:10,tessellation:12},scene); marker.position=new Vector3(0,5,24); const mat=new StandardMaterial('playerHQMat',scene); mat.diffuseColor=new Color3(.6,.58,.54); marker.material=mat; marker.receiveShadows=true; shadows.addShadowCaster(marker); }
-function handleCameraAction(camera, action){ if(action==='left') camera.alpha -= .14; else if(action==='right') camera.alpha += .14; else if(action==='zoomIn') camera.radius = Math.max(camera.lowerRadiusLimit, camera.radius - 18); else if(action==='zoomOut') camera.radius = Math.min(camera.upperRadiusLimit, camera.radius + 18); }
+function handleCameraAction(camera, action){ if(action==='left') camera.alpha -= .14; else if(action==='right') camera.alpha += .14; else if(action==='zoomIn') camera.radius = Math.max(camera.lowerRadiusLimit, camera.radius - 18); else if(action==='zoomOut') camera.radius = Math.min(camera.upperRadiusLimit, camera.radius + 18); else if(action==='fitAll') camera.radius = 520; }
+function setupCameraKeyboardShortcuts(camera) {
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Home') {
+      e.preventDefault();
+      handleCameraAction(camera, 'fitAll');
+    }
+  });
+}
 function capitalize(v){ return v.charAt(0).toUpperCase() + v.slice(1); }
 bootstrap().catch((err)=>{
   console.error('[Bootstrap] Fatal error:', err);
