@@ -11,9 +11,21 @@ export async function createGameRuntimeContext({
   createBestAvailableEngine,
   createScene,
   createGameState,
-  activateCompatibilityMode
+  activateCompatibilityMode,
+  detectDeviceTier = null
 }) {
   bootFlow.setState(BOOT_STATES.checking_support);
+
+  // Detect device capabilities for optimization
+  let deviceTier = 'mid'; // default
+  if (detectDeviceTier) {
+    try {
+      deviceTier = await detectDeviceTier();
+    } catch (err) {
+      console.warn('[Bootstrap] Device detection failed, defaulting to mid-range:', err.message);
+    }
+  }
+
   const support = await detectGraphicsSupport();
 
   if (!support.webglSupported && !support.webgpuSupported) {
@@ -38,6 +50,7 @@ export async function createGameRuntimeContext({
   state.worldRefs.scene = scene;
   state.worldRefs.engine = engine;
   state.worldRefs.camera = camera;
+  state.deviceTier = deviceTier;
 
   return {
     engine,
@@ -48,6 +61,7 @@ export async function createGameRuntimeContext({
     sun,
     moonLight,
     shadows,
-    skyController
+    skyController,
+    deviceTier
   };
 }
