@@ -164,7 +164,7 @@ export function createTerrain(scene) {
   ground.metadata = { buildable: true };
 
   // Shoreline refinement
-  const shore = MeshBuilder.CreateGround('shoreline', { width: 500, height: 180, subdivisions: 20 }, scene);
+  const shore = MeshBuilder.CreateGround('shoreline', { width: 175, height: 63, subdivisions: 20 }, scene);
   shore.position = new Vector3(-420, 2.8, -420);
   const sm = new PBRMaterial('shorePBR', scene);
   sm.albedoColor = new Color3(0.46, 0.44, 0.37);

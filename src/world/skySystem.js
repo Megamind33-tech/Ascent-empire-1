@@ -22,7 +22,7 @@ export function initSky(scene, sun) {
   skyMaterial.mieDirectionalG = 0.8;
   skyMaterial.mieCoefficient = 0.005;
 
-  const skybox = MeshBuilder.CreateBox("skyBox", { size: 2000 }, scene);
+  const skybox = MeshBuilder.CreateBox("skyBox", { size: 700 }, scene);
   skybox.infiniteDistance = true;
   skybox.material = skyMaterial;
 

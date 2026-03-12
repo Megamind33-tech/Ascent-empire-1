@@ -40,9 +40,9 @@ export function createNationWorld(scene, shadows, state) {
 
   // ── Roads ──────────────────────────────────────────────────────────────────
   for (let a = -240; a <= 240; a += 120) {
-    const rz = MeshBuilder.CreateGround(`road-z-${a}`, { width: 560, height: 22 }, scene);
+    const rz = MeshBuilder.CreateGround(`road-z-${a}`, { width: 196, height: 7.7 }, scene);
     rz.position.set(0, .12, a); rz.material = mats.road; rz.receiveShadows = true; meshes.push(rz);
-    const rx = MeshBuilder.CreateGround(`road-x-${a}`, { width: 22, height: 560 }, scene);
+    const rx = MeshBuilder.CreateGround(`road-x-${a}`, { width: 7.7, height: 196 }, scene);
     rx.position.set(a, .12, 0); rx.material = mats.road; rx.receiveShadows = true; meshes.push(rx);
 
     // 🏙️ Add Billboards near road intersections
@@ -177,12 +177,12 @@ export function createNationWorld(scene, shadows, state) {
 
   // ── Coastal / inland features ─────────────────────────────────────────────
   if (nation.coastal) {
-    const sea = MeshBuilder.CreateGround('sea', { width: 880, height: 880, subdivisions: 24 }, scene);
+    const sea = MeshBuilder.CreateGround('sea', { width: 308, height: 308, subdivisions: 24 }, scene);
     sea.position.set(-450, CONFIG.world.waterLevel, -450);
     sea.material = mats.water;
     sea.metadata = { isWater: true };   // ←  death zone marker
     meshes.push(sea);
-    const port = MeshBuilder.CreateGround('port', { width: 180, height: 80 }, scene);
+    const port = MeshBuilder.CreateGround('port', { width: 63, height: 28 }, scene);
     port.position.set(-230, 4.1, -220); port.material = mats.port; meshes.push(port);
     for (let i = 0; i < 3; i++) {
       const ship = MeshBuilder.CreateBox(`ship-${i}`, { width: 14, height: 6, depth: 32 }, scene);
@@ -190,7 +190,7 @@ export function createNationWorld(scene, shadows, state) {
       traffic.push({ mesh: ship, axis: 'x', dir: i % 2 === 0 ? 1 : -1, speed: 2 + rand() * 1.4, min: -520, max: -120, ship: true, passengers: 0 });
     }
   } else {
-    const airstrip = MeshBuilder.CreateGround('airstrip', { width: 220, height: 40 }, scene);
+    const airstrip = MeshBuilder.CreateGround('airstrip', { width: 77, height: 14 }, scene);
     airstrip.position.set(-260, .14, -240); airstrip.material = mats.airstrip; meshes.push(airstrip);
   }
   // ── Static world decorations ─────────────────────────────────────────────
