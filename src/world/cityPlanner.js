@@ -3,12 +3,15 @@
  * ==========================================
  * Orchestrates district-based city generation using DistrictPlanner and PlacementValidator.
  * Manages building spawning, placement, metrics, and visual organization.
+ * Now includes terrain-aware alignment and visual variation per district.
  */
 
 import { instantiateModel, getModelScale } from '../systems/assetLoader.js';
 import { createDistrictPlanner } from '../systems/districtPlanner.js';
 import { createPlacementValidator } from '../systems/placementValidator.js';
 import { isValidBuildingPosition } from './createCity.js';
+import { alignNodeToGround, isAcceptableSlope } from './terrainHeightSampler.js';
+import { applyBuildingVariation } from '../systems/buildingVariationSystem.js';
 
 /**
  * Create a city planner coordinator
@@ -69,29 +72,48 @@ export function createCityPlanner(scene, shadows) {
         const placement = districtPlanner.suggestPlacement(
           district.id,
           buildingKey,
-          (x, z) => validator.isValidPlacement(x, z, district, buildingKey)
+          (x, z) => {
+            // Check standard validity
+            if (!validator.isValidPlacement(x, z, district, buildingKey)) {
+              return false;
+            }
+            // Check terrain slope acceptability for this district
+            if (!isAcceptableSlope(x, z, 0.20)) {
+              return false;
+            }
+            return true;
+          }
         );
 
         if (placement) {
           // Create and position building
           const mesh = instantiateModel(buildingKey, scene);
           if (mesh) {
-            // Apply scale with variation for visual interest
+            // Get base scale from asset loader
             const baseScale = getModelScale(buildingKey);
-            const scaleVariation = 0.75 + Math.random() * 0.5; // ±25% variation (0.75 to 1.25)
-            const finalScale = baseScale * scaleVariation;
 
-            // Random cardinal rotation (0°, 90°, 180°, 270°)
-            const rotation = Math.floor(Math.random() * 4) * (Math.PI / 2);
+            // Align to terrain (this sets position.y to match terrain height)
+            alignNodeToGround(mesh, placement.x, placement.z, {
+              yOffset: 0.05,           // Small offset above terrain
+              clampPitch: true,        // Keep buildings mostly upright
+              clampRoll: true,
+              maxSlopeAngle: Math.PI / 16, // 11.25°
+            });
 
-            // Position and orient mesh
-            mesh.scaling.set(finalScale, finalScale, finalScale);
-            mesh.position.set(placement.x, 0.1, placement.z);
-            mesh.rotation.y = rotation;
+            // Apply visual variation (scale, rotation, material tinting)
+            const variation = applyBuildingVariation(
+              mesh,
+              district.id,
+              buildingKey,
+              scene,
+              { baseScale, baseRotation: 0 }
+            );
+
             mesh.metadata = {
               type: buildingKey,
               onFire: false,
               district: district.id,
+              terrain: true,           // Marked as terrain-aligned
             };
 
             // Add shadow casting
@@ -115,8 +137,8 @@ export function createCityPlanner(scene, shadows) {
               z: placement.z,
               buildingKey,
               districtId: district.id,
-              scale: finalScale,
-              rotation,
+              scale: variation.scale,
+              rotation: variation.rotation,
             });
 
             successCount++;

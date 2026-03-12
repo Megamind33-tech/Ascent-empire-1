@@ -1,5 +1,6 @@
 import { Engine, Scene, Color3, Color4, ArcRotateCamera, Vector3, HemisphericLight, DirectionalLight, PointLight, ShadowGenerator, GlowLayer } from '@babylonjs/core';
 import { initSky, updateSkyIntensity } from './skySystem.js';
+import { applyReadabilityEnhancements } from './sceneTuning.js';
 import { CONFIG } from '../config.js';
 export function createScene(canvas, providedEngine){
   if (!canvas) {
@@ -30,10 +31,12 @@ export function createScene(canvas, providedEngine){
     console.warn('Failed to attach camera control to canvas:', err);
   }
 
-  scene.fogMode = Scene.FOGMODE_LINEAR; scene.fogColor = new Color3(.72,.79,.88); scene.fogStart = CONFIG.world.fogStart; scene.fogEnd = CONFIG.world.fogEnd; const hemi = new HemisphericLight('hemi', new Vector3(.2,1,.1), scene); hemi.intensity=.9; hemi.groundColor = new Color3(.18,.2,.22); const sun = new DirectionalLight('sun', new Vector3(-.4,-1,-.2), scene); sun.position = new Vector3(180,260,-100); sun.intensity=1.7; const moonLight = new PointLight('moon', new Vector3(-180,120,80), scene); moonLight.intensity=.12;  const shadows = new ShadowGenerator(CONFIG.mobile.shadowMapSize, sun); shadows.useBlurExponentialShadowMap = true; shadows.blurKernel = 16; const glow = new GlowLayer('glow', scene); glow.intensity=.18; 
+  scene.fogMode = Scene.FOGMODE_LINEAR; scene.fogColor = new Color3(.72,.79,.88); scene.fogStart = CONFIG.world.fogStart; scene.fogEnd = CONFIG.world.fogEnd; const hemi = new HemisphericLight('hemi', new Vector3(.2,1,.1), scene); hemi.intensity=.9; hemi.groundColor = new Color3(.18,.2,.22); const sun = new DirectionalLight('sun', new Vector3(-.4,-1,-.2), scene); sun.position = new Vector3(180,260,-100); sun.intensity=1.7; const moonLight = new PointLight('moon', new Vector3(-180,120,80), scene); moonLight.intensity=.12;  const shadows = new ShadowGenerator(CONFIG.mobile.shadowMapSize, sun); shadows.useBlurExponentialShadowMap = true; shadows.blurKernel = 16; const glow = new GlowLayer('glow', scene); glow.intensity=.25;
   const { skyMaterial, sunSphere, moonSphere, cloudLayers } = initSky(scene, sun);
   glow.addIncludedOnlyMesh(sunSphere);
   glow.addIncludedOnlyMesh(moonSphere);
+  // Apply readability enhancements for better visibility of terrain and buildings
+  applyReadabilityEnhancements(scene, { reduceFog: true, improveContrast: true, enhanceLighting: false, increaseGlow: true });
   function skyController(daylight){
     updateSkyIntensity(skyMaterial, daylight, sunSphere, moonSphere, cloudLayers);
     const daySky=new Color3(.72,.82,.93); const nightSky=new Color3(.02,.03,.07);

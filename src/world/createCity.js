@@ -1,6 +1,7 @@
 import { MeshBuilder, StandardMaterial, Color3, Vector3, Matrix, Quaternion } from '@babylonjs/core';
 import { spawnInstitution } from './createInstitutions.js';
 import { instantiateModel, getModelScale } from '../systems/assetLoader.js';
+import { sampleTerrainHeight, alignNodeToGround } from './terrainHeightSampler.js';
 
 /**
  * Validation helper: Check if a building position is valid according to scale calibration rules.
@@ -61,10 +62,12 @@ export function createCity(scene, shadows, state) {
               if (Math.abs(x) < 54 || Math.abs(z) < 54) continue;
               if (Math.abs(x - 160) < 22 || Math.abs(x + 160) < 22 || Math.abs(z - 160) < 22 || Math.abs(z + 160) < 22) continue;
               if (Math.random() > 0.72) continue;
-              
+
+              // Sample terrain height at this position for proper alignment
+              const terrainY = sampleTerrainHeight(x, z);
               const h = 5 + Math.random() * 15;
               const s = 0.5 + Math.random() * 0.5;
-              matrices.push(Matrix.Compose(new Vector3(s, h, s), q, new Vector3(x, 0.1, z)));
+              matrices.push(Matrix.Compose(new Vector3(s, h, s), q, new Vector3(x, terrainY + 0.1, z)));
             }
           }
           mesh.thinInstanceAdd(matrices);
@@ -79,16 +82,16 @@ export function createCity(scene, shadows, state) {
   // ⚓ Port Infrastructure (Scaled using city planning math: ~36 units per building unit)
   // Seaport reduced from 90x26 to 36x12 to fit the grid
   const seaport = MeshBuilder.CreateBox('seaport', { width: 36, depth: 12, height: 5 }, scene);
-  seaport.position = new Vector3(-250, 2.6, -250);
+  alignNodeToGround(seaport, -250, -250, { yOffset: 2.5, clampPitch: true, clampRoll: true });
   seaport.material = m.port;
 
   // Docks reduced from 14x48 to 12x16 each for proportional sizing
   const dock1 = MeshBuilder.CreateBox('dock1', { width: 12, depth: 16, height: 1.5 }, scene);
-  dock1.position = new Vector3(-208, 0.8, -250);
+  alignNodeToGround(dock1, -208, -250, { yOffset: 0.75, clampPitch: true, clampRoll: true });
   dock1.material = m.port;
 
   const dock2 = dock1.clone('dock2');
-  dock2.position.x = -186;
+  alignNodeToGround(dock2, -186, -250, { yOffset: 0.75, clampPitch: true, clampRoll: true });
 
   createAnchors(scene, state, m);
   
