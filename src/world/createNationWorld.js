@@ -610,12 +610,12 @@ function materials(scene, tone) {
     m.specularColor = new Color3(...spec); m.alpha = alpha; return m;
   };
   return {
-    ground: make('ground', tone), road: make('road', [.11,.12,.13]),
-    building: make('building',[.43,.45,.48],[.16,.16,.18]), civic: make('civic',[.54,.52,.49],[.12,.12,.12]),
-    dark: make('dark',[.24,.27,.31],[.1,.1,.1]), anchor: make('anchor',[.22,.26,.28],[.03,.03,.03],.72),
-    car: make('car',[.16,.17,.19],[.3,.3,.3]), agent: make('agent',[.22,.23,.24]),
-    water: make('water',[.08,.22,.32],[.4,.45,.5],.93), port: make('port',[.36,.37,.35]),
-    ship: make('ship',[.27,.29,.31]), airstrip: make('air',[.15,.15,.15]), industrial: make('ind',[.37,.39,.4]),
+    ground: make('ground', tone), road: make('road', [.18,.18,.20]),
+    building: make('building',[.72,.62,.50],[.20,.20,.22]), civic: make('civic',[.65,.58,.48],[.15,.15,.15]),
+    dark: make('dark',[.35,.30,.28],[.12,.12,.12]), anchor: make('anchor',[.28,.38,.30],[.05,.05,.05],.72),
+    car: make('car',[.25,.28,.32],[.3,.3,.3]), agent: make('agent',[.35,.32,.28]),
+    water: make('water',[.15,.45,.65],[.5,.55,.6],.93), port: make('port',[.50,.48,.42]),
+    ship: make('ship',[.45,.42,.38]), airstrip: make('air',[.22,.22,.24]), industrial: make('ind',[.55,.50,.44]),
   };
 }
 function point(rand) { return new Vector3(-170 + rand() * 340, .9, -170 + rand() * 340); }

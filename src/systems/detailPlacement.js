@@ -30,7 +30,7 @@ export class DetailPlacement {
       vegetation: {
         trees: {
           density: 0.08,            // ~8% of buildable area
-          types: ['tree1', 'tree2', 'tree3'],
+          types: ['birch', 'palm', 'pine'],
           targetCount: 60,          // Increased from 45 for better coverage
           scale: [0.10, 0.16],      // Increased from 0.08-0.12 for visibility
           minDistanceFromBuildings: 20,  // Increased from 18
@@ -39,7 +39,7 @@ export class DetailPlacement {
         },
         shrubs: {
           density: 0.15,            // More shrubs for ground coverage
-          types: ['bush1', 'bush2'],
+          types: ['birch', 'pine'],
           targetCount: 90,          // Increased from 60
           scale: [0.06, 0.12],      // Much larger: was 0.03-0.06
           minDistanceFromBuildings: 12,  // Increased from 10
