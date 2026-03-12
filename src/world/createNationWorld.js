@@ -185,8 +185,8 @@ export function createNationWorld(scene, shadows, state) {
     const port = MeshBuilder.CreateGround('port', { width: 180, height: 80 }, scene);
     port.position.set(-230, 4.1, -220); port.material = mats.port; meshes.push(port);
     for (let i = 0; i < 3; i++) {
-      const ship = MeshBuilder.CreateBox(`ship-${i}`, { width: 18, height: 8, depth: 54 }, scene);
-      ship.position.set(-380 + i * 80, 8, -290 + i * 30); ship.material = mats.ship; meshes.push(ship);
+      const ship = MeshBuilder.CreateBox(`ship-${i}`, { width: 14, height: 6, depth: 32 }, scene);
+      ship.position.set(-380 + i * 80, 3.2, -290 + i * 30); ship.material = mats.ship; meshes.push(ship);
       traffic.push({ mesh: ship, axis: 'x', dir: i % 2 === 0 ? 1 : -1, speed: 2 + rand() * 1.4, min: -520, max: -120, ship: true, passengers: 0 });
     }
   } else {
