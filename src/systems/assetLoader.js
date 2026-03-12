@@ -149,64 +149,64 @@ export function getAssetContainer(key) {
 export function getModelScale(key) {
   switch (key) {
     // ── Civic ──────────────────────────────────────────────────────────────
-    case 'housing':        return 0.48;
-    case 'school':         return 0.45;
+    case 'housing':        return 0.10;
+    case 'school':         return 0.10;
     case 'police':
     case 'acc':
-    case 'dec':            return 0.45;
-    case 'police_station': return 0.45;
-    case 'hospital':       return 0.54;
-    case 'parliament':     return 0.84;
-    case 'stadium':        return 0.96;
+    case 'dec':            return 0.10;
+    case 'police_station': return 0.10;
+    case 'hospital':       return 0.12;
+    case 'parliament':     return 0.096; // Building.glb proxy — same calibration as tower_a
+    case 'stadium':        return 0.20;
     case 'mine':
-    case 'refinery':       return 0.60;
+    case 'refinery':       return 0.15;
     case 'barracks':
-    case 'base':           return 0.66;
-    case 'cat':            return 0.18;  // small decorative animal
+    case 'base':           return 0.15;
+    case 'cat':            return 0.05;  // small decorative animal
 
     // ── Stores ─────────────────────────────────────────────────────────────
-    case 'store':          return 0.42;
-    case 'bar':            return 0.42;
+    case 'store':          return 0.10;
+    case 'bar':            return 0.10;
 
     // ── Landmarks ──────────────────────────────────────────────────────────
     case 'tower_a':
     case 'tower_b':        return 0.096; // Building.glb is very large natively
-    case 'billboard':      return 0.36;
-    case 'farm':           return 0.30;
-    case 'bridge':         return 0.72;
+    case 'billboard':      return 0.09;
+    case 'farm':           return 0.09;
+    case 'bridge':         return 0.15;
     case 'road_seg':
-    case 'road_3':         return 0.54;
-    case 'road_bits':      return 0.36;
-    case 'stop_sign':      return 0.24;
-    case 'waterfall':      return 0.66;
+    case 'road_3':         return 0.12;
+    case 'road_bits':      return 0.09;
+    case 'stop_sign':      return 0.06;
+    case 'waterfall':      return 0.15;
 
     // ── Trees ──────────────────────────────────────────────────────────────
     case 'birch':
     case 'palm':
-    case 'pine':           return 0.45;
+    case 'pine':           return 0.12;
 
     // ── Rural ──────────────────────────────────────────────────────────────
-    case 'cottage':        return 0.42;
-    case 'rural_farm':     return 0.48;
-    case 'greenhouse':     return 0.42;
+    case 'cottage':        return 0.10;
+    case 'rural_farm':     return 0.12;
+    case 'greenhouse':     return 0.10;
 
-    // ── Vehicles (smaller than buildings) ──────────────────────────────────
+    // ── Vehicles ───────────────────────────────────────────────────────────
     case 'car_a':
     case 'car_b':
     case 'car_c':
     case 'car_model':
     case 'gtr':
-    case 'sports_car':     return 0.27;
-    case 'police_car':     return 0.27;
-    case 'suv':            return 0.30;
-    case 'bus':            return 0.33;
+    case 'sports_car':     return 0.09;
+    case 'police_car':     return 0.09;
+    case 'suv':            return 0.09;
+    case 'bus':            return 0.11;
 
     // ── People ─────────────────────────────────────────────────────────────
-    case 'agent_a':        return 0.30;
+    case 'agent_a':        return 0.09;
 
     // ── Ship ───────────────────────────────────────────────────────────────
-    case 'ship':           return 0.54;
+    case 'ship':           return 0.15;
 
-    default:               return 0.30;
+    default:               return 0.09;
   }
 }
