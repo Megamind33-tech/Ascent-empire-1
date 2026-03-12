@@ -219,7 +219,6 @@ export function createNationWorld(scene, shadows, state) {
     { key: 'cottage',       pos: new Vector3( 235,  0.1,   80) },
     { key: 'greenhouse',    pos: new Vector3( 205,  0.1,   55) },
     { key: 'rural_farm',    pos: new Vector3( 245,  0.1,  -30) },
-    { key: 'corn_maze',     pos: new Vector3( 240,  0.1,   25) },
 
     // Bridge over the z=120 road corridor
     { key: 'bridge',        pos: new Vector3(   0,  0.1,  130), rotY: Math.PI / 2 },

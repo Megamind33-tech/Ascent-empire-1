@@ -29,7 +29,6 @@ const MANIFEST = {
   refinery:       'civic/refinery.glb',
   barracks:       'civic/barracks.glb',
   base:           'civic/base.glb',
-  corn_maze:      'civic/corn_maze-01_glb-compressed.glb',
   cat:            'civic/3danimate_cat_glb-compressed-compressed.glb',
   acc:            'civic/police.glb',   // reuse police as anti-corruption office
   dec:            'civic/police.glb',   // reuse police as defence ministry
@@ -163,7 +162,6 @@ export function getModelScale(key) {
     case 'refinery':       return 0.60;
     case 'barracks':
     case 'base':           return 0.66;
-    case 'corn_maze':      return 0.48;
     case 'cat':            return 0.18;  // small decorative animal
 
     // ── Stores ─────────────────────────────────────────────────────────────
