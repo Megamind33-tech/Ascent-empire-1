@@ -383,6 +383,24 @@
     
     <canvas id="renderCanvas"></canvas>
 
+    <!-- DEBUG STATUS (always visible for troubleshooting) -->
+    <div id="debugStatus" style="
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.8);
+      color: #0f0;
+      font-family: monospace;
+      font-size: 10px;
+      padding: 8px;
+      border: 1px solid #0f0;
+      max-width: 200px;
+      z-index: 99998;
+      max-height: 100px;
+      overflow-y: auto;
+      display: none;
+    "></div>
+
     <!-- SETUP OVERLAY (Game Start) -->
     <div id="setupOverlay" class="modal" style="display:none; z-index: 9999;">
         <div class="modal-content" style="max-width: 500px; height: auto; margin: auto;">

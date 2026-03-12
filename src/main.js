@@ -2,15 +2,44 @@ import { runGameBootstrap } from './runtime/runGameBootstrap.js';
 
 console.log('[BOOT] Loading main entry point');
 
+// Debug status tracking - press Ctrl+Shift+Alt to toggle debug mode
+const debugStatus = document.getElementById('debugStatus');
+let debugEnabled = localStorage.getItem('ascent-debug') === 'true';
+
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.shiftKey && e.altKey && e.key === '0') {
+    debugEnabled = !debugEnabled;
+    localStorage.setItem('ascent-debug', debugEnabled);
+    if (debugStatus) debugStatus.style.display = debugEnabled ? 'block' : 'none';
+    console.log('[BOOT] Debug mode:', debugEnabled);
+  }
+});
+
+function debugLog(msg) {
+  console.log(msg);
+  if (debugStatus && debugEnabled) {
+    const line = document.createElement('div');
+    line.textContent = msg.substring(0, 50);
+    debugStatus.appendChild(line);
+    debugStatus.scrollTop = debugStatus.scrollHeight;
+  }
+}
+
+debugLog('[BOOT] Loading main entry point');
+
 // Global error handler to catch any errors that aren't handled
 window.addEventListener('error', (event) => {
-  console.error('[BOOT] Uncaught error:', event.error);
-  showFatalErrorPanel(`Uncaught Error: ${event.error?.message || 'Unknown error'}`, event.error);
+  const msg = `Uncaught Error: ${event.error?.message || 'Unknown error'}`;
+  console.error('[BOOT]', msg);
+  debugLog('[ERROR] ' + msg);
+  showFatalErrorPanel(msg, event.error);
 });
 
 window.addEventListener('unhandledrejection', (event) => {
-  console.error('[BOOT] Unhandled promise rejection:', event.reason);
-  showFatalErrorPanel(`Promise Rejection: ${event.reason?.message || event.reason || 'Unknown error'}`, event.reason);
+  const msg = `Promise Rejection: ${event.reason?.message || event.reason || 'Unknown error'}`;
+  console.error('[BOOT]', msg);
+  debugLog('[REJECT] ' + msg);
+  showFatalErrorPanel(msg, event.reason);
 });
 
 // Ensure DOM is ready before bootstrapping
