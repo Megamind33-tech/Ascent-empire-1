@@ -1,5 +1,6 @@
 import { MeshBuilder, StandardMaterial, Color3, Vector3 } from '@babylonjs/core';
 import { instantiateModel, getModelScale } from '../systems/assetLoader.js';
+import { getVehicleRotation } from '../systems/vehicleDirectionController.js';
 
 export function createTraffic(scene,shadows){
   const cars=[],agents=[],ships=[];
@@ -76,19 +77,23 @@ export function createTraffic(scene,shadows){
           continue;
         }
         
-        // Traffic movement
+        // Traffic movement with proper direction handling
         if (item.axis) {
+            // Move vehicle along axis
+            const distance = item.speed * item.dir * dt;
             if (item.axis === 'x') {
-              item.mesh.position.x += item.speed * item.dir * dt;
+              item.mesh.position.x += distance;
               if (item.mesh.position.x > 260) item.mesh.position.x = -260;
               if (item.mesh.position.x < -260) item.mesh.position.x = 260;
-              item.mesh.rotation.y = item.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
             } else {
-              item.mesh.position.z += item.speed * item.dir * dt;
+              item.mesh.position.z += distance;
               if (item.mesh.position.z > 260) item.mesh.position.z = -260;
               if (item.mesh.position.z < -260) item.mesh.position.z = 260;
-              item.mesh.rotation.y = item.dir > 0 ? 0 : Math.PI;
             }
+
+            // Rotate vehicle to face direction of travel
+            // Uses standardized rotation that accounts for model forward axis
+            item.mesh.rotation.y = getVehicleRotation(item.dir, item.axis, '+z');
         } else if (item.target) {
             // Agent movement
             const d = item.target.subtract(item.mesh.position);
