@@ -24,9 +24,9 @@ export function createScene(canvas, providedEngine) {
     throw new Error('Failed to create or use Babylon engine');
   }
 
-  // Create scene with proper clear color (light blue)
+  // Create scene with proper clear color (matches daytime sky)
   const scene = new Scene(engine);
-  scene.clearColor = new Color4(0.55, 0.75, 0.95, 1.0);
+  scene.clearColor = new Color4(0.72, 0.82, 0.93, 1.0);
 
   // Set hardware scaling for mobile optimization
   engine.setHardwareScalingLevel(1 / clamp(window.devicePixelRatio, CONFIG.mobile.hardwareScalingMin, CONFIG.mobile.hardwareScalingMax));
@@ -88,7 +88,8 @@ export function createScene(canvas, providedEngine) {
   console.log('[BOOT] Initializing sky and celestial objects');
 
   // Initialize sky with sun/moon
-  const { skyMaterial, sunSphere, moonSphere, cloudLayers } = initSky(scene, sun);
+  const { skybox, skyMaterial, sunSphere, moonSphere, cloudLayers } = initSky(scene, sun);
+  skybox.renderingGroupId = -1;  // Render skybox first, as background
   glow.addIncludedOnlyMesh(sunSphere);
   glow.addIncludedOnlyMesh(moonSphere);
 

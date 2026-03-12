@@ -27,13 +27,13 @@ export function applyReadabilityEnhancements(scene, options = {}) {
   } = options;
 
   // ── Fog Tuning ──────────────────────────────────────────────────
-  // Make the city more visible by reducing fog start distance
+  // Make the city more visible while preventing fog from occluding it
   if (reduceFog) {
-    // More visible fog that doesn't choke off the city
+    // Fog positioned to enhance atmosphere without obscuring world
     scene.fogMode = 1; // LINEAR
-    scene.fogStart = 500;    // Push fog start further out for better city visibility
-    scene.fogEnd = 1600;     // Extended visibility range
-    scene.fogColor = new Color3(0.75, 0.82, 0.90); // Warmer, brighter sky fog
+    scene.fogStart = 800;    // Start fog further away from camera
+    scene.fogEnd = 2000;     // Extended visibility range for far objects
+    scene.fogColor = new Color3(0.75, 0.82, 0.90); // Match sky color
   }
 
   // ── Color/Contrast Tuning ───────────────────────────────────────

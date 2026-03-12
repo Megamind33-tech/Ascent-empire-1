@@ -12,8 +12,8 @@ export function initSky(scene, sun) {
   skyMaterial.backFaceCulling = false;
 
   // Cinematic / Realistic Settings
-  skyMaterial.turbidity = 2.5;
-  skyMaterial.luminance = 1.1;
+  skyMaterial.turbidity = 1.5;   // Reduced haze for clearer visibility
+  skyMaterial.luminance = 1.0;   // Standard brightness (was 1.1)
   skyMaterial.inclination = 0.5; // Day/Night
   skyMaterial.azimuth = 0.25;
 
@@ -110,6 +110,7 @@ function createAnimatedClouds(scene) {
       cloudMaterial.alpha = 0.30;
       cloudMaterial.disableDepthWrite = false;
       cloudPlane.isPickable = false;
+      cloudPlane.renderingGroupId = 1;  // Render after world, with proper depth ordering
       cloudPlane.material = cloudMaterial;
 
       planes.push({
