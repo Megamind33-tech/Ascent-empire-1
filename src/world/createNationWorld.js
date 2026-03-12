@@ -288,10 +288,10 @@ export function createNationWorld(scene, shadows, state) {
 
   // ── Diagnostic logging (optional: uncomment for calibration debugging) ──────
   // Logs initial vehicle positions to verify traffic spacing and lane distribution
-  if (false) { // Set to true for diagnostics during calibration
+  if (true) { // Set to true for diagnostics during calibration
     console.log('[Diagnostics] Traffic spawn positions:');
     traffic.forEach((item, i) => {
-      console.log(`  Car ${i}: lane=${item.axis}/${item.laneCoord} dir=${item.dir} pos=[${item.mesh.position.x.toFixed(1)},${item.mesh.position.z.toFixed(1)}]`);
+      console.log(`  Car ${i}: lane=${item.axis}/${item.laneCoord} dir=${item.dir} pos=[${item.mesh.position.x.toFixed(1)},${item.mesh.position.z.toFixed(1)}] scale=${item.mesh.scaling.x.toFixed(3)}`);
     });
   }
 
@@ -330,17 +330,18 @@ export function createNationWorld(scene, shadows, state) {
 
   // ── Coastal / inland features ─────────────────────────────────────────────
   if (nation.coastal) {
-    const sea = MeshBuilder.CreateGround('sea', { width: 880, height: 880, subdivisions: 24 }, scene);
-    sea.position.set(-450, CONFIG.world.waterLevel, -450);
+    const sea = MeshBuilder.CreateGround('sea', { width: 1000, height: 1000, subdivisions: 24 }, scene);
+    // Position water far edge at -600 (city extends to -280, so clear gap)
+    sea.position.set(-880, CONFIG.world.waterLevel, -880);
     sea.material = mats.water;
     sea.metadata = { isWater: true };   // ←  death zone marker
     meshes.push(sea);
     const port = MeshBuilder.CreateGround('port', { width: 180, height: 80 }, scene);
-    port.position.set(-230, 4.1, -220); port.material = mats.port; meshes.push(port);
+    port.position.set(-750, 4.1, -750); port.material = mats.port; meshes.push(port);
     for (let i = 0; i < 3; i++) {
       const ship = MeshBuilder.CreateBox(`ship-${i}`, { width: 18, height: 8, depth: 54 }, scene);
-      ship.position.set(-380 + i * 80, 8, -290 + i * 30); ship.material = mats.ship; meshes.push(ship);
-      traffic.push({ mesh: ship, axis: 'x', dir: i % 2 === 0 ? 1 : -1, speed: 2 + rand() * 1.4, min: -520, max: -120, ship: true, passengers: 0 });
+      ship.position.set(-750 + i * 80, 8, -750 + i * 30); ship.material = mats.ship; meshes.push(ship);
+      traffic.push({ mesh: ship, axis: 'x', dir: i % 2 === 0 ? 1 : -1, speed: 2 + rand() * 1.4, min: -1150, max: -400, ship: true, passengers: 0 });
     }
   } else {
     const airstrip = MeshBuilder.CreateGround('airstrip', { width: 220, height: 40 }, scene);
