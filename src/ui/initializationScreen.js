@@ -118,10 +118,24 @@ export function createInitializationScreen() {
   document.body.appendChild(initScreen);
 
   return new Promise((resolve) => {
-    // Simulate initialization (at least 2 seconds for visual effect)
-    setTimeout(() => {
-      initScreen.remove();
+    let resolved = false;
+
+    const cleanup = () => {
+      if (resolved) return;
+      resolved = true;
+      if (initScreen.parentElement) initScreen.remove();
       resolve();
-    }, 2500);
+    };
+
+    // Simulate initialization (at least 2 seconds for visual effect)
+    // Defensive: use shorter timeout to ensure screen dismisses quickly if something hangs
+    const timer = setTimeout(cleanup, 2500);
+
+    // Failsafe: guarantee cleanup even if promise handling is slow
+    // This prevents the screen from persisting indefinitely
+    const failsafeTimer = setTimeout(cleanup, 5000);
+
+    // Store timers so they can be cleared if needed
+    initScreen._timers = { timer, failsafeTimer };
   });
 }

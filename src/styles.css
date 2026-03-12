@@ -1,16 +1,17 @@
 /* ━━━━━━━━━━━━━━  DESIGN TOKENS  ━━━━━━━━━━━━━━ */
 :root {
-  --bg:      #0b1118;
-  --glass:   rgba(10,18,27,.68);
-  --border:  rgba(255,255,255,.08);
-  --text:    #ecf1f7;
-  --muted:   #9eb0c2;
-  --accent:  #d8e4f2;
-  --shadow:  0 10px 30px rgba(0,0,0,.25);
-  --green:   #3ddc84;
-  --red:     #ff6060;
-  --gold:    #f5c842;
-  --brand:   #5c8fff;
+  --bg:        #0b1118;
+  --glass:     rgba(10,18,27,.68);
+  --glass-bg:  rgba(10,18,27,.68);
+  --border:    rgba(255,255,255,.08);
+  --text:      #ecf1f7;
+  --muted:     #9eb0c2;
+  --accent:    #d8e4f2;
+  --shadow:    0 10px 30px rgba(0,0,0,.25);
+  --green:     #3ddc84;
+  --red:       #ff6060;
+  --gold:      #f5c842;
+  --brand:     #5c8fff;
 }
 
 /* ━━━━━━━━━━━━━━  RESET & BASE  ━━━━━━━━━━━━━━ */

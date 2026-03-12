@@ -48,6 +48,19 @@ export function createBootFlow({ onRetry3D, onCompatibilityMode }) {
     }
   }, 20000);
 
+  // Additional failsafe: if still not ready after 35 seconds, force show error even if normal flow doesn't reach it
+  const hardFailsafeTimer = setTimeout(() => {
+    if (overlay.isConnected && currentState !== BOOT_STATES.ready) {
+      console.error('[BOOT] Hard failsafe triggered - boot process unresponsive after 35 seconds');
+      overlay.style.pointerEvents = 'auto';
+      overlay.style.opacity = '1';
+      statusText.textContent = 'Boot Timeout - Please refresh or select an option below';
+      setState(BOOT_STATES.boot_error, {
+        detail: 'Boot process did not complete. Try refreshing the page or switching to compatibility mode.'
+      });
+    }
+  }, 35000);
+
   function setState(state, opts = {}) {
     currentState = state;
     overlay.dataset.state = state;
@@ -75,7 +88,8 @@ export function createBootFlow({ onRetry3D, onCompatibilityMode }) {
 
   function destroy() {
     clearTimeout(stallTimer);
-    overlay.remove();
+    clearTimeout(hardFailsafeTimer);
+    if (overlay.parentElement) overlay.remove();
   }
 
   return { setState, destroy, states: BOOT_STATES };
