@@ -1,5 +1,15 @@
 import { CONFIG } from '../config.js';
-export function initSetupOverlay(state, onStart){
+import { createIntroScreen } from '../ui/introScreen.js';
+import { createInitializationScreen } from '../ui/initializationScreen.js';
+
+export async function initSetupOverlay(state, onStart){
+  // Phase 1: Show cinematic intro screen
+  await createIntroScreen();
+
+  // Phase 2: Show initialization/loading screen
+  await createInitializationScreen();
+
+  // Phase 3: Show nation selection form
   const overlay=document.getElementById('setupOverlay');
   const form=document.getElementById('setupForm');
 
@@ -7,6 +17,9 @@ export function initSetupOverlay(state, onStart){
     console.error('[Setup] Form or overlay element not found!');
     return;
   }
+
+  // Make overlay visible
+  overlay.style.display = 'flex';
 
   // Use 'change' events to validate selections immediately
   const playerNameInput = document.getElementById('playerName');

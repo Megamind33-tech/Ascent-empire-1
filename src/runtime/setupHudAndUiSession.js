@@ -1,9 +1,9 @@
 /**
  * Sets up HUD actions, setup overlay, and runtime UI hooks.
  * @param {object} deps grouped HUD/setup dependencies
- * @returns {void}
+ * @returns {Promise<void>}
  */
-export function setupHudAndUiSession({
+export async function setupHudAndUiSession({
   state,
   camera,
   buildNation,
@@ -30,7 +30,7 @@ export function setupHudAndUiSession({
 
   hudServices.initHUD(state, onHudAction, (action) => hudServices.handleCameraAction(camera, action));
 
-  setupServices.initSetupOverlay(state, () => {
+  await setupServices.initSetupOverlay(state, () => {
     setupServices.initAudio();
     buildNation();
   });

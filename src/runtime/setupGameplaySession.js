@@ -30,7 +30,7 @@ export async function setupGameplaySession({
     services
   });
 
-  setupHudAndUiSession({
+  await setupHudAndUiSession({
     state,
     camera,
     buildNation,
