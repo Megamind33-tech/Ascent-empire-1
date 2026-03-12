@@ -62,7 +62,7 @@ export async function runGameBootstrap(canvas) {
       services: gameplaySessionServices
     });
 
-    bootFlow.setState(BOOT_STATES.ready);
+    globalThis.__ASCENT_FIRST_FRAME_RENDERED__ = false;
 
     startGameLoop({
       engine,
@@ -77,10 +77,23 @@ export async function runGameBootstrap(canvas) {
       timeSystem,
       camera
     });
+
+    await waitForFirstFrame(8000);
+    bootFlow.setState(BOOT_STATES.ready);
   } catch (err) {
     console.error('[Bootstrap] Boot error:', err);
     bootFlow.setState(BOOT_STATES.boot_error, {
       detail: `Unable to start full 3D mode. ${err.message || 'Unknown initialization issue.'}`
     });
+  }
+}
+
+async function waitForFirstFrame(timeoutMs = 8000) {
+  const start = performance.now();
+  while (!globalThis.__ASCENT_FIRST_FRAME_RENDERED__) {
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    if (performance.now() - start > timeoutMs) {
+      throw new Error('Render loop did not produce a frame before timeout.');
+    }
   }
 }

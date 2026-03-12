@@ -37,13 +37,25 @@ export function createBootFlow({ onRetry3D, onCompatibilityMode }) {
   const statusText = overlay.querySelector('#bootStatusText');
   const details = overlay.querySelector('#bootDetails');
   const actions = overlay.querySelector('#bootActions');
+  let currentState = 'initializing';
+
+  // Failsafe: if boot flow stalls, provide recovery actions instead of an indefinite grey/black screen.
+  const stallTimer = setTimeout(() => {
+    if (overlay.isConnected && currentState !== BOOT_STATES.ready) {
+      setState(BOOT_STATES.boot_error, {
+        detail: 'Startup took too long and appears stalled. You can retry 3D mode or switch to compatibility mode.'
+      });
+    }
+  }, 20000);
 
   function setState(state, opts = {}) {
+    currentState = state;
     overlay.dataset.state = state;
     statusText.textContent = opts.message || STATE_LABELS[state] || 'Initializing…';
     details.textContent = opts.detail || '';
 
     if (state === BOOT_STATES.ready && !opts.keepVisible) {
+      clearTimeout(stallTimer);
       overlay.classList.add('boot-overlay--hidden');
       setTimeout(() => overlay.remove(), 280);
       return;
@@ -62,6 +74,7 @@ export function createBootFlow({ onRetry3D, onCompatibilityMode }) {
   }
 
   function destroy() {
+    clearTimeout(stallTimer);
     overlay.remove();
   }
 

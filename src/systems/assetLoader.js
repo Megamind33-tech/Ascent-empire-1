@@ -11,7 +11,7 @@
 import { SceneLoader, AssetContainer, AbstractMesh } from '@babylonjs/core';
 import "@babylonjs/loaders/glTF";
 
-const ASSET_PATH = 'assets/models/';
+const ASSET_PATH = '/assets/models/';
 
 /**
  * Manifest defining all available models.
