@@ -26,7 +26,7 @@ export function createScene(canvas, providedEngine) {
 
   // Create scene with proper clear color (matches daytime sky)
   const scene = new Scene(engine);
-  scene.clearColor = new Color4(0.72, 0.82, 0.93, 1.0);
+  scene.clearColor = new Color4(0.75, 0.84, 0.95, 1.0);
 
   // Set hardware scaling for mobile optimization
   engine.setHardwareScalingLevel(1 / clamp(window.devicePixelRatio, CONFIG.mobile.hardwareScalingMin, CONFIG.mobile.hardwareScalingMax));
@@ -64,18 +64,18 @@ export function createScene(canvas, providedEngine) {
 
   // Configure scene environment
   scene.fogMode = Scene.FOGMODE_LINEAR;
-  scene.fogColor = new Color3(0.75, 0.82, 0.90);
+  scene.fogColor = new Color3(0.75, 0.84, 0.95);
   scene.fogStart = CONFIG.world.fogStart;
   scene.fogEnd = CONFIG.world.fogEnd;
 
   // Lighting setup
   const hemi = new HemisphericLight('hemi', new Vector3(0.2, 1, 0.1), scene);
-  hemi.intensity = 1.15;
-  hemi.groundColor = new Color3(0.30, 0.32, 0.28);
+  hemi.intensity = 1.35;
+  hemi.groundColor = new Color3(0.45, 0.47, 0.45);
 
   const sun = new DirectionalLight('sun', new Vector3(-0.4, -1, -0.2), scene);
   sun.position = new Vector3(180, 260, -100);
-  sun.intensity = 2.2;
+  sun.intensity = 2.8;
 
   const moonLight = new PointLight('moon', new Vector3(-180, 120, 80), scene);
   moonLight.intensity = 0.12;
