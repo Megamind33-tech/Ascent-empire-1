@@ -21,7 +21,11 @@ export async function initializeRuntimeSystems({
   state.worldRefs.rapier = RAPIER;
   state.worldRefs.rapierWorld = world;
 
-  createFixedBox(world, RAPIER, { x: 0, y: -2, z: 0 }, { x: 900, y: 2, z: 900 });
+  if (world && RAPIER) {
+    createFixedBox(world, RAPIER, { x: 0, y: -2, z: 0 }, { x: 900, y: 2, z: 900 });
+  } else {
+    console.warn('[Bootstrap] Physics world unavailable; running visual-only world collisions.');
+  }
 
   subscribeInteractions(state);
   subscribeAudioEvents(state);
