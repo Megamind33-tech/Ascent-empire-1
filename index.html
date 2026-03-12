@@ -389,12 +389,13 @@
             <div class="modal-header"><h2>ASCENT REALMS</h2></div>
             <div class="modal-body" style="grid-template-columns: 1fr; padding: 30px;">
                 <p style="color:var(--terminal-cyan); font-weight:bold; margin-bottom:10px;">Choose your identity, nation, and starting district.</p>
-                <form id="setupForm" style="display:flex; flex-direction:column; gap:20px;">
+                <form id="setupForm" style="display:flex; flex-direction:column; gap:20px;" onsubmit="return false;">
                     <label class="form-label">Player Name
-                        <input id="playerName" class="form-input" type="text" maxlength="24" placeholder="Enter your name" />
+                        <input id="playerName" name="playerName" class="form-input" type="text" maxlength="24" placeholder="Enter your name" required />
                     </label>
                     <label class="form-label">Nation
-                        <select id="playerNation" class="form-input">
+                        <select id="playerNation" name="playerNation" class="form-input" required>
+                            <option value="">Select a Nation...</option>
                             <option value="0">Zambria • Inland</option>
                             <option value="1">Kitala • Coast</option>
                             <option value="2">Nembia • Inland</option>
@@ -408,7 +409,8 @@
                         </select>
                     </label>
                     <label class="form-label">Starting Position
-                        <select id="playerStart" class="form-input">
+                        <select id="playerStart" name="playerStart" class="form-input" required>
+                            <option value="">Select Starting Position...</option>
                             <option value="capital-core">Capital Core</option>
                             <option value="harbor-district">Harbor District</option>
                             <option value="industrial-belt">Industrial Belt</option>

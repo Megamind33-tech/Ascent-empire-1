@@ -8,28 +8,60 @@ export function initSetupOverlay(state, onStart){
     return;
   }
 
+  // Use 'change' events to validate selections immediately
+  const playerNameInput = document.getElementById('playerName');
+  const nationSelect = document.getElementById('playerNation');
+  const districtSelect = document.getElementById('playerStart');
+
+  if (!playerNameInput || !nationSelect || !districtSelect) {
+    console.error('[Setup] One or more form elements missing!');
+    return;
+  }
+
+  // Add input validation for live feedback
+  playerNameInput.addEventListener('input', () => {
+    playerNameInput.value = playerNameInput.value.trim();
+  });
+
+  nationSelect.addEventListener('change', () => {
+    console.log('[Setup] Nation selected:', nationSelect.value);
+  });
+
+  districtSelect.addEventListener('change', () => {
+    console.log('[Setup] District selected:', districtSelect.value);
+  });
+
   form.addEventListener('submit', (event) => {
     event.preventDefault();
+    event.stopPropagation();
 
     try {
-      // Get fresh form values from DOM every time
-      const playerNameInput = document.getElementById('playerName');
-      const nationSelect = document.getElementById('playerNation');
-      const districtSelect = document.getElementById('playerStart');
+      // Get fresh form values from DOM
+      const playerName = playerNameInput.value.trim() || 'Player';
+      const nationIndexStr = nationSelect.value;
+      const startDistrict = districtSelect.value;
 
-      if (!playerNameInput || !nationSelect || !districtSelect) {
-        console.error('[Setup] One or more form elements missing!');
+      console.log('[Setup] Form submitted with:', { playerName, nationIndexStr, startDistrict });
+
+      // Validate inputs
+      if (!nationIndexStr || nationIndexStr === '') {
+        console.error('[Setup] No nation selected');
+        alert('Please select a nation');
         return;
       }
 
-      // Validate and set state
-      const playerName = playerNameInput.value.trim() || 'Player';
-      const nationIndex = Number(nationSelect.value);
-      const startDistrict = districtSelect.value;
+      if (!startDistrict || startDistrict === '') {
+        console.error('[Setup] No starting position selected');
+        alert('Please select a starting position');
+        return;
+      }
+
+      const nationIndex = Number(nationIndexStr);
 
       // Validate nation index is in range
-      if (nationIndex < 0 || nationIndex >= state.nations.length) {
+      if (isNaN(nationIndex) || nationIndex < 0 || nationIndex >= state.nations.length) {
         console.error('[Setup] Invalid nation index:', nationIndex);
+        alert('Invalid nation selection');
         return;
       }
 
@@ -41,16 +73,19 @@ export function initSetupOverlay(state, onStart){
       // Increment visits counter
       state.nations[nationIndex].visits += 1;
 
-      // Clear form before hiding
-      form.reset();
+      console.log('[Setup] State updated successfully');
 
       // Hide overlay
       overlay.style.display = 'none';
+
+      // Clear form after hiding overlay
+      form.reset();
 
       // Proceed with game start
       onStart();
     } catch (err) {
       console.error('[Setup] Error during form submission:', err);
+      alert('Error starting game: ' + err.message);
     }
   });
 }
