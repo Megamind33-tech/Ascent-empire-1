@@ -90,6 +90,7 @@ export function initHUD(state, actionHandler, cameraHandler) {
   el('rotateRightBtn').addEventListener('click', () => { playUIClick(); cameraHandler('right');   });
   el('zoomInBtn').addEventListener('click',      () => { playUIClick(); cameraHandler('zoomIn');  });
   el('zoomOutBtn').addEventListener('click',     () => { playUIClick(); cameraHandler('zoomOut'); });
+  el('fitAllBtn').addEventListener('click',      () => { playUIClick(); cameraHandler('fitAll');  });
 
   // Mute toggle button (injected into mobile-controls)
   const muteBtn = document.getElementById('muteBtn');
