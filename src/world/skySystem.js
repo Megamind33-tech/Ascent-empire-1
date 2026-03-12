@@ -76,8 +76,8 @@ function createAnimatedClouds(scene) {
 
   // Create 3 cloud layers at different heights for depth and movement variety
   // Keep clouds well above gameplay camera to avoid "gray wall" occluding the city.
-  const cloudHeights = [260, 340, 420];
-  const cloudSpeeds = [0.002, 0.0015, 0.001]; // Slower, more realistic wind
+  const cloudHeights = [500, 600, 700];
+  const cloudSpeeds = [0.0008, 0.0006, 0.0004]; // Even slower wind at higher altitudes
   const cloudDensities = [0.6, 0.4, 0.5];
 
   cloudHeights.forEach((height, index) => {
@@ -107,8 +107,8 @@ function createAnimatedClouds(scene) {
       cloudMaterial.emissiveColor = new Color3(1, 1, 1);
       cloudMaterial.backFaceCulling = false;
       cloudMaterial.transparencyMode = 2; // ALPHA_BLEND
-      cloudMaterial.alpha = 0.55;
-      cloudMaterial.disableDepthWrite = true;
+      cloudMaterial.alpha = 0.30;
+      cloudMaterial.disableDepthWrite = false;
       cloudPlane.isPickable = false;
       cloudPlane.material = cloudMaterial;
 
@@ -231,16 +231,16 @@ export function updateSkyIntensity(skyMaterial, daylight, sunSphere, moonSphere,
           if (daylight > 0.5) {
             // Day: bright white clouds
             mat.emissiveColor = new Color3(1, 1, 1);
-            mat.alpha = 0.7 + daylight * 0.1;
+            mat.alpha = 0.35 + daylight * 0.08;
           } else if (daylight > 0.2) {
             // Sunset/sunrise: orange-tinted clouds
             const sunsetFactor = (0.5 - daylight) / 0.3;
             mat.emissiveColor = new Color3(1, 0.7 - sunsetFactor * 0.2, 0.4 - sunsetFactor * 0.2);
-            mat.alpha = 0.6;
+            mat.alpha = 0.30;
           } else {
             // Night: dark blue-gray clouds
             mat.emissiveColor = new Color3(0.2, 0.25, 0.35);
-            mat.alpha = 0.4;
+            mat.alpha = 0.25;
           }
         }
       });
