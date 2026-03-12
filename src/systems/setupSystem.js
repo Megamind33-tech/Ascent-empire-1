@@ -20,6 +20,8 @@ export async function initSetupOverlay(state, onStart){
 
   // Make overlay visible
   overlay.style.display = 'flex';
+  // Avoid browser-native hidden form validity traps on mobile webviews.
+  form.noValidate = true;
 
   // Use 'change' events to validate selections immediately
   const playerNameInput = document.getElementById('playerName');
@@ -30,6 +32,11 @@ export async function initSetupOverlay(state, onStart){
     console.error('[Setup] One or more form elements missing!');
     return;
   }
+
+  // Provide robust defaults so startup cannot dead-end on mobile validation quirks.
+  if (!playerNameInput.value?.trim()) playerNameInput.value = 'Player';
+  if (!nationSelect.value) nationSelect.value = '0';
+  if (!districtSelect.value) districtSelect.value = 'capital-core';
 
   // Add input validation for live feedback
   playerNameInput.addEventListener('input', () => {
@@ -44,9 +51,14 @@ export async function initSetupOverlay(state, onStart){
     console.log('[Setup] District selected:', districtSelect.value);
   });
 
-  form.addEventListener('submit', (event) => {
-    event.preventDefault();
-    event.stopPropagation();
+  let hasStarted = false;
+  const startGameFromSetup = (event) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    if (hasStarted) return;
 
     try {
       // Get fresh form values from DOM
@@ -56,20 +68,11 @@ export async function initSetupOverlay(state, onStart){
 
       console.log('[Setup] Form submitted with:', { playerName, nationIndexStr, startDistrict });
 
-      // Validate inputs
-      if (!nationIndexStr || nationIndexStr === '') {
-        console.error('[Setup] No nation selected');
-        alert('Please select a nation');
-        return;
-      }
+      // Use safe defaults if UI selections are unavailable in constrained mobile webviews.
+      const safeNationIndexStr = nationIndexStr || '0';
+      const safeStartDistrict = startDistrict || 'capital-core';
 
-      if (!startDistrict || startDistrict === '') {
-        console.error('[Setup] No starting position selected');
-        alert('Please select a starting position');
-        return;
-      }
-
-      const nationIndex = Number(nationIndexStr);
+      const nationIndex = Number(safeNationIndexStr);
 
       // Validate nation index is in range
       if (isNaN(nationIndex) || nationIndex < 0 || nationIndex >= state.nations.length) {
@@ -81,13 +84,14 @@ export async function initSetupOverlay(state, onStart){
       // Set state properties
       state.playerName = playerName;
       state.currentNationIndex = nationIndex;
-      state.startDistrict = startDistrict;
+      state.startDistrict = safeStartDistrict;
 
       // Increment visits counter
       state.nations[nationIndex].visits += 1;
 
       console.log('[Setup] State updated successfully');
 
+      hasStarted = true;
       // Hide overlay
       overlay.style.display = 'none';
 
@@ -97,8 +101,17 @@ export async function initSetupOverlay(state, onStart){
       // Proceed with game start
       onStart();
     } catch (err) {
+      hasStarted = false;
       console.error('[Setup] Error during form submission:', err);
       alert('Error starting game: ' + err.message);
     }
-  });
+  };
+
+  form.addEventListener('submit', startGameFromSetup);
+
+  // Mobile/webview hardening: some runtimes may not dispatch submit reliably.
+  const startButton = form.querySelector('button[type="submit"]');
+  if (startButton) {
+    startButton.addEventListener('click', startGameFromSetup);
+  }
 }
