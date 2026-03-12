@@ -8,7 +8,7 @@
  * (1800 * 0.02 = 36 units). Vehicles are proportionally smaller (~20 units).
  */
 
-import { SceneLoader, AssetContainer, AbstractMesh } from '@babylonjs/core';
+import { SceneLoader, AssetContainer, AbstractMesh, MeshBuilder, StandardMaterial, Color3, TransformNode } from '@babylonjs/core';
 import "@babylonjs/loaders/glTF";
 
 const ASSET_PATH = '/assets/models/';
@@ -20,16 +20,16 @@ const ASSET_PATH = '/assets/models/';
 const MANIFEST = {
   // ── Civic buildings ────────────────────────────────────────────────────────
   housing:        'civic/housing.glb',
-  school:         'civic/school.glb',
+  school:         'civic/school_optimized.glb',        // Phase 1 optimization
   police:         'civic/police.glb',
   police_station: 'civic/stylized_police_station_lowpoly-compressed.glb',
-  hospital:       'civic/hospital.glb',
+  hospital:       'civic/hospital_optimized.glb',      // Phase 1 optimization
   stadium:        'civic/stadium.glb',
   mine:           'civic/mine.glb',
   refinery:       'civic/refinery.glb',
   barracks:       'civic/barracks.glb',
   base:           'civic/base.glb',
-  cat:            'civic/cat_animated.glb',
+  cat:            'civic/cat_animated_optimized.glb',  // Phase 1 optimization
   acc:            'civic/police.glb',   // reuse police as anti-corruption office
   dec:            'civic/police.glb',   // reuse police as defence ministry
 
@@ -43,15 +43,15 @@ const MANIFEST = {
   tower_b:        'landmarks/Building.glb',
   billboard:      'landmarks/Billboard.glb',
   farm:           'landmarks/farm_variant_02.glb',
-  birch:          'landmarks/birch_trees.glb',
-  palm:           'landmarks/palm_trees.glb',
+  birch:          'landmarks/birch_trees_optimized.glb', // Phase 1 optimization
+  palm:           'landmarks/palm_trees_optimized.glb',  // Phase 1 optimization
   pine:           'landmarks/pine_trees.glb',
   bridge:         'landmarks/Bridge.glb',
   road_seg:       'landmarks/Road.glb',
   road_bits:      'landmarks/road_bits.glb',
   road_3:         'landmarks/road_segment_variant_03.glb',
   stop_sign:      'landmarks/stop_sign.glb',
-  waterfall:      'landmarks/Waterfall.glb',
+  waterfall:      'landmarks/Waterfall_optimized.glb', // Phase 1 optimization
 
   // ── Rural ─────────────────────────────────────────────────────────────────
   cottage:        'rural/Cottage.glb',
@@ -62,9 +62,9 @@ const MANIFEST = {
   car_a:          'vehicles/car_a.glb',
   car_b:          'vehicles/car_b.glb',
   car_c:          'vehicles/Car.glb',
-  car_model:      'vehicles/car_model.glb',
+  car_model:      'vehicles/car_model_optimized.glb',    // Phase 1 optimization
   bus:            'vehicles/Bus.glb',
-  gtr:            'vehicles/nissan_gtr.glb',
+  gtr:            'vehicles/nissan_gtr_optimized.glb',   // Phase 1 optimization (92% reduction!)
   police_car:     'vehicles/police_car.glb',
   suv:            'vehicles/SUV.glb',
   sports_car:     'vehicles/sports_car.glb',
@@ -176,12 +176,81 @@ export function getAssetLoadingStats() {
 }
 
 /**
+ * Create a fallback mesh for placeholder/missing assets.
+ * Returns a simple geometric representation based on asset type.
+ */
+function createFallbackMesh(key, scene) {
+  const root = new TransformNode(`${key}-fallback`, scene);
+
+  // Define color and shape based on asset type
+  const fallbacks = {
+    // Civic buildings - blue boxes
+    mine: { color: Color3.FromHexString('#8B4513'), shape: 'building', height: 1.2 },
+    refinery: { color: Color3.FromHexString('#A9A9A9'), shape: 'building', height: 1.5 },
+    base: { color: Color3.FromHexString('#2F4F4F'), shape: 'military', height: 1.8 },
+    barracks: { color: Color3.FromHexString('#556B2F'), shape: 'building', height: 1.4 },
+
+    // Vehicles - grey boxes
+    car_a: { color: Color3.FromHexString('#C0C0C0'), shape: 'vehicle', height: 0.6 },
+    car_b: { color: Color3.FromHexString('#A9A9A9'), shape: 'vehicle', height: 0.6 },
+
+    // People - capsule shape
+    agent_a: { color: Color3.FromHexString('#FFD700'), shape: 'capsule', height: 1.0 },
+  };
+
+  const config = fallbacks[key] || { color: Color3.Gray(), shape: 'building', height: 1.0 };
+  const mat = new StandardMaterial(`${key}-mat`, scene);
+  mat.diffuse = config.color;
+  mat.specularColor = Color3.Black();
+
+  let mesh;
+  if (config.shape === 'military') {
+    // Military base - create pyramid
+    mesh = MeshBuilder.CreateBox(`${key}-mesh`, { size: 0.8 }, scene);
+    const top = MeshBuilder.CreateCylinder(`${key}-top`, { diameter: 0.4, height: 0.6, tessellation: 4 }, scene);
+    top.position.y = 0.6;
+    top.parent = root;
+    mesh.position.y = 0.4;
+  } else if (config.shape === 'vehicle') {
+    // Vehicle - elongated box
+    mesh = MeshBuilder.CreateBox(`${key}-mesh`, { width: 0.4, height: 0.3, depth: 0.7 }, scene);
+    mesh.position.y = 0.15;
+  } else if (config.shape === 'capsule') {
+    // Character - cylinder for body
+    mesh = MeshBuilder.CreateCylinder(`${key}-mesh`, { diameter: 0.25, height: 0.6 }, scene);
+    const head = MeshBuilder.CreateSphere(`${key}-head`, { diameter: 0.2 }, scene);
+    head.position.y = 0.35;
+    head.parent = root;
+    mesh.position.y = 0.3;
+  } else {
+    // Default building - box
+    mesh = MeshBuilder.CreateBox(`${key}-mesh`, { width: 0.6, height: config.height, depth: 0.6 }, scene);
+    mesh.position.y = config.height / 2;
+  }
+
+  mesh.material = mat;
+  mesh.parent = root;
+  mesh.receiveShadows = true;
+  mesh.checkCollisions = false;
+
+  console.log(`[AssetLoader] Created fallback mesh for placeholder asset: ${key}`);
+  return root;
+}
+
+/**
  * Instantiate a model from the loaded containers.
  * Returns the root TransformNode, or null if the asset is unavailable.
+ * Falls back to procedural geometry for placeholder files.
  */
 export function instantiateModel(key, scene) {
   const container = _containers.get(key);
-  if (!container) return null;
+  if (!container) {
+    // Create fallback mesh for known placeholder assets
+    if (['mine', 'refinery', 'base', 'barracks', 'car_a', 'car_b', 'agent_a'].includes(key)) {
+      return createFallbackMesh(key, scene);
+    }
+    return null;
+  }
 
   const entries = container.instantiateModelsToScene(
     (name) => `${key}-${name}-${Date.now()}`,

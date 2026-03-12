@@ -39,6 +39,16 @@ export function sampleTerrainHeight(x, z) {
   const riverCut = Math.exp(-Math.pow((x - 140) * 0.008, 2)) * 18;
   if (!road) y -= riverCut;
 
+  // Validate height: clamp to safe range to prevent NaN/Infinity issues
+  // Valid range: -50 to 100 (covers all possible terrain)
+  y = Math.max(-50, Math.min(100, y));
+
+  // Ensure result is a valid number
+  if (!Number.isFinite(y)) {
+    console.warn(`[TerrainHeight] Invalid height sampled at (${x}, ${z}): ${y}, clamping to 0`);
+    y = 0;
+  }
+
   return y;
 }
 

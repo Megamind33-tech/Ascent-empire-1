@@ -18,13 +18,14 @@ export async function createGameRuntimeContext({
   bootFlow.setState(BOOT_STATES.checking_support);
 
   // Detect device capabilities for optimization
-  let deviceTier = 'mid'; // default
+  // Default to 'low' for safety - if detection fails, assume low-end device
+  let deviceTier = 'low';
   if (detectDeviceTier) {
     try {
       deviceTier = await detectDeviceTier();
       console.log('[BOOT] Device tier detected:', deviceTier);
     } catch (err) {
-      console.warn('[BOOT] Device detection failed, defaulting to mid-range:', err.message);
+      console.warn('[BOOT] Device detection failed, defaulting to low-tier for safety:', err.message);
     }
   }
 
