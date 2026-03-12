@@ -28,11 +28,28 @@ import { runEventTick } from './systems/eventSystem.js';
 
 async function bootstrap(){
   const canvas=document.getElementById('renderCanvas');
+  if (!canvas) {
+    throw new Error('Render canvas element not found in DOM');
+  }
+
   const state=createGameState();
   const { engine, scene, camera, hemi, sun, moonLight, shadows, skyController } = createScene(canvas);
+
+  // Validate critical objects
+  if (!scene || !camera || !engine) {
+    throw new Error('Failed to initialize scene, camera, or engine');
+  }
+
   state.worldRefs.scene=scene; state.worldRefs.engine=engine; state.worldRefs.camera=camera;
+
   // 📱 Wire up pinch-to-zoom and two-finger rotation
-  initMobileControls(canvas, camera);
+  // Do this in a try-catch to prevent mobile crashes from blocking game startup
+  try {
+    initMobileControls(canvas, camera);
+  } catch (err) {
+    console.warn('[Bootstrap] Mobile controls initialization failed:', err);
+    // Don't throw - game can run without mobile controls
+  }
 
   const { RAPIER, world } = await createRapierWorld();
   state.worldRefs.rapier = RAPIER; state.worldRefs.rapierWorld = world;
