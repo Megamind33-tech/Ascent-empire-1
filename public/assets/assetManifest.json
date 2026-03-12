@@ -1,0 +1,748 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2025-03-12T00:00:00Z",
+  "description": "Complete asset metadata repository for Ascent Empire. Enables LOD, physics, animation, and compatibility systems.",
+  "categories": {
+    "civic": "Government, institutional, and civic buildings",
+    "stores": "Commercial establishments",
+    "landmarks": "Structures, trees, decorative elements",
+    "rural": "Agricultural and rural buildings",
+    "vehicles": "Cars, buses, and transportation",
+    "people": "NPCs and animated characters"
+  },
+  "assets": {
+    "housing": {
+      "id": "housing",
+      "category": "civic",
+      "path": "civic/housing.glb",
+      "status": "production",
+      "scale": 0.10,
+      "collisionType": "aabb",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 16, "depth": 16, "height": 20},
+      "lodLevels": {
+        "high": {"path": "civic/housing.glb", "polygonTarget": 5000},
+        "medium": null,
+        "low": null
+      },
+      "metadata": {"type": "residential", "footprint": 16, "occupants": 120}
+    },
+    "school": {
+      "id": "school",
+      "category": "civic",
+      "path": "civic/school.glb",
+      "status": "production",
+      "scale": 0.10,
+      "collisionType": "aabb",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 24, "depth": 18, "height": 10},
+      "lodLevels": {"high": {"path": "civic/school.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "education"}
+    },
+    "police": {
+      "id": "police",
+      "category": "civic",
+      "path": "civic/police.glb",
+      "status": "production",
+      "scale": 0.10,
+      "collisionType": "aabb",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 18, "depth": 18, "height": 12},
+      "lodLevels": {"high": {"path": "civic/police.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "security"}
+    },
+    "police_station": {
+      "id": "police_station",
+      "category": "civic",
+      "path": "civic/stylized_police_station_lowpoly-compressed.glb",
+      "status": "production",
+      "scale": 0.10,
+      "collisionType": "aabb",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 18, "depth": 18, "height": 12},
+      "lodLevels": {"high": null, "medium": {"path": "civic/stylized_police_station_lowpoly-compressed.glb"}, "low": null},
+      "metadata": {"type": "security", "compressed": true}
+    },
+    "hospital": {
+      "id": "hospital",
+      "category": "civic",
+      "path": "civic/hospital.glb",
+      "status": "production",
+      "scale": 0.12,
+      "collisionType": "aabb",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 20, "depth": 20, "height": 24},
+      "lodLevels": {"high": {"path": "civic/hospital.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "healthcare"}
+    },
+    "stadium": {
+      "id": "stadium",
+      "category": "civic",
+      "path": "civic/stadium.glb",
+      "status": "production",
+      "scale": 0.20,
+      "collisionType": "aabb",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "cylinder",
+      "fallbackDimensions": {"diameterTop": 22, "diameterBottom": 28, "height": 8},
+      "lodLevels": {"high": {"path": "civic/stadium.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "entertainment"}
+    },
+    "mine": {
+      "id": "mine",
+      "category": "civic",
+      "path": "civic/mine.glb",
+      "status": "placeholder",
+      "scale": 0.15,
+      "collisionType": "aabb",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 24, "depth": 24, "height": 9},
+      "lodLevels": {"high": {"path": "civic/mine.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "production", "warning": "660-byte placeholder file — needs replacement"}
+    },
+    "refinery": {
+      "id": "refinery",
+      "category": "civic",
+      "path": "civic/refinery.glb",
+      "status": "placeholder",
+      "scale": 0.15,
+      "collisionType": "aabb",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 28, "depth": 20, "height": 14},
+      "lodLevels": {"high": {"path": "civic/refinery.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "production", "warning": "660-byte placeholder file — needs replacement"}
+    },
+    "barracks": {
+      "id": "barracks",
+      "category": "civic",
+      "path": "civic/barracks.glb",
+      "status": "production",
+      "scale": 0.15,
+      "collisionType": "aabb",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 24, "depth": 18, "height": 10},
+      "lodLevels": {"high": {"path": "civic/barracks.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "military"}
+    },
+    "base": {
+      "id": "base",
+      "category": "civic",
+      "path": "civic/base.glb",
+      "status": "placeholder",
+      "scale": 0.15,
+      "collisionType": "aabb",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 34, "depth": 26, "height": 12},
+      "lodLevels": {"high": {"path": "civic/base.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "military", "warning": "660-byte placeholder file — needs replacement"}
+    },
+    "cat": {
+      "id": "cat",
+      "category": "civic",
+      "path": "civic/3danimate_cat_glb-compressed-compressed.glb",
+      "status": "production",
+      "scale": 0.05,
+      "collisionType": "none",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "sphere",
+      "fallbackDimensions": {"diameter": 2},
+      "lodLevels": {"high": null, "medium": {"path": "civic/3danimate_cat_glb-compressed-compressed.glb"}, "low": null},
+      "metadata": {"type": "decoration", "animated": true, "compressed": true}
+    },
+    "acc": {
+      "id": "acc",
+      "category": "civic",
+      "path": "civic/police.glb",
+      "status": "reused",
+      "scale": 0.10,
+      "collisionType": "aabb",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 18, "depth": 18, "height": 13},
+      "lodLevels": {"high": {"path": "civic/police.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "governance", "logicalUse": "anti_corruption_office", "sharedAsset": "police"}
+    },
+    "dec": {
+      "id": "dec",
+      "category": "civic",
+      "path": "civic/police.glb",
+      "status": "reused",
+      "scale": 0.10,
+      "collisionType": "aabb",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 18, "depth": 18, "height": 13},
+      "lodLevels": {"high": {"path": "civic/police.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "governance", "logicalUse": "defence_ministry", "sharedAsset": "police"}
+    },
+    "store": {
+      "id": "store",
+      "category": "stores",
+      "path": "stores/store.glb",
+      "status": "production",
+      "scale": 0.10,
+      "collisionType": "aabb",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 20, "depth": 16, "height": 8},
+      "lodLevels": {"high": {"path": "stores/store.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "commercial"}
+    },
+    "bar": {
+      "id": "bar",
+      "category": "stores",
+      "path": "stores/Bar.glb",
+      "status": "production",
+      "scale": 0.10,
+      "collisionType": "aabb",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 20, "depth": 16, "height": 8},
+      "lodLevels": {"high": {"path": "stores/Bar.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "commercial"}
+    },
+    "parliament": {
+      "id": "parliament",
+      "category": "landmarks",
+      "path": "landmarks/Building.glb",
+      "status": "reused",
+      "scale": 0.096,
+      "collisionType": "aabb",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 30, "depth": 30, "height": 25},
+      "lodLevels": {"high": {"path": "landmarks/Building.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "civic_landmark", "logicalUse": "parliament", "sharedAsset": "Building.glb", "note": "actual file Building.glb also used for tower_a, tower_b, ship"}
+    },
+    "tower_a": {
+      "id": "tower_a",
+      "category": "landmarks",
+      "path": "landmarks/Building.glb",
+      "status": "placeholder",
+      "scale": 0.096,
+      "collisionType": "aabb",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 20, "depth": 20, "height": 25},
+      "lodLevels": {"high": {"path": "landmarks/Building.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "skyline", "warning": "660-byte placeholder; currently maps to Building.glb"}
+    },
+    "tower_b": {
+      "id": "tower_b",
+      "category": "landmarks",
+      "path": "landmarks/Building.glb",
+      "status": "placeholder",
+      "scale": 0.096,
+      "collisionType": "aabb",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 20, "depth": 20, "height": 25},
+      "lodLevels": {"high": {"path": "landmarks/Building.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "skyline", "warning": "660-byte placeholder; currently maps to Building.glb"}
+    },
+    "billboard": {
+      "id": "billboard",
+      "category": "landmarks",
+      "path": "landmarks/Billboard.glb",
+      "status": "production",
+      "scale": 0.09,
+      "collisionType": "aabb",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 12, "depth": 3, "height": 10},
+      "lodLevels": {"high": {"path": "landmarks/Billboard.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "advertising"}
+    },
+    "farm": {
+      "id": "farm",
+      "category": "landmarks",
+      "path": "landmarks/Farm (1) (1).glb",
+      "status": "production",
+      "scale": 0.09,
+      "collisionType": "aabb",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 20, "depth": 20, "height": 15},
+      "lodLevels": {"high": {"path": "landmarks/Farm (1) (1).glb"}, "medium": null, "low": null},
+      "metadata": {"type": "structure", "variant": 2, "note": "Farm (1) (1).glb is duplicate iteration"}
+    },
+    "birch": {
+      "id": "birch",
+      "category": "landmarks",
+      "path": "landmarks/Birch Trees.glb",
+      "status": "production",
+      "scale": 0.12,
+      "collisionType": "none",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "sphere",
+      "fallbackDimensions": {"diameter": 10},
+      "lodLevels": {"high": {"path": "landmarks/Birch Trees.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "vegetation"}
+    },
+    "palm": {
+      "id": "palm",
+      "category": "landmarks",
+      "path": "landmarks/Palm Trees (1).glb",
+      "status": "production",
+      "scale": 0.12,
+      "collisionType": "none",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "sphere",
+      "fallbackDimensions": {"diameter": 10},
+      "lodLevels": {"high": {"path": "landmarks/Palm Trees (1).glb"}, "medium": null, "low": null},
+      "metadata": {"type": "vegetation", "note": "Palm Trees (1).glb"}
+    },
+    "pine": {
+      "id": "pine",
+      "category": "landmarks",
+      "path": "landmarks/Pine Trees.glb",
+      "status": "production",
+      "scale": 0.12,
+      "collisionType": "none",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "sphere",
+      "fallbackDimensions": {"diameter": 10},
+      "lodLevels": {"high": {"path": "landmarks/Pine Trees.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "vegetation"}
+    },
+    "bridge": {
+      "id": "bridge",
+      "category": "landmarks",
+      "path": "landmarks/Bridge.glb",
+      "status": "production",
+      "scale": 0.15,
+      "collisionType": "aabb",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 20, "depth": 50, "height": 8},
+      "lodLevels": {"high": {"path": "landmarks/Bridge.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "infrastructure"}
+    },
+    "road_seg": {
+      "id": "road_seg",
+      "category": "landmarks",
+      "path": "landmarks/Road.glb",
+      "status": "production",
+      "scale": 0.12,
+      "collisionType": "aabb",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 50, "depth": 50, "height": 1},
+      "lodLevels": {"high": {"path": "landmarks/Road.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "infrastructure"}
+    },
+    "road_bits": {
+      "id": "road_bits",
+      "category": "landmarks",
+      "path": "landmarks/Road Bits.glb",
+      "status": "production",
+      "scale": 0.09,
+      "collisionType": "aabb",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 30, "depth": 30, "height": 1},
+      "lodLevels": {"high": {"path": "landmarks/Road Bits.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "infrastructure"}
+    },
+    "road_3": {
+      "id": "road_3",
+      "category": "landmarks",
+      "path": "landmarks/Road (3).glb",
+      "status": "production",
+      "scale": 0.12,
+      "collisionType": "aabb",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 50, "depth": 50, "height": 1},
+      "lodLevels": {"high": {"path": "landmarks/Road (3).glb"}, "medium": null, "low": null},
+      "metadata": {"type": "infrastructure", "variant": 3}
+    },
+    "stop_sign": {
+      "id": "stop_sign",
+      "category": "landmarks",
+      "path": "landmarks/Stop sign.glb",
+      "status": "production",
+      "scale": 0.06,
+      "collisionType": "none",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 2, "depth": 2, "height": 4},
+      "lodLevels": {"high": {"path": "landmarks/Stop sign.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "traffic_control"}
+    },
+    "waterfall": {
+      "id": "waterfall",
+      "category": "landmarks",
+      "path": "landmarks/Waterfall.glb",
+      "status": "production",
+      "scale": 0.15,
+      "collisionType": "aabb",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 20, "depth": 20, "height": 20},
+      "lodLevels": {"high": {"path": "landmarks/Waterfall.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "environmental"}
+    },
+    "ship": {
+      "id": "ship",
+      "category": "landmarks",
+      "path": "landmarks/Building.glb",
+      "status": "reused",
+      "scale": 0.15,
+      "collisionType": "aabb",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 30, "depth": 50, "height": 20},
+      "lodLevels": {"high": {"path": "landmarks/Building.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "naval", "logicalUse": "ship", "sharedAsset": "Building.glb"}
+    },
+    "cottage": {
+      "id": "cottage",
+      "category": "rural",
+      "path": "rural/Cottage.glb",
+      "status": "production",
+      "scale": 0.10,
+      "collisionType": "aabb",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 16, "depth": 16, "height": 12},
+      "lodLevels": {"high": {"path": "rural/Cottage.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "residential"}
+    },
+    "rural_farm": {
+      "id": "rural_farm",
+      "category": "rural",
+      "path": "rural/Farm (1).glb",
+      "status": "production",
+      "scale": 0.12,
+      "collisionType": "aabb",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 20, "depth": 20, "height": 15},
+      "lodLevels": {"high": {"path": "rural/Farm (1).glb"}, "medium": null, "low": null},
+      "metadata": {"type": "agricultural", "variant": 1}
+    },
+    "greenhouse": {
+      "id": "greenhouse",
+      "category": "rural",
+      "path": "rural/Greenhouse.glb",
+      "status": "production",
+      "scale": 0.10,
+      "collisionType": "aabb",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 18, "depth": 18, "height": 16},
+      "lodLevels": {"high": {"path": "rural/Greenhouse.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "agricultural"}
+    },
+    "car_a": {
+      "id": "car_a",
+      "category": "vehicles",
+      "path": "vehicles/car_a.glb",
+      "status": "placeholder",
+      "scale": 0.09,
+      "collisionType": "capsule",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 8, "depth": 15, "height": 7},
+      "lodLevels": {"high": {"path": "vehicles/car_a.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "sedan", "warning": "660-byte placeholder file — needs replacement"}
+    },
+    "car_b": {
+      "id": "car_b",
+      "category": "vehicles",
+      "path": "vehicles/car_b.glb",
+      "status": "placeholder",
+      "scale": 0.09,
+      "collisionType": "capsule",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 8, "depth": 15, "height": 7},
+      "lodLevels": {"high": {"path": "vehicles/car_b.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "sedan", "warning": "660-byte placeholder file — needs replacement"}
+    },
+    "car_c": {
+      "id": "car_c",
+      "category": "vehicles",
+      "path": "vehicles/Car.glb",
+      "status": "production",
+      "scale": 0.09,
+      "collisionType": "capsule",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 8, "depth": 15, "height": 7},
+      "lodLevels": {"high": {"path": "vehicles/Car.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "sedan"}
+    },
+    "car_model": {
+      "id": "car_model",
+      "category": "vehicles",
+      "path": "vehicles/CAR Model.glb",
+      "status": "production",
+      "scale": 0.09,
+      "collisionType": "capsule",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 8, "depth": 15, "height": 7},
+      "lodLevels": {"high": {"path": "vehicles/CAR Model.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "sedan"}
+    },
+    "bus": {
+      "id": "bus",
+      "category": "vehicles",
+      "path": "vehicles/Bus.glb",
+      "status": "production",
+      "scale": 0.11,
+      "collisionType": "capsule",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 10, "depth": 20, "height": 10},
+      "lodLevels": {"high": {"path": "vehicles/Bus.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "bus"}
+    },
+    "gtr": {
+      "id": "gtr",
+      "category": "vehicles",
+      "path": "vehicles/Nissan GTR.glb",
+      "status": "production",
+      "scale": 0.09,
+      "collisionType": "capsule",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 8, "depth": 15, "height": 7},
+      "lodLevels": {"high": {"path": "vehicles/Nissan GTR.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "sports_car"}
+    },
+    "police_car": {
+      "id": "police_car",
+      "category": "vehicles",
+      "path": "vehicles/Police Car.glb",
+      "status": "production",
+      "scale": 0.09,
+      "collisionType": "capsule",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 8, "depth": 15, "height": 7},
+      "lodLevels": {"high": {"path": "vehicles/Police Car.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "sedan", "variant": "police"}
+    },
+    "suv": {
+      "id": "suv",
+      "category": "vehicles",
+      "path": "vehicles/SUV.glb",
+      "status": "production",
+      "scale": 0.09,
+      "collisionType": "capsule",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 9, "depth": 16, "height": 9},
+      "lodLevels": {"high": {"path": "vehicles/SUV.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "suv"}
+    },
+    "sports_car": {
+      "id": "sports_car",
+      "category": "vehicles",
+      "path": "vehicles/Sports Car.glb",
+      "status": "production",
+      "scale": 0.09,
+      "collisionType": "capsule",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "box",
+      "fallbackDimensions": {"width": 8, "depth": 15, "height": 7},
+      "lodLevels": {"high": {"path": "vehicles/Sports Car.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "sports_car"}
+    },
+    "agent_a": {
+      "id": "agent_a",
+      "category": "people",
+      "path": "people/agent_a.glb",
+      "status": "placeholder",
+      "scale": 0.09,
+      "collisionType": "capsule",
+      "forwardAxis": "z",
+      "visualRotationOffset": 0,
+      "fallbackPrimitive": "sphere",
+      "fallbackDimensions": {"diameter": 3},
+      "lodLevels": {"high": {"path": "people/agent_a.glb"}, "medium": null, "low": null},
+      "metadata": {"type": "npc", "animated": false, "warning": "660-byte placeholder file — needs replacement"}
+    }
+  },
+  "statistics": {
+    "totalAssets": 40,
+    "productionAssets": 25,
+    "placeholderAssets": 10,
+    "reusedAssets": 5,
+    "totalFileSize": "~4.2 MB",
+    "averageScale": 0.106
+  },
+  "issues": {
+    "placeholderFiles": [
+      {
+        "id": "mine",
+        "size": "660 bytes",
+        "issue": "Placeholder file, needs real asset"
+      },
+      {
+        "id": "refinery",
+        "size": "660 bytes",
+        "issue": "Placeholder file, needs real asset"
+      },
+      {
+        "id": "base",
+        "size": "660 bytes",
+        "issue": "Placeholder file, needs real asset"
+      },
+      {
+        "id": "car_a",
+        "size": "660 bytes",
+        "issue": "Placeholder file, needs real asset"
+      },
+      {
+        "id": "car_b",
+        "size": "660 bytes",
+        "issue": "Placeholder file, needs real asset"
+      },
+      {
+        "id": "agent_a",
+        "size": "660 bytes",
+        "issue": "Placeholder file, needs real asset"
+      },
+      {
+        "id": "tower_a",
+        "size": "660 bytes",
+        "issue": "Placeholder file, mapped to Building.glb"
+      },
+      {
+        "id": "tower_b",
+        "size": "660 bytes",
+        "issue": "Placeholder file, mapped to Building.glb"
+      }
+    ],
+    "fileNamingIssues": [
+      {
+        "file": "Farm (1).glb",
+        "issue": "Spaces and parentheses in filename (web-unsafe)"
+      },
+      {
+        "file": "Farm (1) (1).glb",
+        "issue": "Duplicate iteration with poor naming"
+      },
+      {
+        "file": "Pine Trees.glb",
+        "issue": "Space in filename (web-unsafe)"
+      },
+      {
+        "file": "Palm Trees (1).glb",
+        "issue": "Space and parenthesis in filename (web-unsafe)"
+      },
+      {
+        "file": "Birch Trees.glb",
+        "issue": "Space in filename (web-unsafe)"
+      },
+      {
+        "file": "Stop sign.glb",
+        "issue": "Space in filename (web-unsafe)"
+      },
+      {
+        "file": "Road (3).glb",
+        "issue": "Parenthesis in filename (web-unsafe)"
+      },
+      {
+        "file": "Road Bits.glb",
+        "issue": "Space in filename (web-unsafe)"
+      },
+      {
+        "file": "Nissan GTR.glb",
+        "issue": "Space in filename (web-unsafe)"
+      },
+      {
+        "file": "Police Car.glb",
+        "issue": "Space in filename (web-unsafe)"
+      },
+      {
+        "file": "CAR Model.glb",
+        "issue": "Space and capitals in filename (web-unsafe)"
+      },
+      {
+        "file": "Sports Car.glb",
+        "issue": "Space in filename (web-unsafe)"
+      },
+      {
+        "file": "3danimate_cat_glb-compressed-compressed.glb",
+        "issue": "Double-compressed naming, unclear intent"
+      },
+      {
+        "file": "stylized_police_station_lowpoly-compressed.glb",
+        "issue": "Long filename with multiple style conventions mixed"
+      }
+    ],
+    "assetReuse": [
+      {
+        "sharedAsset": "police.glb",
+        "usedBy": ["police", "acc", "dec"],
+        "note": "Intentional reuse for different gameplay roles"
+      },
+      {
+        "sharedAsset": "Building.glb",
+        "usedBy": ["parliament", "tower_a", "tower_b", "ship"],
+        "note": "Placeholder fallback; should have distinct assets"
+      }
+    ]
+  },
+  "nextPhases": {
+    "phase4": "Performance, LOD & Lazy Loading — Use lodLevels structure to implement detail tiers",
+    "phase5": "Vehicle Direction Bug & Traffic — Use forwardAxis and visualRotationOffset for orientation",
+    "phase6": "Scale, Collision & Road Calibration — Validate and refine scale values and collisionType"
+  }
+}
