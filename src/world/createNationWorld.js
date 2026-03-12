@@ -288,7 +288,7 @@ export function createNationWorld(scene, shadows, state) {
 
   // ── Diagnostic logging (optional: uncomment for calibration debugging) ──────
   // Logs initial vehicle positions to verify traffic spacing and lane distribution
-  if (true) { // Set to true for diagnostics during calibration
+  if (false) { // Set to true for diagnostics during calibration
     console.log('[Diagnostics] Traffic spawn positions:');
     traffic.forEach((item, i) => {
       console.log(`  Car ${i}: lane=${item.axis}/${item.laneCoord} dir=${item.dir} pos=[${item.mesh.position.x.toFixed(1)},${item.mesh.position.z.toFixed(1)}] scale=${item.mesh.scaling.x.toFixed(3)}`);
