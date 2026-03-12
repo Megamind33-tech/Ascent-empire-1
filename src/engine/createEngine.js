@@ -18,7 +18,16 @@ export async function createBestAvailableEngine(canvas, support) {
         antialias: true,
         adaptToDeviceRatio: true
       });
-      await webgpuEngine.initAsync();
+
+      // Some mobile/webview environments can hang indefinitely on WebGPU init.
+      const initTimeoutMs = 5000;
+      await Promise.race([
+        webgpuEngine.initAsync(),
+        new Promise((_, reject) => {
+          setTimeout(() => reject(new Error(`WebGPU init timed out after ${initTimeoutMs}ms`)), initTimeoutMs);
+        })
+      ]);
+
       return { engine: webgpuEngine, mode: 'webgpu' };
     } catch (error) {
       console.warn('[Bootstrap] WebGPU initialization failed, falling back to WebGL.', error);

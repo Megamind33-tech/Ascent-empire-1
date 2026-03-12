@@ -23,38 +23,48 @@ export function startGameLoop({
   camera
 }) {
   let last = performance.now();
+  let firstFrameRendered = false;
 
   engine.runRenderLoop(() => {
-    const now = performance.now();
-    const dt = Math.min(0.05, (now - last) * 0.001);
-    last = now;
+    try {
+      const now = performance.now();
+      const dt = Math.min(0.05, (now - last) * 0.001);
+      last = now;
 
-    if (!state.gamePaused) {
-      stepRapier(world, dt);
-      runEconomyTick(state, dt);
-      runPoliticalTick(state, dt);
-      runEventTick(state, dt);
+      if (!state.gamePaused) {
+        stepRapier(world, dt);
+        runEconomyTick(state, dt);
+        runPoliticalTick(state, dt);
+        runEventTick(state, dt);
 
-      npcSystem.update(dt);
-      checkpoints.update(dt);
-      updatePhysicsInteractions(state, dt);
-      updateCareer(state, dt);
-      updateMedia(state, dt);
+        npcSystem.update(dt);
+        checkpoints.update(dt);
+        updatePhysicsInteractions(state, dt);
+        updateCareer(state, dt);
+        updateMedia(state, dt);
 
-      if (state.pendingWorldReload) {
-        buildNation();
-        state.pendingWorldReload = false;
+        if (state.pendingWorldReload) {
+          buildNation();
+          state.pendingWorldReload = false;
+        }
+
+        if (nationRuntimeRef.current) {
+          nationRuntimeRef.current.update(dt, now * 0.001);
+        }
+
+        timeSystem.update();
+        updateHUD(state);
+        updateCameraNavigation(camera, dt);
       }
 
-      if (nationRuntimeRef.current) {
-        nationRuntimeRef.current.update(dt, now * 0.001);
-      }
+      scene.render();
 
-      timeSystem.update();
-      updateHUD(state);
-      updateCameraNavigation(camera, dt);
+      if (!firstFrameRendered) {
+        firstFrameRendered = true;
+        globalThis.__ASCENT_FIRST_FRAME_RENDERED__ = true;
+      }
+    } catch (err) {
+      console.error('[GameLoop] Runtime error in render loop:', err);
     }
-
-    scene.render();
   });
 }

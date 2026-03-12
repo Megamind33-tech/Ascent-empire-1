@@ -67,17 +67,48 @@ export async function detectDeviceTier() {
  */
 function getGPUCapabilities(gl) {
   if (!gl) {
-    return { maxTextureSize: 1024, hasDrawBuffers: false, maxDrawBuffers: 1 };
+    return {
+      maxTextureSize: 1024,
+      maxRenderbufferSize: 1024,
+      maxViewportDims: [1024, 1024],
+      hasDrawBuffers: false,
+      maxDrawBuffers: 1,
+      hasAnisotropic: false,
+      maxAnisotropy: 1,
+    };
   }
 
+  const safeGetParameter = (key, fallback) => {
+    if (key == null) return fallback;
+    try {
+      const value = gl.getParameter(key);
+      return value ?? fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
+  const drawBuffersExt = gl.getExtension('WEBGL_draw_buffers');
+  const anisotropicExt =
+    gl.getExtension('EXT_texture_filter_anisotropic') ||
+    gl.getExtension('MOZ_EXT_texture_filter_anisotropic') ||
+    gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic');
+
+  const maxDrawBuffers =
+    safeGetParameter(gl.MAX_DRAW_BUFFERS, null) ||
+    safeGetParameter(drawBuffersExt?.MAX_DRAW_BUFFERS_WEBGL, 1);
+
+  const maxAnisotropy =
+    safeGetParameter(anisotropicExt?.MAX_TEXTURE_MAX_ANISOTROPY_EXT, 1);
+
   return {
-    maxTextureSize: gl.getParameter(gl.MAX_TEXTURE_SIZE),
-    maxRenderbufferSize: gl.getParameter(gl.MAX_RENDERBUFFER_SIZE),
-    maxViewportDims: gl.getParameter(gl.MAX_VIEWPORT_DIMS),
-    hasDrawBuffers: !!gl.getExtension('WEBGL_draw_buffers'),
-    maxDrawBuffers: gl.getParameter(gl.getExtension('WEBGL_draw_buffers')?.MAX_DRAW_BUFFERS_WEBGL || 1),
-    hasAnisotropic: !!gl.getExtension('EXT_texture_filter_anisotropic'),
-    maxAnisotropy: gl.getParameter(gl.getExtension('EXT_texture_filter_anisotropic')?.MAX_TEXTURE_MAX_ANISOTROPY_EXT || 1),
+    maxTextureSize: safeGetParameter(gl.MAX_TEXTURE_SIZE, 1024),
+    maxRenderbufferSize: safeGetParameter(gl.MAX_RENDERBUFFER_SIZE, 1024),
+    maxViewportDims: safeGetParameter(gl.MAX_VIEWPORT_DIMS, [1024, 1024]),
+    hasDrawBuffers: Boolean(gl.MAX_DRAW_BUFFERS || drawBuffersExt),
+    maxDrawBuffers,
+    hasAnisotropic: Boolean(anisotropicExt),
+    maxAnisotropy,
   };
 }
 
