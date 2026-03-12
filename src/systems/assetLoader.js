@@ -78,11 +78,22 @@ const MANIFEST = {
 
 const _containers = new Map();
 
+// Track loading statistics for telemetry
+const _loadingStats = { total: 0, successful: 0, failed: [] };
+
 /**
  * Initialize the loader and fetch all assets in the manifest.
  * Failed assets fall back to null; callers gracefully skip or use primitives.
+ *
+ * @param {Scene} scene Babylon.js scene
+ * @param {Object} options Configuration options
+ * @param {string} options.deviceTier Optional device tier ('low', 'mid', 'high') for LOD selection
+ * @param {Object} options.lodSystem Optional LOD system for selecting asset detail levels
+ * @param {Function} options.progressCallback Optional progress callback(assetKey, loadedCount, totalCount, phase)
  */
-export async function initAssetLoader(scene) {
+export async function initAssetLoader(scene, options = {}) {
+  const { deviceTier = 'high', lodSystem = null, progressCallback = null } = options;
+
   // Deduplicate paths so identical GLBs are only fetched once.
   const pathToKeys = new Map();
   for (const [key, path] of Object.entries(MANIFEST)) {
@@ -90,20 +101,78 @@ export async function initAssetLoader(scene) {
     pathToKeys.get(path).push(key);
   }
 
+  _loadingStats.total = pathToKeys.size;
+  _loadingStats.successful = 0;
+  _loadingStats.failed = [];
+
+  let loadedCount = 0;
+
   const promises = Array.from(pathToKeys.entries()).map(async ([path, keys]) => {
     let container = null;
     try {
       container = await SceneLoader.LoadAssetContainerAsync(ASSET_PATH, path, scene);
+      _loadingStats.successful++;
       console.log(`[AssetLoader] Loaded: ${path} → [${keys.join(', ')}]`);
     } catch (err) {
+      _loadingStats.failed.push({ path, error: err.message });
       console.warn(`[AssetLoader] Failed to load ${path}: ${err.message}. Callers will use primitives.`);
     }
+
     // All keys that share the same path get the same container (or null).
-    for (const key of keys) _containers.set(key, container);
+    for (const key of keys) {
+      _containers.set(key, container);
+      loadedCount++;
+
+      // Report progress
+      if (progressCallback) {
+        const phase = getLoadingPhase(key);
+        progressCallback(key, loadedCount, _loadingStats.total, phase);
+      }
+    }
   });
 
   await Promise.all(promises);
+
+  console.log(
+    `[AssetLoader] Loading complete: ${_loadingStats.successful}/${_loadingStats.total} assets loaded`
+  );
+
   return true;
+}
+
+/**
+ * Get the logical loading phase for an asset key.
+ * @param {string} key Asset key
+ * @returns {string} Phase description
+ */
+function getLoadingPhase(key) {
+  if (key.includes('civic') || ['housing', 'school', 'police', 'hospital', 'stadium', 'mine', 'refinery', 'barracks', 'base', 'cat', 'acc', 'dec'].includes(key)) {
+    return 'Civic Buildings';
+  }
+  if (['store', 'bar'].includes(key)) {
+    return 'Commercial';
+  }
+  if (['parliament', 'tower_a', 'tower_b', 'billboard', 'farm', 'birch', 'palm', 'pine', 'bridge', 'road_seg', 'road_bits', 'road_3', 'stop_sign', 'waterfall', 'ship'].includes(key)) {
+    return 'Landmarks';
+  }
+  if (['cottage', 'rural_farm', 'greenhouse'].includes(key)) {
+    return 'Rural';
+  }
+  if (['car_a', 'car_b', 'car_c', 'car_model', 'bus', 'gtr', 'police_car', 'suv', 'sports_car'].includes(key)) {
+    return 'Vehicles';
+  }
+  if (['agent_a'].includes(key)) {
+    return 'Characters';
+  }
+  return 'Assets';
+}
+
+/**
+ * Get asset loading statistics.
+ * @returns {Object} Statistics with total, successful, failed counts
+ */
+export function getAssetLoadingStats() {
+  return { ..._loadingStats };
 }
 
 /**
