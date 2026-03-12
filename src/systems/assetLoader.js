@@ -118,6 +118,10 @@ export function instantiateModel(key, scene) {
     { doNotRecurse: false }
   );
 
+  // Auto-play any embedded animations (drive cycles, idle, etc.)
+  // Static models have no animation groups, so this is a no-op for buildings.
+  entries.animationGroups.forEach(ag => { ag.play(true); });
+
   const root = entries.rootNodes[0];
   if (root) {
     root.getChildMeshes().forEach(m => {
