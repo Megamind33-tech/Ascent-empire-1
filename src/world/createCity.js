@@ -38,15 +38,17 @@ export function createCity(scene, shadows, state) {
   spawnInstitution(scene, shadows, 'parliament', new Vector3(0, 0.1, -82), state);
   spawnInstitution(scene, shadows, 'school', new Vector3(72, 0.1, -70), state); // Proxy for Cabinet
   
-  // ⚓ Port Infrastructure (Keep as geom for now as port assets are custom)
-  const seaport = MeshBuilder.CreateBox('seaport', { width: 90, depth: 26, height: 6 }, scene);
-  seaport.position = new Vector3(-250, 3.1, -250);
+  // ⚓ Port Infrastructure (Scaled using city planning math: ~36 units per building unit)
+  // Seaport reduced from 90x26 to 36x12 to fit the grid
+  const seaport = MeshBuilder.CreateBox('seaport', { width: 36, depth: 12, height: 5 }, scene);
+  seaport.position = new Vector3(-250, 2.6, -250);
   seaport.material = m.port;
-  
-  const dock1 = MeshBuilder.CreateBox('dock1', { width: 14, depth: 48, height: 2 }, scene);
-  dock1.position = new Vector3(-208, 4.2, -250);
+
+  // Docks reduced from 14x48 to 12x16 each for proportional sizing
+  const dock1 = MeshBuilder.CreateBox('dock1', { width: 12, depth: 16, height: 1.5 }, scene);
+  dock1.position = new Vector3(-208, 0.8, -250);
   dock1.material = m.port;
-  
+
   const dock2 = dock1.clone('dock2');
   dock2.position.x = -186;
 
