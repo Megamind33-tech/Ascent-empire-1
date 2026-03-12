@@ -59,9 +59,11 @@ export function createNationWorld(scene, shadows, state) {
   }
 
   // ── Skyline (Buildings) ──────────────────────────────────────────────────
+  const ROAD_POSITIONS = [0, 120, -120, 240, -240];
   for (let x = -220; x <= 220; x += 32) {
     for (let z = -220; z <= 220; z += 32) {
-      if (Math.abs((x + 14) % 120 - 60) < 18 || Math.abs((z + 14) % 120 - 60) < 18) continue;
+      // Skip any grid cell whose centre is within 14 units of a road centreline
+      if (ROAD_POSITIONS.some(r => Math.abs(x - r) < 14) || ROAD_POSITIONS.some(r => Math.abs(z - r) < 14)) continue;
       if (rand() > CONFIG.mobile.skylineDensity) continue;
 
       const type = rand() > 0.5 ? 'tower_a' : 'tower_b';
@@ -82,7 +84,8 @@ export function createNationWorld(scene, shadows, state) {
   if (parliament) {
     const s = getModelScale('parliament');
     parliament.scaling.set(s, s, s);
-    parliament.position.set(0, 0.1, -96);
+    // Moved off x=0 road — now sits in the safe block between x=0 and x=120 roads
+    parliament.position.set(55, 0.1, -80);
     parliament.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
     parliament.metadata = { type: 'parliament', onFire: false };
     meshes.push(parliament);
@@ -131,22 +134,52 @@ export function createNationWorld(scene, shadows, state) {
   state.worldRefs.constructionAnchors = anchors; meshes.push(...anchors);
 
   // ── Traffic (diverse vehicles — all 9 types cycle through the fleet) ──────
+  // Each entry: { axis, laneCoord, dir }
+  // axis='x' → car travels east/west; laneCoord is the z position (on a z-road)
+  // axis='z' → car travels north/south; laneCoord is the x position (on an x-road)
+  // Two lanes per road (offset ±4 from centreline): one for each direction.
+  const CAR_LANES = [
+    // z-roads (cars travel along X axis)
+    { axis: 'x', laneCoord:   -4, dir:  1 },   // z=0   road, eastbound
+    { axis: 'x', laneCoord:    4, dir: -1 },   // z=0   road, westbound
+    { axis: 'x', laneCoord:  116, dir:  1 },   // z=120 road, eastbound
+    { axis: 'x', laneCoord:  124, dir: -1 },   // z=120 road, westbound
+    { axis: 'x', laneCoord: -124, dir:  1 },   // z=-120 road, eastbound
+    { axis: 'x', laneCoord: -116, dir: -1 },   // z=-120 road, westbound
+    { axis: 'x', laneCoord:  236, dir:  1 },   // z=240 road, eastbound
+    { axis: 'x', laneCoord:  244, dir: -1 },   // z=240 road, westbound
+    { axis: 'x', laneCoord: -236, dir:  1 },   // z=-240 road, eastbound
+    // x-roads (cars travel along Z axis)
+    { axis: 'z', laneCoord:   -4, dir:  1 },   // x=0   road, southbound
+    { axis: 'z', laneCoord:    4, dir: -1 },   // x=0   road, northbound
+    { axis: 'z', laneCoord:  116, dir:  1 },   // x=120 road, southbound
+    { axis: 'z', laneCoord:  124, dir: -1 },   // x=120 road, northbound
+    { axis: 'z', laneCoord: -124, dir:  1 },   // x=-120 road, southbound
+    { axis: 'z', laneCoord: -116, dir: -1 },   // x=-120 road, northbound
+    { axis: 'z', laneCoord:  236, dir:  1 },   // x=240 road, southbound
+    { axis: 'z', laneCoord:  244, dir: -1 },   // x=240 road, northbound
+    { axis: 'z', laneCoord: -236, dir:  1 },   // x=-240 road, southbound
+  ];
   const VEHICLE_TYPES = ['car_a','car_b','car_c','car_model','bus','gtr','police_car','suv','sports_car'];
   const traffic = [];
   for (let i = 0; i < CONFIG.mobile.maxDynamicCars; i++) {
+    const lane = CAR_LANES[i % CAR_LANES.length];
     const carType = VEHICLE_TYPES[i % VEHICLE_TYPES.length];
     const carModel = instantiateModel(carType, scene);
     if (carModel) {
       const s = getModelScale(carType);
       carModel.scaling.set(s, s, s);
-      // Spread vehicles across the road grid; buses and SUVs use a slightly
-      // raised Y so they sit flush on the road surface (ground is y≈0).
-      const roadZ = i % 2 === 0 ? -40 : 40;
-      carModel.position.set(-240 + i * 26, 0.4, roadZ);
+      // Stagger initial positions so cars are spread across the road length
+      const startOffset = -240 + (i * 54) % 480;
+      if (lane.axis === 'x') {
+        carModel.position.set(startOffset, 0.4, lane.laneCoord);
+      } else {
+        carModel.position.set(lane.laneCoord, 0.4, startOffset);
+      }
       carModel.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
       // Buses are slower; sports/GTR faster
       const baseSpeed = carType === 'bus' ? 5 : (carType === 'gtr' || carType === 'sports_car') ? 14 : 8;
-      traffic.push({ mesh: carModel, axis: i % 2 === 0 ? 'x' : 'z', dir: i % 3 === 0 ? -1 : 1, speed: baseSpeed + rand() * 4, passengers: 0 });
+      traffic.push({ mesh: carModel, axis: lane.axis, dir: lane.dir, speed: baseSpeed + rand() * 4, passengers: 0 });
       meshes.push(carModel);
     }
   }
@@ -204,45 +237,38 @@ export function createNationWorld(scene, shadows, state) {
   // assets whose origin is at their base (standard for Kenney / Quaternius packs).
 
   const _worldDecorations = [
-    // Industrial outskirts
-    { key: 'mine',          pos: new Vector3( 260,  0.1,  230) },
-    { key: 'refinery',      pos: new Vector3( 220,  0.1, -250) },
-    { key: 'barracks',      pos: new Vector3(-250,  0.1,  220) },
-    { key: 'stadium',       pos: new Vector3( 130,  0.1,  155) },
+    // Industrial outskirts — all kept well clear of road centrelines (±0, ±120, ±240)
+    { key: 'mine',          pos: new Vector3( 260,  0.1,  190) },   // z moved from 230→190 (was 10 from z=240 road)
+    { key: 'refinery',      pos: new Vector3( 220,  0.1, -195) },   // z moved from -250→-195 (was 10 from z=-240 road)
+    { key: 'barracks',      pos: new Vector3(-200,  0.1,  220) },   // x moved from -250→-200 (was 10 from x=-240 road)
+    { key: 'stadium',       pos: new Vector3( 155,  0.1,  155) },   // x moved from 130→155 (was 10 from x=120 road)
 
     // Civic downtown (between road bands, clear of parliament & police)
     { key: 'hospital',      pos: new Vector3( 100,  0.1,  -55) },
     { key: 'police_station',pos: new Vector3(  82,  0.1,   65) },
     { key: 'bar',           pos: new Vector3(-105,  0.1,   65) },
 
-    // Rural zone (east outskirts, beyond x=180)
-    { key: 'cottage',       pos: new Vector3( 235,  0.1,   80) },
+    // Rural zone (east outskirts) — shifted inward away from x=240 road
+    { key: 'cottage',       pos: new Vector3( 205,  0.1,   80) },   // x moved from 235→205 (was 5 from x=240 road)
     { key: 'greenhouse',    pos: new Vector3( 205,  0.1,   55) },
-    { key: 'rural_farm',    pos: new Vector3( 245,  0.1,  -30) },
+    { key: 'rural_farm',    pos: new Vector3( 205,  0.1,  -55) },   // x moved from 245→205, z moved from -30→-55
 
-    // Bridge over the z=120 road corridor
-    { key: 'bridge',        pos: new Vector3(   0,  0.1,  130), rotY: Math.PI / 2 },
+    // Stop signs at road corners — placed just outside the road edge (road half-width = 11)
+    { key: 'stop_sign',     pos: new Vector3(  55,  0.1,  132) },   // z moved from 125→132 (12 from z=120 road edge)
+    { key: 'stop_sign',     pos: new Vector3( -55,  0.1,  132) },   // same z fix
+    { key: 'stop_sign',     pos: new Vector3( 132,  0.1,   13) },   // x moved from 115→132, z moved from 5→13
+    { key: 'stop_sign',     pos: new Vector3(-132,  0.1,   13) },   // x moved from -115→-132, z moved from 5→13
 
-    // Road detail pieces near the main grid (decorative, not blocking traffic)
-    { key: 'road_seg',      pos: new Vector3(  60,  0.08,    0) },
-    { key: 'road_bits',     pos: new Vector3( -60,  0.08,    0) },
-    { key: 'road_3',        pos: new Vector3(   0,  0.08,   60) },
-
-    // Stop signs at key cross-road corners
-    { key: 'stop_sign',     pos: new Vector3(  55,  0.1,  125) },
-    { key: 'stop_sign',     pos: new Vector3( -55,  0.1,  125) },
-    { key: 'stop_sign',     pos: new Vector3( 115,  0.1,    5) },
-    { key: 'stop_sign',     pos: new Vector3(-115,  0.1,    5) },
-
-    // Small decorative cats scattered in the city centre
-    { key: 'cat',           pos: new Vector3(  20,  0.1,   10) },
+    // Small decorative cats — kept off road surfaces
+    { key: 'cat',           pos: new Vector3(  20,  0.1,   20) },   // z moved from 10→20 (was on z=0 road)
     { key: 'cat',           pos: new Vector3( -30,  0.1,   25) },
     { key: 'cat',           pos: new Vector3(  45,  0.1,  -28) },
   ];
 
   // Waterfall — inland nations only (coastal maps have the sea edge)
   if (!nation.coastal) {
-    _worldDecorations.push({ key: 'waterfall', pos: new Vector3(-230, 0.1, 100) });
+    // x moved from -230→-200 (was 10 from x=-240 road)
+    _worldDecorations.push({ key: 'waterfall', pos: new Vector3(-200, 0.1, 100) });
   }
 
   for (const { key, pos, rotY } of _worldDecorations) {
@@ -274,6 +300,8 @@ export function createNationWorld(scene, shadows, state) {
       const tx = -280 + rand() * 560;
       const tz = -280 + rand() * 560;
       if (Math.abs(tx) < 40 && Math.abs(tz) < 40) continue; // avoid centre plaza
+      // Avoid all road centrelines (roads at 0, ±120, ±240; half-width 11 + small buffer)
+      if (ROAD_POSITIONS.some(r => Math.abs(tx - r) < 13) || ROAD_POSITIONS.some(r => Math.abs(tz - r) < 13)) continue;
       tree.position.set(tx, 0.1, tz);
       const s = 0.12 + rand() * 0.09;
       tree.scaling.set(s, s, s);
@@ -287,7 +315,8 @@ export function createNationWorld(scene, shadows, state) {
   for (let i = 0; i < 6; i++) {
     const farm = instantiateModel('farm', scene);
     if (farm) {
-      farm.position.set(200 + rand() * 80, 0.1, 150 + rand() * 100);
+      // x range 160-215 and z range 150-220: both clear of x=120, x=240, z=120, z=240 roads
+      farm.position.set(160 + rand() * 55, 0.1, 150 + rand() * 70);
       farm.scaling.setAll(0.09);
       farm.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
       meshes.push(farm);
@@ -305,7 +334,7 @@ export function createNationWorld(scene, shadows, state) {
     for (let i = 0; i < count; i++) {
       const ag = state.worldRefs.agents[i];
       if (ag && ag.status === 'alive' && !ag.passenger)
-        ag.target = new Vector3(-10 + Math.random() * 20, 0.9, -86 + Math.random() * 20);
+        ag.target = new Vector3(45 + Math.random() * 20, 0.9, -70 + Math.random() * 20);
     }
   };
   const _onScandal = () => {
@@ -337,14 +366,14 @@ export function createNationWorld(scene, shadows, state) {
           item.mesh.position.x += item.speed * item.dir * dt;
           if (item.mesh.position.x >  260) item.mesh.position.x = -260;
           if (item.mesh.position.x < -260) item.mesh.position.x =  260;
-          // Face direction of travel along X-axis
+          // Face direction of travel along X-axis (models import facing +Z; π/2 = +X, -π/2 = -X)
           item.mesh.rotation.y = item.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
         } else {
           item.mesh.position.z += item.speed * item.dir * dt;
           if (item.mesh.position.z >  260) item.mesh.position.z = -260;
           if (item.mesh.position.z < -260) item.mesh.position.z =  260;
-          // Face direction of travel along Z-axis
-          item.mesh.rotation.y = item.dir > 0 ? 0 : Math.PI;
+          // Face direction of travel along Z-axis (π = +Z direction, 0 = -Z direction)
+          item.mesh.rotation.y = item.dir > 0 ? Math.PI : 0;
         }
       }
 
@@ -368,7 +397,7 @@ export function createNationWorld(scene, shadows, state) {
         dir.y = 0;
         if (dir.lengthSquared() < 4) {
           if (hasProtest && Math.random() < 0.3) {
-            person.target = new Vector3(-20 + Math.random() * 40, 0.9, -96 + Math.random() * 30);
+            person.target = new Vector3(35 + Math.random() * 40, 0.9, -80 + Math.random() * 30);
           } else if (hasScandal && Math.random() < 0.4 && person.mesh.position.z > 0) {
             person.target = new Vector3(-170 + Math.random() * 100, 0.9, -170 + Math.random() * 100);
           } else {
