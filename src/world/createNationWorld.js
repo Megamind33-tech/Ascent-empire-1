@@ -3,6 +3,9 @@ import { CONFIG } from '../config.js';
 import { on, off, getRecentEvents } from '../systems/eventBus.js';
 import { instantiateModel, getModelScale } from '../systems/assetLoader.js';
 import { createCityPlanner } from './cityPlanner.js';
+import { createDistrictLighting } from '../systems/districtLighting.js';
+import { createDetailPlacement } from '../systems/detailPlacement.js';
+import { createAudioManager } from '../systems/audioManager.js';
 
 // ── World boundary configs ────────────────────────────────────────────────────
 const WALL_HALF  = 300;  // Half-extent of the play area (px)
@@ -71,6 +74,42 @@ export function createNationWorld(scene, shadows, state) {
 
   // Log city statistics
   cityPlanner.logStatistics();
+
+  // ── Atmosphere, Environment & World Density (Phase 8) ────────────────────
+  // Apply district-specific lighting for atmospheric variety
+  const districtLighting = createDistrictLighting(scene);
+  districtLighting.applyDistrictWiseLighting(
+    cityPlanner.planner,
+    cityPlanner.validator
+  );
+  districtLighting.logLighting();
+
+  // Place vegetation and decorative details throughout the world
+  const detailPlacement = createDetailPlacement(
+    scene,
+    cityPlanner.planner,
+    cityPlanner.validator
+  );
+
+  const vegetationMeshes = detailPlacement.placeVegetation();
+  for (const veg of vegetationMeshes) {
+    meshes.push(veg.mesh);
+  }
+
+  const decorativeMeshes = detailPlacement.placeDecoratives();
+  for (const decor of decorativeMeshes) {
+    meshes.push(decor.mesh);
+  }
+
+  detailPlacement.logSummary();
+
+  // Set up audio atmosphere for each district
+  const audioManager = createAudioManager(scene);
+  const districts = cityPlanner.planner.getAllDistricts();
+  for (const district of districts) {
+    audioManager.playDistrictAudio(district.id);
+  }
+  audioManager.logAudio();
 
   // ── Key civic buildings ────────────────────────────────────────────────────
   const parliament = instantiateModel('parliament', scene);
