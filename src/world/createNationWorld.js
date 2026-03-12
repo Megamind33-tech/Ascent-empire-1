@@ -2,6 +2,7 @@ import { Color3, MeshBuilder, StandardMaterial, Vector3, Matrix } from '@babylon
 import { CONFIG } from '../config.js';
 import { on, off, getRecentEvents } from '../systems/eventBus.js';
 import { instantiateModel, getModelScale } from '../systems/assetLoader.js';
+import { createCityPlanner } from './cityPlanner.js';
 
 // ── World boundary configs ────────────────────────────────────────────────────
 const WALL_HALF  = 300;  // Half-extent of the play area (px)
@@ -39,6 +40,7 @@ export function createNationWorld(scene, shadows, state) {
   meshes.push(ground);
 
   // ── Roads ──────────────────────────────────────────────────────────────────
+  const ROAD_POSITIONS = [0, 120, -120, 240, -240];  // Positions of road centerlines
   for (let a = -240; a <= 240; a += 120) {
     const rz = MeshBuilder.CreateGround(`road-z-${a}`, { width: 560, height: 22 }, scene);
     rz.position.set(0, .12, a); rz.material = mats.road; rz.receiveShadows = true; meshes.push(rz);
@@ -58,26 +60,17 @@ export function createNationWorld(scene, shadows, state) {
     }
   }
 
-  // ── Skyline (Buildings) ──────────────────────────────────────────────────
-  const ROAD_POSITIONS = [0, 120, -120, 240, -240];
-  for (let x = -220; x <= 220; x += 32) {
-    for (let z = -220; z <= 220; z += 32) {
-      // Skip any grid cell whose centre is within 14 units of a road centreline
-      if (ROAD_POSITIONS.some(r => Math.abs(x - r) < 14) || ROAD_POSITIONS.some(r => Math.abs(z - r) < 14)) continue;
-      if (rand() > CONFIG.mobile.skylineDensity) continue;
+  // ── Beautiful City Planning (District-Based Generation) ─────────────────
+  const cityPlanner = createCityPlanner(scene, shadows);
+  const plannedBuildings = cityPlanner.generateCity();
 
-      const type = rand() > 0.5 ? 'tower_a' : 'tower_b';
-      const tower = instantiateModel(type, scene);
-      if (tower) {
-        const s = getModelScale(type) * (0.8 + rand() * 0.4);
-        tower.scaling.set(s, s, s);
-        tower.position.set(x, 0.1, z);
-        tower.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
-        tower.metadata = { type: 'skyline', onFire: false }; // Can catch fire
-        meshes.push(tower);
-      }
-    }
+  // Add planned buildings to world meshes
+  for (const building of plannedBuildings) {
+    meshes.push(building.mesh);
   }
+
+  // Log city statistics
+  cityPlanner.logStatistics();
 
   // ── Key civic buildings ────────────────────────────────────────────────────
   const parliament = instantiateModel('parliament', scene);
