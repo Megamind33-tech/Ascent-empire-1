@@ -6,6 +6,11 @@ import { createCityPlanner } from './cityPlanner.js';
 import { createDistrictLighting } from '../systems/districtLighting.js';
 import { createDetailPlacement } from '../systems/detailPlacement.js';
 import { createAudioManager } from '../systems/audioManager.js';
+import { createDistrictManager } from '../systems/districtManager.js';
+import { createResourceManager } from '../systems/resourceManager.js';
+import { createEventManager } from '../systems/eventManager.js';
+import { createInteractionHandler } from '../systems/interactionHandler.js';
+import { createDistrictPanel } from '../ui/districtPanel.js';
 
 // ── World boundary configs ────────────────────────────────────────────────────
 const WALL_HALF  = 300;  // Half-extent of the play area (px)
@@ -13,6 +18,29 @@ const WALL_H     = 40;   // Invisible wall height — tall enough NPCs/vehicles 
 const WALL_THICK =  4;   // Wall thickness
 
 export function destroyWorld(state) {
+  // Clean up Phase 9 systems
+  if (state.worldRefs.districtPanel) {
+    state.worldRefs.districtPanel.destroy();
+    state.worldRefs.districtPanel = null;
+  }
+  if (state.worldRefs.eventManager) {
+    state.worldRefs.eventManager.reset();
+    state.worldRefs.eventManager = null;
+  }
+  if (state.worldRefs.resourceManager) {
+    state.worldRefs.resourceManager.reset();
+    state.worldRefs.resourceManager = null;
+  }
+  if (state.worldRefs.districtManager) {
+    state.worldRefs.districtManager.reset();
+    state.worldRefs.districtManager = null;
+  }
+  if (state.worldRefs.interactionHandler) {
+    state.worldRefs.interactionHandler.reset();
+    state.worldRefs.interactionHandler = null;
+  }
+
+  // Clean up existing systems
   for (const fn of state.worldRefs.cleanupFns) fn();
   state.worldRefs.cleanupFns = [];
   for (const mesh of state.worldRefs.worldMeshes) {
@@ -110,6 +138,47 @@ export function createNationWorld(scene, shadows, state) {
     audioManager.playDistrictAudio(district.id);
   }
   audioManager.logAudio();
+
+  // ── Interactive Districts & Gameplay (Phase 9) ──────────────────────────────
+  console.log('[CreateNationWorld] Initializing Phase 9 interactive systems...');
+
+  // Create district game state manager
+  const districtManager = createDistrictManager(cityPlanner.planner);
+
+  // Create resource economy system
+  const resourceManager = createResourceManager(districtManager);
+
+  // Create dynamic event system
+  const eventManager = createEventManager(districtManager, resourceManager);
+
+  // Create interaction handler for building clicks
+  const interactionHandler = createInteractionHandler(
+    scene,
+    scene.activeCamera,
+    districtManager,
+    cityPlanner.planner
+  );
+
+  // Register all planned buildings for interaction
+  interactionHandler.registerBuildings(plannedBuildings);
+  interactionHandler.logStatistics();
+
+  // Create district management UI panel
+  const districtPanel = createDistrictPanel(scene, districtManager, interactionHandler);
+
+  // Set up district selection callback
+  interactionHandler.onDistrictSelected = (districtId) => {
+    districtPanel.show(districtId);
+  };
+
+  // Store gameplay systems in world refs for update loop
+  state.worldRefs.districtManager = districtManager;
+  state.worldRefs.resourceManager = resourceManager;
+  state.worldRefs.eventManager = eventManager;
+  state.worldRefs.interactionHandler = interactionHandler;
+  state.worldRefs.districtPanel = districtPanel;
+
+  console.log('[CreateNationWorld] Phase 9 systems initialized successfully');
 
   // ── Key civic buildings ────────────────────────────────────────────────────
   const parliament = instantiateModel('parliament', scene);
@@ -398,10 +467,41 @@ export function createNationWorld(scene, shadows, state) {
   on('SCANDAL', _onScandal);
   cleanupFns.push(() => { off('PROTEST', _onProtest); off('SCANDAL', _onScandal); });
 
+  // ── Phase 9: Click handler for district interaction ──────────────────────────
+  const _onMouseClick = (e) => {
+    if (e.button === 0) { // Left click only
+      const x = e.clientX;
+      const y = e.clientY;
+      state.worldRefs.interactionHandler.handleClick(x, y);
+    }
+  };
+  scene.getEngine().getRenderingCanvas().addEventListener('click', _onMouseClick);
+  cleanupFns.push(() => {
+    scene.getEngine().getRenderingCanvas().removeEventListener('click', _onMouseClick);
+  });
+
   state.worldRefs.cleanupFns = cleanupFns;
 
   return {
     update(dt, t) {
+      // ── Phase 9: Update all gameplay systems ──────────────────────────────────
+      if (state.worldRefs.districtManager && state.worldRefs.resourceManager && state.worldRefs.eventManager) {
+        // Update districts (population, production, consumption)
+        const globalStats = state.worldRefs.resourceManager.getGlobalStats();
+        state.worldRefs.districtManager.updateDistricts(dt, globalStats);
+
+        // Execute resource trades between districts
+        state.worldRefs.resourceManager.executeTrades();
+
+        // Update active events and check for new ones
+        state.worldRefs.eventManager.updateEvents();
+
+        // Update district UI panel if visible
+        if (state.worldRefs.districtPanel) {
+          state.worldRefs.districtPanel.update(dt);
+        }
+      }
+
       // ── Traffic movement + car rotation ───────────────────────────────────
       for (const item of state.worldRefs.traffic) {
         if (item.ship) {
