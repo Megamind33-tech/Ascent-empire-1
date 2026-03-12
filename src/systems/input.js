@@ -42,10 +42,10 @@ export function updateCameraNavigation(camera, dt) {
   // Right/Left based on camera rotation
   const dirR = new Vector3(Math.cos(angle + Math.PI/2), 0, Math.sin(angle + Math.PI/2));
 
-  if (keys.w) camera.target.addInPlace(dirF.scale(-speed));
-  if (keys.s) camera.target.addInPlace(dirF.scale(speed));
-  if (keys.a) camera.target.addInPlace(dirR.scale(-speed));
-  if (keys.d) camera.target.addInPlace(dirR.scale(speed));
+  if (keys.w) camera.target.addInPlace(dirF.scale(speed));
+  if (keys.s) camera.target.addInPlace(dirF.scale(-speed));
+  if (keys.a) camera.target.addInPlace(dirR.scale(speed));
+  if (keys.d) camera.target.addInPlace(dirR.scale(-speed));
 
   // Clamp camera target to stay within world bounds (roughly)
   const limit = 800;
