@@ -102,12 +102,12 @@ function createAnimatedClouds(scene) {
       cloudMaterial.diffuseTexture = cloudTexture;
       cloudMaterial.opacityTexture = cloudTexture;
       cloudMaterial.useAlphaFromDiffuseTexture = true;
-      cloudMaterial.disableLighting = true;
+      cloudMaterial.disableLighting = false;
       cloudMaterial.specularColor = new Color3(0, 0, 0);
       cloudMaterial.emissiveColor = new Color3(1, 1, 1);
       cloudMaterial.backFaceCulling = false;
       cloudMaterial.transparencyMode = 2; // ALPHA_BLEND
-      cloudMaterial.alpha = 0.30;
+      cloudMaterial.alpha = 0.12;
       cloudMaterial.disableDepthWrite = false;
       cloudPlane.isPickable = false;
       cloudPlane.renderingGroupId = 1;  // Render after world, with proper depth ordering
@@ -232,16 +232,16 @@ export function updateSkyIntensity(skyMaterial, daylight, sunSphere, moonSphere,
           if (daylight > 0.5) {
             // Day: bright white clouds
             mat.emissiveColor = new Color3(1, 1, 1);
-            mat.alpha = 0.35 + daylight * 0.08;
+            mat.alpha = 0.12 + daylight * 0.04;
           } else if (daylight > 0.2) {
             // Sunset/sunrise: orange-tinted clouds
             const sunsetFactor = (0.5 - daylight) / 0.3;
             mat.emissiveColor = new Color3(1, 0.7 - sunsetFactor * 0.2, 0.4 - sunsetFactor * 0.2);
-            mat.alpha = 0.30;
+            mat.alpha = 0.10;
           } else {
             // Night: dark blue-gray clouds
             mat.emissiveColor = new Color3(0.2, 0.25, 0.35);
-            mat.alpha = 0.25;
+            mat.alpha = 0.08;
           }
         }
       });

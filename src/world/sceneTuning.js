@@ -59,8 +59,8 @@ export function applyReadabilityEnhancements(scene, options = {}) {
       // Tone down ground color if it's a hemispheric light
       if (light.name === 'hemi' || light instanceof HemisphericLight) {
         if (light.groundColor) {
-          // Slightly boost ground color to reduce shadows on terrain
-          light.groundColor = new Color3(0.20, 0.22, 0.24);
+          // Boost ground color to ensure terrain is visible
+          light.groundColor = new Color3(0.50, 0.52, 0.54);
         }
         if (light.intensity < 1.0) {
           light.intensity *= 1.02;
