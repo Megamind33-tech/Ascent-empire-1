@@ -1,5 +1,6 @@
 import { Color3, Color4, MeshBuilder, StandardMaterial, Vector3, ParticleSystem, Texture } from '@babylonjs/core';
 import { instantiateModel, getModelScale } from '../systems/assetLoader.js';
+import { alignNodeToGround } from './terrainHeightSampler.js';
 
 /** Emit a sparkling construction burst at the given world position. */
 function spawnConstructionBurst(scene, position) {
@@ -35,12 +36,14 @@ export function spawnInstitution(scene, shadows, type, point, state) {
     mesh = model;
     const s = getModelScale(type);
     mesh.scaling.set(s, s, s);
-    mesh.position.copyFrom(point);
-    // Real models often have pivot at bottom; if not, we compensate:
-    // Some assets are centered, some on floor.
-    // For Quaternius/Kenney, we usually leave Y=0 as the ground if the model is set up correctly.
-    mesh.position.y = 0.1; 
-    mesh.metadata = { type, onFire: false };
+    // Align to terrain at the given point position
+    alignNodeToGround(mesh, point.x, point.z, {
+      yOffset: 0.05,
+      clampPitch: true,
+      clampRoll: true,
+      maxSlopeAngle: Math.PI / 12, // 15° max slope for civic buildings
+    });
+    mesh.metadata = { type, onFire: false, terrain: true };
 
     // Metadata update for specific types
     if (type === 'housing')   { state.buildings.housing += 1;   state.population += 120; state.legitimacy += 0.6; }
