@@ -94,12 +94,19 @@ function createAnimatedClouds(scene) {
       generateCloudPattern(cloudTexture.getContext(), 256, cloudDensities[index]);
       cloudTexture.update();
 
-      // Create material with transparency
+      // Create material with proper alpha handling
       const cloudMaterial = new StandardMaterial(`cloudMaterial${index}_${i}`, scene);
-      cloudMaterial.emissiveTexture = cloudTexture;
+      cloudTexture.hasAlpha = true;
+      cloudMaterial.diffuseTexture = cloudTexture;
+      cloudMaterial.opacityTexture = cloudTexture;
+      cloudMaterial.useAlphaFromDiffuseTexture = true;
+      cloudMaterial.disableLighting = true;
+      cloudMaterial.specularColor = new Color3(0, 0, 0);
       cloudMaterial.emissiveColor = new Color3(1, 1, 1);
       cloudMaterial.backFaceCulling = false;
       cloudMaterial.transparencyMode = 2; // ALPHA_BLEND
+      cloudMaterial.alpha = 0.55;
+      cloudPlane.isPickable = false;
       cloudPlane.material = cloudMaterial;
 
       planes.push({
