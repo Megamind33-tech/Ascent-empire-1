@@ -107,16 +107,16 @@ export function createNationWorld(scene, shadows, state) {
   // Apply district-specific lighting for atmospheric variety
   const districtLighting = createDistrictLighting(scene);
   districtLighting.applyDistrictWiseLighting(
-    cityPlanner.planner,
-    cityPlanner.validator
+    cityPlanner.getDistrictPlanner(),
+    cityPlanner.getValidator()
   );
   districtLighting.logLighting();
 
   // Place vegetation and decorative details throughout the world
   const detailPlacement = createDetailPlacement(
     scene,
-    cityPlanner.planner,
-    cityPlanner.validator
+    cityPlanner.getDistrictPlanner(),
+    cityPlanner.getValidator()
   );
 
   const vegetationMeshes = detailPlacement.placeVegetation();
@@ -133,7 +133,7 @@ export function createNationWorld(scene, shadows, state) {
 
   // Set up audio atmosphere for each district
   const audioManager = createAudioManager(scene);
-  const districts = cityPlanner.planner.getAllDistricts();
+  const districts = cityPlanner.getDistrictPlanner().getAllDistricts();
   for (const district of districts) {
     audioManager.playDistrictAudio(district.id);
   }
@@ -143,7 +143,7 @@ export function createNationWorld(scene, shadows, state) {
   console.log('[CreateNationWorld] Initializing Phase 9 interactive systems...');
 
   // Create district game state manager
-  const districtManager = createDistrictManager(cityPlanner.planner);
+  const districtManager = createDistrictManager(cityPlanner.getDistrictPlanner());
 
   // Create resource economy system
   const resourceManager = createResourceManager(districtManager);
@@ -156,7 +156,7 @@ export function createNationWorld(scene, shadows, state) {
     scene,
     scene.activeCamera,
     districtManager,
-    cityPlanner.planner
+    cityPlanner.getDistrictPlanner()
   );
 
   // Register all planned buildings for interaction

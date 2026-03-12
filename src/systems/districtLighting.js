@@ -5,6 +5,8 @@
  * Creates visual variety and emotional atmosphere throughout the city.
  */
 
+import { Color3 } from '@babylonjs/core';
+
 /**
  * DistrictLighting Class
  * Manages lighting configurations and atmospheric effects for each district.
@@ -112,13 +114,13 @@ export class DistrictLighting {
 
     // Set ambient light for the scene (affects entire scene, but visual effect varies per district)
     // Note: In a real implementation, you might use separate lighting for different regions
-    this.scene.ambientColor = new BABYLON.Color3(...config.ambientColor);
+    this.scene.ambientColor = new Color3(...config.ambientColor);
     this.scene.ambientColor.scaleToRef(config.ambientIntensity, this.scene.ambientColor);
 
     // Create fog for atmospheric effect
     this.scene.fogEnabled = true;
-    this.scene.fogMode = BABYLON.Scene.FOGMODE_EXP;
-    this.scene.fogColor = new BABYLON.Color3(...config.fogColor);
+    this.scene.fogMode = 3; // FOGMODE_EXP
+    this.scene.fogColor = new Color3(...config.fogColor);
     this.scene.fogDensity = config.fogDensity;
 
     // Store reference for tracking
@@ -213,7 +215,7 @@ export class DistrictLighting {
    */
   reset() {
     this.districtLights.clear();
-    this.scene.ambientColor = new BABYLON.Color3(1, 1, 1);
+    this.scene.ambientColor = new Color3(1, 1, 1);
     this.scene.fogEnabled = false;
   }
 }
