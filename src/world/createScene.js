@@ -1,12 +1,12 @@
 import { Engine, Scene, Color3, Color4, ArcRotateCamera, Vector3, HemisphericLight, DirectionalLight, PointLight, ShadowGenerator, GlowLayer } from '@babylonjs/core';
 import { initSky, updateSkyIntensity } from './skySystem.js';
 import { CONFIG } from '../config.js';
-export function createScene(canvas){
+export function createScene(canvas, providedEngine){
   if (!canvas) {
     throw new Error('Canvas element is required for scene creation');
   }
 
-  const engine = new Engine(canvas,true,{preserveDrawingBuffer:false, stencil:true, antialias:true, adaptToDeviceRatio:true});
+  const engine = providedEngine || new Engine(canvas,true,{preserveDrawingBuffer:false, stencil:true, antialias:true, adaptToDeviceRatio:true});
   const scene=new Scene(engine);
   scene.clearColor=new Color4(.65,.76,.9,1);
   engine.setHardwareScalingLevel(1 / clamp(window.devicePixelRatio, CONFIG.mobile.hardwareScalingMin, CONFIG.mobile.hardwareScalingMax));
