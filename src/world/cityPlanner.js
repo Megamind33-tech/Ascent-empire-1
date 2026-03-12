@@ -78,7 +78,7 @@ export function createCityPlanner(scene, shadows) {
           if (mesh) {
             // Apply scale with variation for visual interest
             const baseScale = getModelScale(buildingKey);
-            const scaleVariation = 0.9 + Math.random() * 0.2; // ±10% variation
+            const scaleVariation = 0.75 + Math.random() * 0.5; // ±25% variation (0.75 to 1.25)
             const finalScale = baseScale * scaleVariation;
 
             // Random cardinal rotation (0°, 90°, 180°, 270°)

@@ -265,10 +265,10 @@ export function getModelScale(key) {
     case 'car_c':
     case 'car_model':
     case 'gtr':
-    case 'sports_car':     return 0.09;
-    case 'police_car':     return 0.09;
-    case 'suv':            return 0.09;
-    case 'bus':            return 0.11;
+    case 'sports_car':     return 0.12;
+    case 'police_car':     return 0.12;
+    case 'suv':            return 0.12;
+    case 'bus':            return 0.14;
 
     // ── People ─────────────────────────────────────────────────────────────
     case 'agent_a':        return 0.09;

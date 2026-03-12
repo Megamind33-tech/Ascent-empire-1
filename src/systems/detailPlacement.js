@@ -31,20 +31,20 @@ export class DetailPlacement {
         trees: {
           density: 0.08,            // ~8% of buildable area
           types: ['tree1', 'tree2', 'tree3'],
-          targetCount: 45,          // Additional trees
-          scale: [0.08, 0.12],      // Scale variation
-          minDistanceFromBuildings: 18,
-          minDistanceBetweenTrees: 12,
-          clustering: 0.7           // Cluster factor (0-1, higher = more clustered)
+          targetCount: 60,          // Increased from 45 for better coverage
+          scale: [0.10, 0.16],      // Increased from 0.08-0.12 for visibility
+          minDistanceFromBuildings: 20,  // Increased from 18
+          minDistanceBetweenTrees: 15,   // Increased from 12 (less crowded)
+          clustering: 0.8           // Increased from 0.7 (stronger clustering)
         },
         shrubs: {
           density: 0.15,            // More shrubs for ground coverage
           types: ['bush1', 'bush2'],
-          targetCount: 60,
-          scale: [0.03, 0.06],
-          minDistanceFromBuildings: 10,
-          minDistanceBetweenShrubs: 6,
-          clustering: 0.5
+          targetCount: 90,          // Increased from 60
+          scale: [0.06, 0.12],      // Much larger: was 0.03-0.06
+          minDistanceFromBuildings: 12,  // Increased from 10
+          minDistanceBetweenShrubs: 8,   // Increased from 6
+          clustering: 0.6           // Adjusted from 0.5
         }
       },
       decorative: {

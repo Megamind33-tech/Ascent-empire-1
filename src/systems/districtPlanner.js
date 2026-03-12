@@ -37,7 +37,7 @@ export class DistrictPlanner {
         buildingTypes: ['parliament', 'police', 'police_station', 'hospital', 'school', 'bar'],
         capacity: 15,
         priority: 1,        // Spawn first
-        minSpacing: 20,     // Min units between buildings
+        minSpacing: 35,     // Min units between buildings (increased from 20)
         buildingScale: [0.096, 0.10, 0.12, 0.10],
         color: [0.2, 0.4, 0.6],  // RGB for ground variation
       },
@@ -53,7 +53,7 @@ export class DistrictPlanner {
         buildingTypes: ['housing', 'housing', 'housing', 'cottage', 'store'],
         capacity: 20,
         priority: 2,
-        minSpacing: 18,
+        minSpacing: 30,     // Min units between buildings (increased from 18)
         buildingScale: [0.09, 0.10, 0.11, 0.10],
         color: [0.3, 0.5, 0.3],  // Green tint
       },
@@ -69,7 +69,7 @@ export class DistrictPlanner {
         buildingTypes: ['housing', 'housing', 'housing', 'cottage', 'store'],
         capacity: 20,
         priority: 2,
-        minSpacing: 18,
+        minSpacing: 30,     // Min units between buildings (increased from 18)
         buildingScale: [0.09, 0.10, 0.11, 0.10],
         color: [0.3, 0.5, 0.3],  // Green tint
       },
@@ -85,7 +85,7 @@ export class DistrictPlanner {
         buildingTypes: ['mine', 'refinery', 'barracks', 'base'],
         capacity: 12,
         priority: 3,
-        minSpacing: 25,     // Larger spacing for factories
+        minSpacing: 40,     // Larger spacing for factories (increased from 25)
         buildingScale: [0.15, 0.15, 0.15, 0.20],
         color: [0.35, 0.35, 0.35],  // Gray tint
       },
@@ -101,7 +101,7 @@ export class DistrictPlanner {
         buildingTypes: ['stadium', 'bar', 'bar'],
         capacity: 8,
         priority: 2,
-        minSpacing: 30,     // Large spacing for major attractions
+        minSpacing: 40,     // Large spacing for major attractions (increased from 30)
         buildingScale: [0.20, 0.10, 0.15],
         color: [0.6, 0.5, 0.2],  // Yellow/gold tint
       },
@@ -117,7 +117,7 @@ export class DistrictPlanner {
         buildingTypes: ['rural_farm', 'greenhouse', 'cottage', 'waterfall'],
         capacity: 15,
         priority: 4,
-        minSpacing: 25,
+        minSpacing: 35,     // (increased from 25)
         buildingScale: [0.10, 0.12, 0.12],
         color: [0.45, 0.35, 0.25],  // Brown tint
       },
