@@ -46,7 +46,6 @@ export function startGameLoop({
   let last = performance.now();
   let firstFrameRendered = false;
   let errorCount = 0;
-  const maxErrorsBeforeSilent = 5; // Stop logging after many errors
 
   console.log('[BOOT] Registering render loop with Babylon engine');
 
@@ -97,13 +96,16 @@ export function startGameLoop({
 
     } catch (err) {
       errorCount++;
-      if (errorCount <= maxErrorsBeforeSilent) {
-        console.error('[GameLoop] Runtime error in frame:', err.message);
-        if (errorCount === maxErrorsBeforeSilent) {
-          console.warn('[GameLoop] Suppressing further error logs to avoid spam');
-        }
+      // ALWAYS log errors - don't suppress. Use rate limiting if needed for analytics.
+      console.error('[GameLoop] Runtime error in frame:', err.message);
+      console.error('[GameLoop] Stack trace:', err.stack);
+
+      // High error count warning
+      if (errorCount > 5) {
+        console.warn(`[GameLoop] High error rate detected (${errorCount} errors). Game may be unstable.`);
       }
-      // Continue rendering even if a frame has errors
+
+      // Continue rendering even if a frame has errors (graceful degradation)
     }
   });
 
