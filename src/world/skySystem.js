@@ -12,13 +12,13 @@ export function initSky(scene, sun) {
   skyMaterial.backFaceCulling = false;
 
   // Cinematic / Realistic Settings
-  skyMaterial.turbidity = 1.2;
-  skyMaterial.luminance = 1.0;
+  skyMaterial.turbidity = 2.5;
+  skyMaterial.luminance = 1.1;
   skyMaterial.inclination = 0.5; // Day/Night
   skyMaterial.azimuth = 0.25;
 
   // Custom atmosphere colors
-  skyMaterial.rayleigh = 2.0;
+  skyMaterial.rayleigh = 2.8;
   skyMaterial.mieDirectionalG = 0.8;
   skyMaterial.mieCoefficient = 0.005;
 

@@ -43,6 +43,9 @@ export async function createGameRuntimeContext({
   const state = createGameState();
   const { scene, camera, hemi, sun, moonLight, shadows, skyController } = createScene(canvas, engine);
 
+  // Ensure engine dimensions match canvas on initial creation
+  engine.resize();
+
   if (!scene || !camera || !engine) {
     throw new Error('Failed to initialize scene, camera, or engine');
   }

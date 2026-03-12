@@ -112,16 +112,11 @@ export class DistrictLighting {
   applyDistrictLighting(districtId, buildingPositions = []) {
     const config = this.getConfig(districtId);
 
-    // Set ambient light for the scene (affects entire scene, but visual effect varies per district)
-    // Note: In a real implementation, you might use separate lighting for different regions
-    this.scene.ambientColor = new Color3(...config.ambientColor);
-    this.scene.ambientColor.scaleToRef(config.ambientIntensity, this.scene.ambientColor);
-
-    // Create fog for atmospheric effect
-    this.scene.fogEnabled = true;
-    this.scene.fogMode = 3; // FOGMODE_EXP
-    this.scene.fogColor = new Color3(...config.fogColor);
-    this.scene.fogDensity = config.fogDensity;
+    // Set ambient light for the scene based on district theme
+    // Only set ambient color — do NOT override scene fog (managed by createScene/sceneTuning)
+    const ambientColor = new Color3(...config.ambientColor);
+    ambientColor.scaleInPlace(config.ambientIntensity);
+    this.scene.ambientColor = ambientColor;
 
     // Store reference for tracking
     this.districtLights.set(districtId, {

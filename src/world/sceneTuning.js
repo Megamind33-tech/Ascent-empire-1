@@ -31,9 +31,9 @@ export function applyReadabilityEnhancements(scene, options = {}) {
   if (reduceFog) {
     // More visible fog that doesn't choke off the city
     scene.fogMode = 1; // LINEAR
-    scene.fogStart = 400;    // Started seeing things at 400 units (was 600)
-    scene.fogEnd = 1200;     // Full fog at 1200 units (was 1400)
-    scene.fogColor = new Color3(0.72, 0.79, 0.88); // Slightly warmer sky
+    scene.fogStart = 500;    // Push fog start further out for better city visibility
+    scene.fogEnd = 1600;     // Extended visibility range
+    scene.fogColor = new Color3(0.75, 0.82, 0.90); // Warmer, brighter sky fog
   }
 
   // ── Color/Contrast Tuning ───────────────────────────────────────
@@ -42,7 +42,7 @@ export function applyReadabilityEnhancements(scene, options = {}) {
     // Slightly warmer, clearer atmosphere
     // This is typically done through lighting and sky adjustments
     // For now, we enhance fog color
-    scene.fogColor = new Color3(0.74, 0.80, 0.87);
+    scene.fogColor = new Color3(0.75, 0.82, 0.90);
   }
 
   // ── Lighting Balance ────────────────────────────────────────────

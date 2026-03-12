@@ -22,6 +22,8 @@ export function createIntroScreen() {
       .intro-container {
         text-align: center;
         animation: intro-sequence 10s ease-in-out forwards;
+        max-width: 90vw;
+        padding: 0 16px;
       }
 
       .intro-logo {
@@ -35,7 +37,7 @@ export function createIntroScreen() {
       }
 
       .intro-presents {
-        font-size: 2.5rem;
+        font-size: clamp(1rem, 5vw, 2.5rem);
         font-weight: 700;
         color: #eab308;
         text-transform: uppercase;
@@ -45,14 +47,14 @@ export function createIntroScreen() {
       }
 
       .intro-title {
-        font-size: 6rem;
+        font-size: clamp(2.5rem, 12vw, 6rem);
         font-weight: 900;
         background: linear-gradient(180deg, #fde68a 0%, #eab308 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
         text-transform: uppercase;
-        letter-spacing: 12px;
+        letter-spacing: clamp(4px, 2vw, 12px);
         animation: zoom-in-text 2s cubic-bezier(0.175, 0.885, 0.32, 1.275) 1.2s forwards;
         opacity: 0;
         text-shadow: 0 0 60px rgba(234, 179, 8, 0.3);
@@ -60,7 +62,7 @@ export function createIntroScreen() {
       }
 
       .intro-version {
-        font-size: 1rem;
+        font-size: clamp(0.7rem, 2.5vw, 1rem);
         color: #888;
         text-transform: uppercase;
         letter-spacing: 3px;
@@ -70,7 +72,7 @@ export function createIntroScreen() {
       }
 
       .intro-tagline {
-        font-size: 1.1rem;
+        font-size: clamp(0.7rem, 2.5vw, 1.1rem);
         color: #aaa;
         margin-top: 60px;
         animation: fade-in-text 1s ease-out 4s forwards;

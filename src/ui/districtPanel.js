@@ -255,7 +255,7 @@ export class DistrictPanel {
       return;
     }
 
-    const cost = this.districtManager._getUpgradeCost(district);
+    const cost = 1000 + (district.upgradeLevel * 500);
     if (district.treasury >= cost && district.upgradeLevel < 5) {
       upgradeBtn.disabled = false;
       upgradeBtn.style.background = '#2ecc71';

@@ -126,20 +126,20 @@ export function createTerrain(scene) {
     let r, g, b;
 
     if (grassFactor > 0.7) {
-      // Grass dominant
-      r = 0.25 + grassFactor * 0.08 + heightNorm * 0.05;
-      g = 0.40 + grassFactor * 0.15 + heightNorm * 0.08;
-      b = 0.20 + grassFactor * 0.05;
+      // Grass dominant — vibrant green
+      r = 0.22 + grassFactor * 0.06 + heightNorm * 0.04;
+      g = 0.55 + grassFactor * 0.30 + heightNorm * 0.06;
+      b = 0.15 + grassFactor * 0.05;
     } else if (rockFactor > 0.6) {
-      // Rock dominant
-      r = 0.40 + rockFactor * 0.15 + heightNorm * 0.08;
-      g = 0.38 + rockFactor * 0.12;
-      b = 0.35 + rockFactor * 0.12 + heightNorm * 0.05;
+      // Rock dominant — lighter grey stone
+      r = 0.52 + rockFactor * 0.12 + heightNorm * 0.06;
+      g = 0.50 + rockFactor * 0.10;
+      b = 0.47 + rockFactor * 0.10 + heightNorm * 0.04;
     } else {
-      // Dirt/sand transition
-      r = 0.32 + heightNorm * 0.08;
-      g = 0.36 + heightNorm * 0.08;
-      b = 0.22 + heightNorm * 0.05;
+      // Dirt/sand transition — warm earth tones
+      r = 0.48 + heightNorm * 0.06;
+      g = 0.42 + heightNorm * 0.06;
+      b = 0.28 + heightNorm * 0.04;
     }
 
     colors.push(r, g, b, 1);
