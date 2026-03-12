@@ -118,18 +118,20 @@ function ensureBootStyles() {
       z-index: 12000;
       display: grid;
       place-items: center;
-      background: radial-gradient(circle at 30% 20%, #123049 0%, #06080d 55%, #020305 100%);
+      background: linear-gradient(135deg, #1a1f2e 0%, #0f1419 50%, #050709 100%);
       color: #f8fafc;
       transition: opacity .25s ease;
       padding: 24px;
+      opacity: 1 !important;
+      pointer-events: auto !important;
     }
     .boot-overlay--hidden { opacity: 0; pointer-events: none; }
     .boot-panel {
       width: min(560px, 100%);
-      border: 1px solid rgba(255,255,255,.14);
+      border: 2px solid rgba(100, 180, 255, 0.5);
       border-radius: 18px;
-      background: rgba(8, 13, 22, .88);
-      box-shadow: 0 24px 80px rgba(0,0,0,.45);
+      background: rgba(15, 20, 35, 0.98);
+      box-shadow: 0 24px 80px rgba(0,0,0,.65), inset 0 1px 2px rgba(255,255,255,.1);
       padding: 28px;
       backdrop-filter: blur(14px);
     }
@@ -141,8 +143,8 @@ function ensureBootStyles() {
       color: #5de2ff;
       margin-bottom: 14px;
     }
-    .boot-panel h1 { font-size: 30px; margin: 0 0 10px; }
-    .boot-panel p { margin: 0; color: #dbeafe; font-size: 15px; }
+    .boot-panel h1 { font-size: 32px; margin: 0 0 10px; font-weight: 700; color: #fff; }
+    .boot-panel p { margin: 0; color: #b0d4ff; font-size: 16px; line-height: 1.5; }
     .boot-details {
       margin-top: 12px;
       min-height: 42px;

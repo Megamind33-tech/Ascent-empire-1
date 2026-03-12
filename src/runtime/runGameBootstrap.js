@@ -163,8 +163,16 @@ function ensureCanvasSize(canvas) {
   canvas.style.width = '100vw';
   canvas.style.height = '100vh';
   canvas.style.zIndex = '0';
+  canvas.style.display = 'block';
+  canvas.style.visibility = 'visible';
+
+  // Ensure body doesn't hide the canvas
+  document.body.style.overflow = 'hidden';
+  document.body.style.height = '100vh';
+  document.body.style.width = '100vw';
 
   console.log(`[BOOT] Canvas sized to ${canvas.width}x${canvas.height}px`);
+  console.log('[BOOT] Canvas visibility and positioning set');
 }
 
 /**

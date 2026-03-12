@@ -28,6 +28,13 @@ export function createScene(canvas, providedEngine) {
   const scene = new Scene(engine);
   scene.clearColor = new Color4(0.75, 0.84, 0.95, 1.0);
 
+  // Safeguard: ensure clear color is never black or too dark
+  const isTooDark = scene.clearColor.r < 0.2 && scene.clearColor.g < 0.2 && scene.clearColor.b < 0.2;
+  if (isTooDark) {
+    console.warn('[BOOT] Clear color was too dark, resetting to sky blue');
+    scene.clearColor = new Color4(0.75, 0.84, 0.95, 1.0);
+  }
+
   // Set hardware scaling for mobile optimization
   engine.setHardwareScalingLevel(1 / clamp(window.devicePixelRatio, CONFIG.mobile.hardwareScalingMin, CONFIG.mobile.hardwareScalingMax));
 
