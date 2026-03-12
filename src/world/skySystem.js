@@ -6,7 +6,7 @@
  */
 
 import { SkyMaterial } from '@babylonjs/materials';
-import { Vector3, Color3 } from '@babylonjs/core';
+import { Vector3, Color3, MeshBuilder } from '@babylonjs/core';
 
 export function initSky(scene, sun) {
   const skyMaterial = new SkyMaterial("skyMaterial", scene);
@@ -23,7 +23,7 @@ export function initSky(scene, sun) {
   skyMaterial.mieDirectionalG = 0.8;
   skyMaterial.mieCoefficient = 0.005;
 
-  const skybox = scene.createDefaultSkybox(null, true, 2000);
+  const skybox = MeshBuilder.CreateBox("skyBox", { size: 4000.0 }, scene);
   skybox.material = skyMaterial;
 
   // Sync sun position with sky inclination
