@@ -185,6 +185,15 @@ export function createNationWorld(scene, shadows, state) {
   }
   state.worldRefs.traffic = traffic;
 
+  // ── Diagnostic logging (optional: uncomment for calibration debugging) ──────
+  // Logs initial vehicle positions to verify traffic spacing and lane distribution
+  if (false) { // Set to true for diagnostics during calibration
+    console.log('[Diagnostics] Traffic spawn positions:');
+    traffic.forEach((item, i) => {
+      console.log(`  Car ${i}: lane=${item.axis}/${item.laneCoord} dir=${item.dir} pos=[${item.mesh.position.x.toFixed(1)},${item.mesh.position.z.toFixed(1)}]`);
+    });
+  }
+
   // ── Agents (pedestrians) ───────────────────────────────────────────────────
   const agents = [];
   for (let i = 0; i < CONFIG.mobile.maxAgents; i++) {
@@ -207,6 +216,16 @@ export function createNationWorld(scene, shadows, state) {
     }
   }
   state.worldRefs.agents = agents;
+
+  // ── Diagnostic logging (optional: uncomment for calibration debugging) ──────
+  // Logs initial agent positions to verify spawn area and distribution
+  if (false) { // Set to true for diagnostics during calibration
+    console.log('[Diagnostics] Agent spawn positions:');
+    agents.forEach((item, i) => {
+      const dist = Math.sqrt(item.mesh.position.x ** 2 + item.mesh.position.z ** 2);
+      console.log(`  Agent ${i}: pos=[${item.mesh.position.x.toFixed(1)},${item.mesh.position.z.toFixed(1)}] dist=${dist.toFixed(1)}`);
+    });
+  }
 
   // ── Coastal / inland features ─────────────────────────────────────────────
   if (nation.coastal) {

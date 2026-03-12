@@ -2,6 +2,44 @@ import { MeshBuilder, StandardMaterial, Color3, Vector3, Matrix, Quaternion } fr
 import { spawnInstitution } from './createInstitutions.js';
 import { instantiateModel, getModelScale } from '../systems/assetLoader.js';
 
+/**
+ * Validation helper: Check if a building position is valid according to scale calibration rules.
+ * @param {number} x World X coordinate
+ * @param {number} z World Z coordinate
+ * @returns {boolean} True if position meets all constraints
+ */
+export function isValidBuildingPosition(x, z) {
+  // Constraint 1: Must be within buildable area (±220 units from center)
+  if (Math.abs(x) > 220 || Math.abs(z) > 220) return false;
+
+  // Constraint 2: Must maintain 14-unit clearance from all road centerlines (at 0, ±120, ±240)
+  const ROAD_POSITIONS = [0, 120, -120, 240, -240];
+  for (const roadPos of ROAD_POSITIONS) {
+    if (Math.abs(x - roadPos) < 14 || Math.abs(z - roadPos) < 14) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
+ * Get the distance from a position to the nearest road centerline.
+ * @param {number} x World X coordinate
+ * @param {number} z World Z coordinate
+ * @returns {number} Minimum distance to any road centerline
+ */
+export function getDistanceToNearestRoad(x, z) {
+  const ROAD_POSITIONS = [0, 120, -120, 240, -240];
+  let minDist = Infinity;
+  for (const roadPos of ROAD_POSITIONS) {
+    const distX = Math.abs(x - roadPos);
+    const distZ = Math.abs(z - roadPos);
+    minDist = Math.min(minDist, distX, distZ);
+  }
+  return minDist;
+}
+
 export function createCity(scene, shadows, state) {
   const m = mats(scene);
   
