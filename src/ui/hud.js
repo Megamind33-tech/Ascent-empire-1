@@ -145,6 +145,27 @@ function addNewsHeadline(text) {
     }
 }
 
+/**
+ * Show the HUD UI elements (called after 3D scene is initialized)
+ */
+export function showHUD() {
+  const topHud = document.getElementById('top-hud');
+  const newsTicker = document.getElementById('news-ticker');
+  const bottomNav = document.getElementById('bottom-nav');
+  const trayLeft = document.getElementById('tray-left');
+  const trayRight = document.getElementById('tray-right');
+  const saveLoadButtons = document.getElementById('saveLoadButtons');
+  const cameraControlButtons = document.getElementById('cameraControlButtons');
+
+  if (topHud) topHud.classList.add('hud-visible');
+  if (newsTicker) newsTicker.classList.add('hud-visible');
+  if (bottomNav) bottomNav.classList.add('hud-visible');
+  if (trayLeft) trayLeft.classList.add('hud-visible');
+  if (trayRight) trayRight.classList.add('hud-visible');
+  if (saveLoadButtons) saveLoadButtons.classList.add('hud-visible');
+  if (cameraControlButtons) cameraControlButtons.classList.add('hud-visible');
+}
+
 export function updateHUD(state) {
   const cashEl       = el('cashValue');
   const approvalEl   = el('approvalValue');

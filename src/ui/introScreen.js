@@ -149,18 +149,17 @@ export function createIntroScreen() {
   return new Promise((resolve) => {
     let resolved = false;
 
-    // Auto-skip after 10 seconds
+    // Auto-skip after 3 seconds (reduced from 10) - allows 3D scene to render ASAP
     const autoTimeout = setTimeout(() => {
       cleanup();
       resolve();
-    }, 10000);
+    }, 3000);
 
     // Failsafe: guarantee cleanup even if something hangs
-    // This prevents the screen from persisting indefinitely
     const failsafeTimeout = setTimeout(() => {
       cleanup();
       resolve();
-    }, 12000);
+    }, 5000);
 
     // Skip on any key or click
     const skipHandler = () => {
