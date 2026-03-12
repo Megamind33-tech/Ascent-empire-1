@@ -147,23 +147,35 @@ export function createIntroScreen() {
   document.body.appendChild(intro);
 
   return new Promise((resolve) => {
+    let resolved = false;
+
     // Auto-skip after 10 seconds
     const autoTimeout = setTimeout(() => {
       cleanup();
       resolve();
     }, 10000);
 
+    // Failsafe: guarantee cleanup even if something hangs
+    // This prevents the screen from persisting indefinitely
+    const failsafeTimeout = setTimeout(() => {
+      cleanup();
+      resolve();
+    }, 12000);
+
     // Skip on any key or click
     const skipHandler = () => {
       clearTimeout(autoTimeout);
+      clearTimeout(failsafeTimeout);
       cleanup();
       resolve();
     };
 
     const cleanup = () => {
+      if (resolved) return;
+      resolved = true;
       document.removeEventListener('click', skipHandler);
       document.removeEventListener('keydown', skipHandler);
-      intro.remove();
+      if (intro.parentElement) intro.remove();
     };
 
     document.addEventListener('click', skipHandler, { once: true });
