@@ -51,9 +51,14 @@ export async function initSetupOverlay(state, onStart){
     console.log('[Setup] District selected:', districtSelect.value);
   });
 
-  form.addEventListener('submit', (event) => {
-    event.preventDefault();
-    event.stopPropagation();
+  let hasStarted = false;
+  const startGameFromSetup = (event) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    if (hasStarted) return;
 
     try {
       // Get fresh form values from DOM
@@ -86,6 +91,7 @@ export async function initSetupOverlay(state, onStart){
 
       console.log('[Setup] State updated successfully');
 
+      hasStarted = true;
       // Hide overlay
       overlay.style.display = 'none';
 
@@ -95,8 +101,17 @@ export async function initSetupOverlay(state, onStart){
       // Proceed with game start
       onStart();
     } catch (err) {
+      hasStarted = false;
       console.error('[Setup] Error during form submission:', err);
       alert('Error starting game: ' + err.message);
     }
-  });
+  };
+
+  form.addEventListener('submit', startGameFromSetup);
+
+  // Mobile/webview hardening: some runtimes may not dispatch submit reliably.
+  const startButton = form.querySelector('button[type="submit"]');
+  if (startButton) {
+    startButton.addEventListener('click', startGameFromSetup);
+  }
 }
