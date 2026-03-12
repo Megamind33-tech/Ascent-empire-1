@@ -29,45 +29,45 @@ const MANIFEST = {
   refinery:       'civic/refinery.glb',
   barracks:       'civic/barracks.glb',
   base:           'civic/base.glb',
-  cat:            'civic/3danimate_cat_glb-compressed-compressed.glb',
+  cat:            'civic/cat_animated.glb',
   acc:            'civic/police.glb',   // reuse police as anti-corruption office
   dec:            'civic/police.glb',   // reuse police as defence ministry
 
   // ── Stores ────────────────────────────────────────────────────────────────
   store:          'stores/store.glb',
-  bar:            'stores/Bar.glb',
+  bar:            'stores/bar.glb',
 
   // ── Landmarks & structures ────────────────────────────────────────────────
   parliament:     'landmarks/Building.glb', // parliament.glb absent — use Building
   tower_a:        'landmarks/Building.glb', // 660-byte placeholder → use Building
   tower_b:        'landmarks/Building.glb',
   billboard:      'landmarks/Billboard.glb',
-  farm:           'landmarks/Farm (1) (1).glb',
-  birch:          'landmarks/Birch Trees.glb',
-  palm:           'landmarks/Palm Trees (1).glb',
-  pine:           'landmarks/Pine Trees.glb',
+  farm:           'landmarks/farm_variant_02.glb',
+  birch:          'landmarks/birch_trees.glb',
+  palm:           'landmarks/palm_trees.glb',
+  pine:           'landmarks/pine_trees.glb',
   bridge:         'landmarks/Bridge.glb',
   road_seg:       'landmarks/Road.glb',
-  road_bits:      'landmarks/Road Bits.glb',
-  road_3:         'landmarks/Road (3).glb',
-  stop_sign:      'landmarks/Stop sign.glb',
+  road_bits:      'landmarks/road_bits.glb',
+  road_3:         'landmarks/road_segment_variant_03.glb',
+  stop_sign:      'landmarks/stop_sign.glb',
   waterfall:      'landmarks/Waterfall.glb',
 
   // ── Rural ─────────────────────────────────────────────────────────────────
   cottage:        'rural/Cottage.glb',
-  rural_farm:     'rural/Farm (1).glb',
+  rural_farm:     'rural/farm_variant_01.glb',
   greenhouse:     'rural/Greenhouse.glb',
 
   // ── Vehicles ──────────────────────────────────────────────────────────────
   car_a:          'vehicles/car_a.glb',
   car_b:          'vehicles/car_b.glb',
   car_c:          'vehicles/Car.glb',
-  car_model:      'vehicles/CAR Model.glb',
+  car_model:      'vehicles/car_model.glb',
   bus:            'vehicles/Bus.glb',
-  gtr:            'vehicles/Nissan GTR.glb',
-  police_car:     'vehicles/Police Car.glb',
+  gtr:            'vehicles/nissan_gtr.glb',
+  police_car:     'vehicles/police_car.glb',
   suv:            'vehicles/SUV.glb',
-  sports_car:     'vehicles/Sports Car.glb',
+  sports_car:     'vehicles/sports_car.glb',
 
   // ── People ────────────────────────────────────────────────────────────────
   agent_a:        'people/agent_a.glb',

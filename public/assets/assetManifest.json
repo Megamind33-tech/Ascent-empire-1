@@ -158,7 +158,7 @@
     "cat": {
       "id": "cat",
       "category": "civic",
-      "path": "civic/3danimate_cat_glb-compressed-compressed.glb",
+      "path": "civic/cat_animated.glb",
       "status": "production",
       "scale": 0.05,
       "collisionType": "none",
@@ -214,7 +214,7 @@
     "bar": {
       "id": "bar",
       "category": "stores",
-      "path": "stores/Bar.glb",
+      "path": "stores/bar.glb",
       "status": "production",
       "scale": 0.10,
       "collisionType": "aabb",
@@ -284,7 +284,7 @@
     "farm": {
       "id": "farm",
       "category": "landmarks",
-      "path": "landmarks/Farm (1) (1).glb",
+      "path": "landmarks/farm_variant_02.glb",
       "status": "production",
       "scale": 0.09,
       "collisionType": "aabb",
@@ -298,7 +298,7 @@
     "birch": {
       "id": "birch",
       "category": "landmarks",
-      "path": "landmarks/Birch Trees.glb",
+      "path": "landmarks/birch_trees.glb",
       "status": "production",
       "scale": 0.12,
       "collisionType": "none",
@@ -312,7 +312,7 @@
     "palm": {
       "id": "palm",
       "category": "landmarks",
-      "path": "landmarks/Palm Trees (1).glb",
+      "path": "landmarks/palm_trees.glb",
       "status": "production",
       "scale": 0.12,
       "collisionType": "none",
@@ -326,7 +326,7 @@
     "pine": {
       "id": "pine",
       "category": "landmarks",
-      "path": "landmarks/Pine Trees.glb",
+      "path": "landmarks/pine_trees.glb",
       "status": "production",
       "scale": 0.12,
       "collisionType": "none",
@@ -368,7 +368,7 @@
     "road_bits": {
       "id": "road_bits",
       "category": "landmarks",
-      "path": "landmarks/Road Bits.glb",
+      "path": "landmarks/road_bits.glb",
       "status": "production",
       "scale": 0.09,
       "collisionType": "aabb",
@@ -382,7 +382,7 @@
     "road_3": {
       "id": "road_3",
       "category": "landmarks",
-      "path": "landmarks/Road (3).glb",
+      "path": "landmarks/road_segment_variant_03.glb",
       "status": "production",
       "scale": 0.12,
       "collisionType": "aabb",
@@ -396,7 +396,7 @@
     "stop_sign": {
       "id": "stop_sign",
       "category": "landmarks",
-      "path": "landmarks/Stop sign.glb",
+      "path": "landmarks/stop_sign.glb",
       "status": "production",
       "scale": 0.06,
       "collisionType": "none",
@@ -452,7 +452,7 @@
     "rural_farm": {
       "id": "rural_farm",
       "category": "rural",
-      "path": "rural/Farm (1).glb",
+      "path": "rural/farm_variant_01.glb",
       "status": "production",
       "scale": 0.12,
       "collisionType": "aabb",
@@ -522,7 +522,7 @@
     "car_model": {
       "id": "car_model",
       "category": "vehicles",
-      "path": "vehicles/CAR Model.glb",
+      "path": "vehicles/car_model.glb",
       "status": "production",
       "scale": 0.09,
       "collisionType": "capsule",
@@ -550,7 +550,7 @@
     "gtr": {
       "id": "gtr",
       "category": "vehicles",
-      "path": "vehicles/Nissan GTR.glb",
+      "path": "vehicles/nissan_gtr.glb",
       "status": "production",
       "scale": 0.09,
       "collisionType": "capsule",
@@ -564,7 +564,7 @@
     "police_car": {
       "id": "police_car",
       "category": "vehicles",
-      "path": "vehicles/Police Car.glb",
+      "path": "vehicles/police_car.glb",
       "status": "production",
       "scale": 0.09,
       "collisionType": "capsule",
@@ -592,7 +592,7 @@
     "sports_car": {
       "id": "sports_car",
       "category": "vehicles",
-      "path": "vehicles/Sports Car.glb",
+      "path": "vehicles/sports_car.glb",
       "status": "production",
       "scale": 0.09,
       "collisionType": "capsule",
