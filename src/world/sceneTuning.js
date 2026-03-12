@@ -5,7 +5,7 @@
  * Focuses on fog, lighting, glow, and color balance for better readability.
  */
 
-import { Color3 } from '@babylonjs/core';
+import { Color3, DirectionalLight, HemisphericLight } from '@babylonjs/core';
 
 /**
  * Apply readability enhancements to a scene
@@ -50,14 +50,14 @@ export function applyReadabilityEnhancements(scene, options = {}) {
   if (enhanceLighting && scene.lights && scene.lights.length > 0) {
     for (const light of scene.lights) {
       // Enhance directional light (sun)
-      if (light.name === 'sun' || light instanceof window.BABYLON?.DirectionalLight) {
+      if (light.name === 'sun' || light instanceof DirectionalLight) {
         if (light.intensity < 2.0) {
           light.intensity *= 1.05; // Slight boost to sun
         }
       }
 
       // Tone down ground color if it's a hemispheric light
-      if (light.name === 'hemi' || light instanceof window.BABYLON?.HemisphericLight) {
+      if (light.name === 'hemi' || light instanceof HemisphericLight) {
         if (light.groundColor) {
           // Slightly boost ground color to reduce shadows on terrain
           light.groundColor = new Color3(0.20, 0.22, 0.24);

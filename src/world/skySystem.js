@@ -75,7 +75,8 @@ function createAnimatedClouds(scene) {
   const cloudLayers = [];
 
   // Create 3 cloud layers at different heights for depth and movement variety
-  const cloudHeights = [80, 150, 220];
+  // Keep clouds well above gameplay camera to avoid "gray wall" occluding the city.
+  const cloudHeights = [260, 340, 420];
   const cloudSpeeds = [0.002, 0.0015, 0.001]; // Slower, more realistic wind
   const cloudDensities = [0.6, 0.4, 0.5];
 
@@ -86,7 +87,8 @@ function createAnimatedClouds(scene) {
       const cloudPlane = MeshBuilder.CreatePlane(`cloudLayer${index}_${i}`, { width: 1200, height: 600 }, scene);
       cloudPlane.position.y = height;
       cloudPlane.position.x = i * 1200 - 600; // Tile clouds
-      cloudPlane.rotation.x = 0.2 + index * 0.1; // Different tilt per layer
+      // Plane default is vertical; rotate to horizontal sky layer overhead.
+      cloudPlane.rotation.x = Math.PI / 2;
       cloudPlane.billboardMode = 0; // Don't auto-billboard
 
       // Create dynamic cloud texture with Perlin-like noise
@@ -94,12 +96,20 @@ function createAnimatedClouds(scene) {
       generateCloudPattern(cloudTexture.getContext(), 256, cloudDensities[index]);
       cloudTexture.update();
 
-      // Create material with transparency
+      // Create material with proper alpha handling
       const cloudMaterial = new StandardMaterial(`cloudMaterial${index}_${i}`, scene);
-      cloudMaterial.emissiveTexture = cloudTexture;
+      cloudTexture.hasAlpha = true;
+      cloudMaterial.diffuseTexture = cloudTexture;
+      cloudMaterial.opacityTexture = cloudTexture;
+      cloudMaterial.useAlphaFromDiffuseTexture = true;
+      cloudMaterial.disableLighting = true;
+      cloudMaterial.specularColor = new Color3(0, 0, 0);
       cloudMaterial.emissiveColor = new Color3(1, 1, 1);
       cloudMaterial.backFaceCulling = false;
       cloudMaterial.transparencyMode = 2; // ALPHA_BLEND
+      cloudMaterial.alpha = 0.55;
+      cloudMaterial.disableDepthWrite = true;
+      cloudPlane.isPickable = false;
       cloudPlane.material = cloudMaterial;
 
       planes.push({
