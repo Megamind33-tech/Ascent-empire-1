@@ -20,16 +20,16 @@ const ASSET_PATH = '/assets/models/';
 const MANIFEST = {
   // ── Civic buildings ────────────────────────────────────────────────────────
   housing:        'civic/housing.glb',
-  school:         'civic/school.glb',
+  school:         'civic/school_optimized.glb',        // Phase 1 optimization
   police:         'civic/police.glb',
   police_station: 'civic/stylized_police_station_lowpoly-compressed.glb',
-  hospital:       'civic/hospital.glb',
+  hospital:       'civic/hospital_optimized.glb',      // Phase 1 optimization
   stadium:        'civic/stadium.glb',
   mine:           'civic/mine.glb',
   refinery:       'civic/refinery.glb',
   barracks:       'civic/barracks.glb',
   base:           'civic/base.glb',
-  cat:            'civic/cat_animated.glb',
+  cat:            'civic/cat_animated_optimized.glb',  // Phase 1 optimization
   acc:            'civic/police.glb',   // reuse police as anti-corruption office
   dec:            'civic/police.glb',   // reuse police as defence ministry
 
@@ -43,15 +43,15 @@ const MANIFEST = {
   tower_b:        'landmarks/Building.glb',
   billboard:      'landmarks/Billboard.glb',
   farm:           'landmarks/farm_variant_02.glb',
-  birch:          'landmarks/birch_trees.glb',
-  palm:           'landmarks/palm_trees.glb',
+  birch:          'landmarks/birch_trees_optimized.glb', // Phase 1 optimization
+  palm:           'landmarks/palm_trees_optimized.glb',  // Phase 1 optimization
   pine:           'landmarks/pine_trees.glb',
   bridge:         'landmarks/Bridge.glb',
   road_seg:       'landmarks/Road.glb',
   road_bits:      'landmarks/road_bits.glb',
   road_3:         'landmarks/road_segment_variant_03.glb',
   stop_sign:      'landmarks/stop_sign.glb',
-  waterfall:      'landmarks/Waterfall.glb',
+  waterfall:      'landmarks/Waterfall_optimized.glb', // Phase 1 optimization
 
   // ── Rural ─────────────────────────────────────────────────────────────────
   cottage:        'rural/Cottage.glb',
@@ -62,9 +62,9 @@ const MANIFEST = {
   car_a:          'vehicles/car_a.glb',
   car_b:          'vehicles/car_b.glb',
   car_c:          'vehicles/Car.glb',
-  car_model:      'vehicles/car_model.glb',
+  car_model:      'vehicles/car_model_optimized.glb',    // Phase 1 optimization
   bus:            'vehicles/Bus.glb',
-  gtr:            'vehicles/nissan_gtr.glb',
+  gtr:            'vehicles/nissan_gtr_optimized.glb',   // Phase 1 optimization (92% reduction!)
   police_car:     'vehicles/police_car.glb',
   suv:            'vehicles/SUV.glb',
   sports_car:     'vehicles/sports_car.glb',
