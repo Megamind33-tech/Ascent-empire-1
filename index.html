@@ -22,6 +22,7 @@
             --font-ui: 'Inter', sans-serif;
             --glass-border: rgba(255, 255, 255, 0.12);
             --neon-glow: 0 0 15px rgba(0, 242, 255, 0.3);
+            --muted: #8b949e;
         }
 
         /* Visual Realism & Atmosphere */
@@ -46,7 +47,7 @@
         .vignette {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle, transparent 30%, rgba(0,0,0,0.9) 100%);
+            background: radial-gradient(circle, transparent 55%, rgba(0,0,0,0.45) 100%);
             pointer-events: none;
             z-index: 9997;
         }
@@ -62,7 +63,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
-            background-color: transparent;
+            background-color: #05070a;
             color: #f0f6fc;
             overflow: hidden;
             height: 100vh;
@@ -362,6 +363,7 @@
         .v-content p { font-size: 1rem; color: var(--brushed-gold); text-transform: uppercase; letter-spacing: 5px; opacity: 0.8; }
         .victory-flash.fade-out { opacity: 0; transition: opacity 1s ease-in; }
         @keyframes v-flash { from { opacity: 0; clip-path: inset(50% 0 50% 0); } to { opacity: 1; clip-path: inset(0 0 0 0); } }
+        @keyframes slide-in { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* EMPIRE OVERRIDE - FOR ENDGAME */
         .empire-mode #top-hud { border-bottom: 3px solid var(--war-red); background: linear-gradient(to bottom, #2a0a0a, #000); }
@@ -382,20 +384,33 @@
     <canvas id="renderCanvas"></canvas>
 
     <!-- SETUP OVERLAY (Game Start) -->
-    <div id="setupOverlay" class="modal" style="display:flex; z-index: 9999;">
+    <div id="setupOverlay" class="modal" style="display:none; z-index: 9999;">
         <div class="modal-content" style="max-width: 500px; height: auto; margin: auto;">
             <div class="modal-header"><h2>ASCENT REALMS</h2></div>
             <div class="modal-body" style="grid-template-columns: 1fr; padding: 30px;">
                 <p style="color:var(--terminal-cyan); font-weight:bold; margin-bottom:10px;">Choose your identity, nation, and starting district.</p>
-                <form id="setupForm" style="display:flex; flex-direction:column; gap:20px;">
+                <form id="setupForm" style="display:flex; flex-direction:column; gap:20px;" onsubmit="return false;">
                     <label class="form-label">Player Name
-                        <input id="playerName" class="form-input" type="text" maxlength="24" placeholder="Enter your name" />
+                        <input id="playerName" name="playerName" class="form-input" type="text" maxlength="24" placeholder="Enter your name" required />
                     </label>
                     <label class="form-label">Nation
-                        <select id="playerNation" class="form-input"></select>
+                        <select id="playerNation" name="playerNation" class="form-input" required>
+                            <option value="">Select a Nation...</option>
+                            <option value="0">Zambria • Inland</option>
+                            <option value="1">Kitala • Coast</option>
+                            <option value="2">Nembia • Inland</option>
+                            <option value="3">Karumo • Coast</option>
+                            <option value="4">Tazeko • Coast</option>
+                            <option value="5">Belvar • Inland</option>
+                            <option value="6">Sundoro • Coast</option>
+                            <option value="7">Marenga • Inland</option>
+                            <option value="8">Orun • Coast</option>
+                            <option value="9">Velis • Inland</option>
+                        </select>
                     </label>
                     <label class="form-label">Starting Position
-                        <select id="playerStart" class="form-input">
+                        <select id="playerStart" name="playerStart" class="form-input" required>
+                            <option value="">Select Starting Position...</option>
                             <option value="capital-core">Capital Core</option>
                             <option value="harbor-district">Harbor District</option>
                             <option value="industrial-belt">Industrial Belt</option>
@@ -598,11 +613,12 @@
     </div>
 
     <div style="position:absolute; left:20px; bottom:120px; display:grid; grid-template-columns:1fr 1fr; gap:10px; z-index:1000;">
-        <button id="rotateLeftBtn" class="btn-run" style="border-radius:4px; padding:10px; font-size: 1.2rem;">⟲</button>
-        <button id="zoomInBtn" class="btn-run" style="border-radius:4px; padding:10px; font-size: 1.2rem;">＋</button>
-        <button id="zoomOutBtn" class="btn-run" style="border-radius:4px; padding:10px; font-size: 1.2rem;">－</button>
-        <button id="rotateRightBtn" class="btn-run" style="border-radius:4px; padding:10px; font-size: 1.2rem;">⟳</button>
-        <button id="muteBtn" class="btn-run" style="border-radius:4px; padding:10px; font-size: 1.2rem; grid-column:span 2;">🔊</button>
+        <button id="rotateLeftBtn" class="btn-run" style="border-radius:4px; padding:10px; font-size: 1.2rem;" title="Rotate Left">⟲</button>
+        <button id="zoomInBtn" class="btn-run" style="border-radius:4px; padding:10px; font-size: 1.2rem;" title="Zoom In">＋</button>
+        <button id="zoomOutBtn" class="btn-run" style="border-radius:4px; padding:10px; font-size: 1.2rem;" title="Zoom Out">－</button>
+        <button id="rotateRightBtn" class="btn-run" style="border-radius:4px; padding:10px; font-size: 1.2rem;" title="Rotate Right">⟳</button>
+        <button id="fitAllBtn" class="btn-run" style="border-radius:4px; padding:10px; font-size: 1.2rem;" title="Fit All Objects (Home key)">⊡</button>
+        <button id="muteBtn" class="btn-run" style="border-radius:4px; padding:10px; font-size: 1.2rem; grid-column:span 2;" title="Mute/Unmute">🔊</button>
     </div>
 
     <!-- MODAL: CAREER -->

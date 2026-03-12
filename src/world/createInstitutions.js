@@ -1,5 +1,6 @@
 import { Color3, Color4, MeshBuilder, StandardMaterial, Vector3, ParticleSystem, Texture } from '@babylonjs/core';
 import { instantiateModel, getModelScale } from '../systems/assetLoader.js';
+import { alignNodeToGround } from './terrainHeightSampler.js';
 
 /** Emit a sparkling construction burst at the given world position. */
 function spawnConstructionBurst(scene, position) {
@@ -27,7 +28,6 @@ function spawnConstructionBurst(scene, position) {
 }
 
 export function spawnInstitution(scene, shadows, type, point, state) {
-  const mat = new StandardMaterial(`${type}-mat-${Date.now()}`, scene);
   let mesh;
 
   // Try loading GLB first
@@ -36,12 +36,14 @@ export function spawnInstitution(scene, shadows, type, point, state) {
     mesh = model;
     const s = getModelScale(type);
     mesh.scaling.set(s, s, s);
-    mesh.position.copyFrom(point);
-    // Real models often have pivot at bottom; if not, we compensate:
-    // Some assets are centered, some on floor.
-    // For Quaternius/Kenney, we usually leave Y=0 as the ground if the model is set up correctly.
-    mesh.position.y = 0.1; 
-    mesh.metadata = { type, onFire: false };
+    // Align to terrain at the given point position
+    alignNodeToGround(mesh, point.x, point.z, {
+      yOffset: 0.05,
+      clampPitch: true,
+      clampRoll: true,
+      maxSlopeAngle: Math.PI / 12, // 15° max slope for civic buildings
+    });
+    mesh.metadata = { type, onFire: false, terrain: true };
 
     // Metadata update for specific types
     if (type === 'housing')   { state.buildings.housing += 1;   state.population += 120; state.legitimacy += 0.6; }
@@ -60,6 +62,7 @@ export function spawnInstitution(scene, shadows, type, point, state) {
     mesh.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
   } else {
     // Fallback to primitive boxes if asset is missing
+    const mat = new StandardMaterial(`${type}-mat-${Date.now()}`, scene);
     switch (type) {
       case 'housing':   mat.diffuseColor = new Color3(0.56, 0.57, 0.6);  mesh = MeshBuilder.CreateBox(`housing-${Date.now()}`, { width: 16, depth: 16, height: 20 }, scene); mesh.position = new Vector3(point.x, 10, point.z); state.buildings.housing += 1; state.population += 120; state.legitimacy += 0.6; break;
       case 'school':    mat.diffuseColor = new Color3(0.52, 0.49, 0.43); mesh = MeshBuilder.CreateBox(`school-${Date.now()}`, { width: 24, depth: 18, height: 10 }, scene); mesh.position = new Vector3(point.x, 5, point.z); state.buildings.schools += 1; state.education += 3; state.approval += 1.2; break;
@@ -77,8 +80,7 @@ export function spawnInstitution(scene, shadows, type, point, state) {
     mesh.material = mat;
     shadows.addShadowCaster(mesh);
   }
-  mesh.receiveShadows=true;
-  shadows.addShadowCaster(mesh);
+  mesh.receiveShadows = true;
   state.worldRefs.worldMeshes.push(mesh);
 
   // Add Compound Rapier Collider

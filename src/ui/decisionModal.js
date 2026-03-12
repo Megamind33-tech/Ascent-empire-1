@@ -81,7 +81,7 @@ export function initDecisionHooks(state) {
         options: [
           {
             label: "Accept the Deal",
-            consequenceText: `Costs $${cost.toLocaleString()}. Legitmacy decreases, but stability increases.`,
+            consequenceText: `Costs $${cost.toLocaleString()}. Legitimacy decreases, but stability increases.`,
             action: (gs) => {
               if (gs.cash >= cost) {
                 gs.cash -= cost;
