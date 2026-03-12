@@ -11,6 +11,7 @@
 
 const _listeners = {};
 const _history   = []; // Last 32 events, readable by NPCs for memory
+const _handlerErrors = {}; // Track errors per event type
 
 /** Subscribe to an event type */
 export function on(eventType, fn) {
@@ -29,15 +30,45 @@ export function emit(eventType, payload = {}) {
   const entry = { type: eventType, payload, tick: Date.now() };
   _history.push(entry);
   if (_history.length > 32) _history.shift();
-  (_listeners[eventType] || []).forEach(fn => {
-    try { fn(payload); } catch(e) { console.error(`[EventBus] Handler error on ${eventType}:`, e); }
+
+  const handlers = _listeners[eventType] || [];
+  let errorCount = 0;
+
+  handlers.forEach((fn, index) => {
+    try {
+      fn(payload);
+    } catch (e) {
+      errorCount++;
+      // Log full error with context for debugging
+      console.error(`[EventBus] Handler #${index} failed on event "${eventType}":`, e.message);
+      console.error(`[EventBus] Stack:`, e.stack);
+
+      // Track error rates per event type
+      if (!_handlerErrors[eventType]) {
+        _handlerErrors[eventType] = { count: 0, lastError: null };
+      }
+      _handlerErrors[eventType].count++;
+      _handlerErrors[eventType].lastError = e;
+
+      // Warning if too many handlers fail
+      if (errorCount > 2) {
+        console.warn(`[EventBus] Multiple handler failures on "${eventType}" (${errorCount} of ${handlers.length} failed)`);
+      }
+    }
   });
+
+  // Continue processing other handlers even if some fail (graceful degradation)
 }
 
 /** NPCs can query recent event history to inform decisions */
 export function getRecentEvents(withinMs = 30000) {
   const now = Date.now();
   return _history.filter(e => now - e.tick < withinMs);
+}
+
+/** Get handler error statistics (for debugging) */
+export function getHandlerErrors() {
+  return _handlerErrors;
 }
 
 /**
