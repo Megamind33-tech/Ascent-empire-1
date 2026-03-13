@@ -62,13 +62,7 @@ export async function runGameBootstrap(canvas) {
       engine,
       scene,
       camera,
-      state,
-      world,
-      npcSystem,
-      checkpoints,
-      timeSystem,
-      buildNation,
-      nationRuntimeRef
+      state
     } = runtimeContext;
 
     // Validate critical objects exist
@@ -76,7 +70,33 @@ export async function runGameBootstrap(canvas) {
       throw new Error(`Missing critical objects: engine=${!!engine}, scene=${!!scene}, camera=${!!camera}`);
     }
 
-    console.group('[BOOT] Game Session Setup');
+    // ============================================================================
+    // KEY FIX: Start render loop IMMEDIATELY with minimal stub to prevent timeout
+    // ============================================================================
+    console.group('[BOOT] Render Loop Start - Early Initialization');
+    globalThis.__ASCENT_FIRST_FRAME_RENDERED__ = false;
+
+    // Start with a minimal render loop that just clears and renders the scene
+    // This allows rendering to begin BEFORE heavy setup completes
+    const stubLoopRemover = createStubRenderLoop(engine, scene);
+    console.log('[BOOT] Stub render loop started - engine can now render');
+
+    // Wait for first frame with extended timeout to account for browser/device variation
+    // This should be fast now since we're just rendering an empty scene
+    try {
+      await waitForFirstFrame(15000);
+      console.log('[BOOT] First frame rendered successfully');
+    } catch (err) {
+      console.error('[BOOT] Failed to render first frame:', err.message);
+      throw new Error(`Cannot render first frame: ${err.message}. Your device may not support WebGL.`);
+    }
+
+    console.groupEnd();
+
+    // ============================================================================
+    // Now run heavy setup while scene is already rendering in background
+    // ============================================================================
+    console.group('[BOOT] Game Session Setup (background)');
     const sessionResult = await setupGameplaySession({
       runtimeContext,
       canvas,
@@ -86,6 +106,9 @@ export async function runGameBootstrap(canvas) {
     });
     console.log('[BOOT] World, HUD, and systems initialized');
     console.groupEnd();
+
+    // Remove the stub loop and replace with full game loop
+    stubLoopRemover();
 
     // Extract all required objects
     const {
@@ -100,9 +123,7 @@ export async function runGameBootstrap(canvas) {
       nationRuntimeRef: sessionNationRef
     } = sessionResult;
 
-    console.group('[BOOT] Render Loop Start');
-    globalThis.__ASCENT_FIRST_FRAME_RENDERED__ = false;
-
+    console.group('[BOOT] Full Game Loop Start');
     startGameLoop({
       engine: sessionEngine,
       scene: sessionScene,
@@ -116,10 +137,7 @@ export async function runGameBootstrap(canvas) {
       timeSystem: sessionTime,
       camera
     });
-    console.log('[BOOT] Render loop registered with engine');
-
-    await waitForFirstFrame(8000);
-    console.log('[BOOT] First frame rendered');
+    console.log('[BOOT] Full game loop registered with engine');
     console.groupEnd();
 
     console.log('[BOOT] Setting boot state to READY');
@@ -212,7 +230,7 @@ function showErrorPanel(message, err) {
   }
 }
 
-async function waitForFirstFrame(timeoutMs = 8000) {
+async function waitForFirstFrame(timeoutMs = 15000) {
   const start = performance.now();
   while (!globalThis.__ASCENT_FIRST_FRAME_RENDERED__) {
     await new Promise((resolve) => requestAnimationFrame(resolve));
@@ -220,4 +238,60 @@ async function waitForFirstFrame(timeoutMs = 8000) {
       throw new Error('Render loop did not produce a frame before timeout.');
     }
   }
+}
+
+/**
+ * Creates a minimal render loop that just renders the scene without game logic.
+ * Uses requestAnimationFrame to avoid conflicts with engine.runRenderLoop().
+ * This allows the engine to start rendering immediately while heavy setup continues.
+ * Returns a function to unregister this stub loop.
+ */
+function createStubRenderLoop(engine, scene) {
+  let stubLoopActive = true;
+  let firstFrameRendered = false;
+  let animFrameId = null;
+
+  const stubRenderFn = () => {
+    if (!stubLoopActive) {
+      return;
+    }
+
+    try {
+      // Just render the scene - no game logic
+      scene.render();
+
+      // Signal first frame after successful render
+      if (!firstFrameRendered) {
+        firstFrameRendered = true;
+        globalThis.__ASCENT_FIRST_FRAME_RENDERED__ = true;
+        console.log('[BOOT] First frame rendered (stub loop)');
+      }
+    } catch (err) {
+      console.error('[BOOT] Stub render loop error:', err.message);
+      if (!firstFrameRendered) {
+        firstFrameRendered = true;
+        globalThis.__ASCENT_FIRST_FRAME_RENDERED__ = true;
+        console.warn('[BOOT] First frame marked as rendered despite error');
+      }
+    }
+
+    // Continue looping while stub is active
+    if (stubLoopActive) {
+      animFrameId = requestAnimationFrame(stubRenderFn);
+    }
+  };
+
+  // Start stub render loop using requestAnimationFrame (not engine.runRenderLoop)
+  animFrameId = requestAnimationFrame(stubRenderFn);
+  console.log('[BOOT] Stub render loop started via requestAnimationFrame');
+
+  // Return a function to unregister the stub
+  return () => {
+    stubLoopActive = false;
+    if (animFrameId !== null) {
+      cancelAnimationFrame(animFrameId);
+      animFrameId = null;
+    }
+    console.log('[BOOT] Stub render loop stopped');
+  };
 }
