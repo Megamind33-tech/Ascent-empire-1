@@ -6,7 +6,8 @@
  */
 
 /**
- * Detect device tier based on WebGL version, memory, and GPU capabilities.
+ * Detect device tier based on WebGL version, memory, GPU capabilities, and screen size.
+ * Conservative approach favors lower tiers for mobile devices.
  * @returns {Promise<'low' | 'mid' | 'high'>}
  */
 export async function detectDeviceTier() {
@@ -30,24 +31,46 @@ export async function detectDeviceTier() {
     // Check GPU capabilities
     const capabilities = getGPUCapabilities(gl || glFallback);
 
-    // Determine tier based on combined factors
+    // Detect if device is mobile/tablet
+    const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
+      navigator.userAgent.toLowerCase()
+    );
+
+    // Get screen size for viewport detection
+    const screenWidth = window.innerWidth || screen.width;
+    const screenHeight = window.innerHeight || screen.height;
+    const totalPixels = screenWidth * screenHeight;
+
+    // Determine tier based on combined factors with mobile bias
     let tier = 'mid'; // default
 
-    // High-end: WebGL 2.0 + good GPU + sufficient memory
-    if (webglVersion === 2 && deviceMemory >= 4 && capabilities.maxTextureSize >= 2048) {
-      tier = 'high';
-    }
-    // Low-end: WebGL 1.0 only, or very limited memory
-    else if (webglVersion === 1 || deviceMemory < 2) {
-      tier = 'low';
-    }
-    // Mid-range: Everything else
-    else {
-      tier = 'mid';
+    if (isMobileDevice) {
+      // Mobile devices: much more conservative
+      // Only classify as 'mid' if: WebGL 2.0 + 6GB+ memory + large screen
+      if (webglVersion === 2 && deviceMemory >= 6 && totalPixels > 2000000) {
+        tier = 'mid';
+      } else {
+        // Default mobile devices to 'low' for better performance
+        tier = 'low';
+      }
+    } else {
+      // Desktop/laptop devices
+      // High-end: WebGL 2.0 + good GPU + sufficient memory (8GB+)
+      if (webglVersion === 2 && deviceMemory >= 8 && capabilities.maxTextureSize >= 2048) {
+        tier = 'high';
+      }
+      // Low-end: WebGL 1.0 only, or very limited memory
+      else if (webglVersion === 1 || deviceMemory < 2) {
+        tier = 'low';
+      }
+      // Mid-range: Everything else
+      else {
+        tier = 'mid';
+      }
     }
 
     console.log(
-      `[DeviceDetection] Tier: ${tier} | WebGL: ${webglVersion} | Memory: ${deviceMemory}GB | MaxTexture: ${capabilities.maxTextureSize}`
+      `[DeviceDetection] Tier: ${tier} | Mobile: ${isMobileDevice} | WebGL: ${webglVersion} | Memory: ${deviceMemory}GB | Screen: ${screenWidth}x${screenHeight} | MaxTexture: ${capabilities.maxTextureSize}`
     );
 
     // Clean up temporary canvas
@@ -56,7 +79,7 @@ export async function detectDeviceTier() {
     return tier;
   } catch (err) {
     console.error('[DeviceDetection] Error detecting device tier:', err.message);
-    return 'mid'; // Safe default
+    return 'low'; // Safe default for mobile
   }
 }
 

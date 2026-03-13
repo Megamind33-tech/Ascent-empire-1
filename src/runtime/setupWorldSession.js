@@ -20,7 +20,8 @@ export async function setupWorldSession({
     sun,
     moonLight,
     shadows,
-    skyController
+    skyController,
+    deviceTier = 'mid'
   } = runtimeContext;
 
   const { RAPIER, world } = await worldServices.createRapierWorld();
@@ -56,7 +57,8 @@ export async function setupWorldSession({
     createNationWorld: nationServices.createNationWorld,
     updateHUD: nationServices.updateHUD,
     setMessage: assetServices.setMessage,
-    saveGame: nationServices.saveGame
+    saveGame: nationServices.saveGame,
+    deviceTier
   });
 
   placementServices.setupPlacementController({
