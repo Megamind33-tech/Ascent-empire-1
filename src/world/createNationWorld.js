@@ -52,12 +52,16 @@ export function destroyWorld(state) {
   state.worldRefs.agents  = [];
 }
 
-export function createNationWorld(scene, shadows, state) {
+export function createNationWorld(scene, shadows, state, deviceTier = 'mid') {
   destroyWorld(state);
   const nation  = state.nations[state.currentNationIndex];
   const rand    = seeded(nation.seed + nation.visits * 7);
   const meshes  = [];
   const cleanupFns = [];
+
+  // Get device-tier aware entity limits
+  const entityLimits = CONFIG.mobile.entityLimits[deviceTier] || CONFIG.mobile.entityLimits.mid;
+  console.log(`[World] Using entity limits for device tier "${deviceTier}": maxCars=${entityLimits.maxDynamicCars}, maxAgents=${entityLimits.maxAgents}`);
   const tone    = new Color3(...CONFIG.nations[state.currentNationIndex].tone);
   const mats    = materials(scene, tone);
 
@@ -264,7 +268,7 @@ export function createNationWorld(scene, shadows, state) {
   ];
   const VEHICLE_TYPES = ['car_a','car_b','car_c','car_model','bus','gtr','police_car','suv','sports_car'];
   const traffic = [];
-  for (let i = 0; i < CONFIG.mobile.maxDynamicCars; i++) {
+  for (let i = 0; i < entityLimits.maxDynamicCars; i++) {
     const lane = CAR_LANES[i % CAR_LANES.length];
     const carType = VEHICLE_TYPES[i % VEHICLE_TYPES.length];
     const carModel = instantiateModel(carType, scene);
@@ -298,7 +302,7 @@ export function createNationWorld(scene, shadows, state) {
 
   // ── Agents (pedestrians) ───────────────────────────────────────────────────
   const agents = [];
-  for (let i = 0; i < CONFIG.mobile.maxAgents; i++) {
+  for (let i = 0; i < entityLimits.maxAgents; i++) {
     const agentModel = instantiateModel('agent_a', scene);
     if (agentModel) {
       const s = getModelScale('agent_a');

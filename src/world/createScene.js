@@ -3,7 +3,7 @@ import { initSky, updateSkyIntensity } from './skySystem.js';
 import { applyReadabilityEnhancements } from './sceneTuning.js';
 import { CONFIG } from '../config.js';
 
-export function createScene(canvas, providedEngine) {
+export function createScene(canvas, providedEngine, deviceTier = 'mid') {
   console.group('[BOOT] Scene Creation');
 
   if (!canvas) {
@@ -11,6 +11,7 @@ export function createScene(canvas, providedEngine) {
   }
 
   console.log('[BOOT] Canvas validated, creating Babylon engine/scene');
+  console.log(`[BOOT] Using device tier: ${deviceTier}`);
 
   // Use provided engine or create new one (should always be provided in normal boot flow)
   const engine = providedEngine || new Engine(canvas, true, {
@@ -35,8 +36,11 @@ export function createScene(canvas, providedEngine) {
     scene.clearColor = new Color4(0.75, 0.84, 0.95, 1.0);
   }
 
-  // Set hardware scaling for mobile optimization
-  engine.setHardwareScalingLevel(1 / clamp(window.devicePixelRatio, CONFIG.mobile.hardwareScalingMin, CONFIG.mobile.hardwareScalingMax));
+  // Set hardware scaling for mobile optimization based on device tier
+  const scalingConfig = CONFIG.mobile.hardwareScaling[deviceTier] || CONFIG.mobile.hardwareScaling.mid;
+  const baseScale = clamp(window.devicePixelRatio, scalingConfig.minScale, scalingConfig.maxScale);
+  engine.setHardwareScalingLevel(1 / baseScale);
+  console.log(`[BOOT] Hardware scaling level set to ${1 / baseScale} (device tier: ${deviceTier}, scale: ${baseScale})`);
 
   console.log('[BOOT] Scene created, setting up camera');
 
@@ -96,14 +100,22 @@ export function createScene(canvas, providedEngine) {
   const moonLight = new PointLight('moon', new Vector3(-180, 120, 80), scene);
   moonLight.intensity = 0.12;
 
-  // Shadows
-  const shadows = new ShadowGenerator(CONFIG.mobile.shadowMapSize, sun);
-  shadows.useBlurExponentialShadowMap = true;
-  shadows.blurKernel = 16;
+  // Shadows - configure based on device tier
+  const shadowConfig = CONFIG.mobile.shadowConfig[deviceTier] || CONFIG.mobile.shadowConfig.mid;
+  const shadows = new ShadowGenerator(shadowConfig.mapSize, sun);
+  shadows.useBlurExponentialShadowMap = shadowConfig.useBlurExponential;
+  shadows.blurKernel = shadowConfig.blurKernel;
+  console.log(`[BOOT] Shadow quality set to ${deviceTier} tier (map size: ${shadowConfig.mapSize}, blur kernel: ${shadowConfig.blurKernel})`);
 
-  // Glow effects
+  // Glow effects - disable for low-end devices
   const glow = new GlowLayer('glow', scene);
-  glow.intensity = 0.4;
+  if (deviceTier === 'low') {
+    glow.intensity = 0.15;
+  } else if (deviceTier === 'mid') {
+    glow.intensity = 0.28;
+  } else {
+    glow.intensity = 0.4;
+  }
 
   console.log('[BOOT] Initializing sky and celestial objects');
 

@@ -57,7 +57,7 @@ export async function createGameRuntimeContext({
   const state = createGameState();
   console.log('[BOOT] Game state created');
 
-  const sceneData = createScene(canvas, engine);
+  const sceneData = createScene(canvas, engine, deviceTier);
   const { scene, camera, hemi, sun, moonLight, shadows, skyController } = sceneData;
 
   // Ensure engine dimensions match canvas on initial creation

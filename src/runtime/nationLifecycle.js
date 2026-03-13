@@ -9,7 +9,8 @@ export function createNationLifecycle({
   createNationWorld,
   updateHUD,
   setMessage,
-  saveGame
+  saveGame,
+  deviceTier = 'mid'
 }) {
   const nationRuntimeRef = { current: null };
 
@@ -21,7 +22,7 @@ export function createNationLifecycle({
         return;
       }
 
-      nationRuntimeRef.current = createNationWorld(scene, shadows, state);
+      nationRuntimeRef.current = createNationWorld(scene, shadows, state, deviceTier);
       updateHUD(state);
 
       const nationName = state.nations[state.currentNationIndex]?.name || 'Unknown';
