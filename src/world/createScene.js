@@ -62,7 +62,10 @@ export function createScene(canvas, providedEngine) {
 
   // Attach camera controls to canvas
   try {
-    const attached = camera.attachControl(canvas, true);
+    camera.attachControl(canvas, true);
+    if (!camera.inputs) {
+      throw new Error('Camera inputs not properly initialized');
+    }
     console.log('[BOOT] Camera attached to canvas');
   } catch (err) {
     const message = `Failed to attach camera controls: ${err.message}. Game will not be interactive.`;

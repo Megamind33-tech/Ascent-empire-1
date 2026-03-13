@@ -147,7 +147,7 @@ export function createTerrain(scene) {
 
   ground.updateVerticesData(VertexBuffer.PositionKind, pos);
   ground.setVerticesData(VertexBuffer.ColorKind, colors);
-  ground.updateMeshPositions(() => {}, true); // Recalculate normals
+  ground.createNormals(false); // Recalculate normals from updated positions
   ground.refreshBoundingInfo();
 
   // ── Enhanced PBR Material for Realism ─────────────────────────────────────
