@@ -38,9 +38,22 @@ export function createScene(canvas, providedEngine, deviceTier = 'mid') {
 
   // Set hardware scaling for mobile optimization based on device tier
   const scalingConfig = CONFIG.mobile.hardwareScaling[deviceTier] || CONFIG.mobile.hardwareScaling.mid;
-  const baseScale = clamp(window.devicePixelRatio, scalingConfig.minScale, scalingConfig.maxScale);
+  let baseScale = clamp(window.devicePixelRatio, scalingConfig.minScale, scalingConfig.maxScale);
+
+  // For low-end devices, be more aggressive with scaling
+  if (deviceTier === 'low') {
+    baseScale = Math.min(baseScale, 2.5);  // Cap at 2.5x downscaling for low-end
+  }
+
   engine.setHardwareScalingLevel(1 / baseScale);
   console.log(`[BOOT] Hardware scaling level set to ${1 / baseScale} (device tier: ${deviceTier}, scale: ${baseScale})`);
+
+  // Disable unnecessary rendering features for low-end devices
+  if (deviceTier === 'low') {
+    scene.collisionsEnabled = false;  // Disable collision detection for better performance
+    scene.workerCollisions = false;
+    console.log('[BOOT] Collision detection disabled for low-end device');
+  }
 
   console.log('[BOOT] Scene created, setting up camera');
 
@@ -88,17 +101,33 @@ export function createScene(canvas, providedEngine, deviceTier = 'mid') {
   scene.fogStart = CONFIG.world.fogStart;
   scene.fogEnd = CONFIG.world.fogEnd;
 
-  // Lighting setup
+  // Lighting setup - optimize for device tier
   const hemi = new HemisphericLight('hemi', new Vector3(0.2, 1, 0.1), scene);
-  hemi.intensity = 1.35;
+  if (deviceTier === 'low') {
+    hemi.intensity = 1.2;  // Slightly reduced for mobile
+  } else {
+    hemi.intensity = 1.35;
+  }
   hemi.groundColor = new Color3(0.45, 0.47, 0.45);
 
   const sun = new DirectionalLight('sun', new Vector3(-0.4, -1, -0.2), scene);
   sun.position = new Vector3(180, 260, -100);
-  sun.intensity = 2.8;
+  if (deviceTier === 'low') {
+    sun.intensity = 2.5;  // Slightly reduced for mobile
+  } else {
+    sun.intensity = 2.8;
+  }
 
   const moonLight = new PointLight('moon', new Vector3(-180, 120, 80), scene);
   moonLight.intensity = 0.12;
+
+  // Disable moon light for low-end devices to save performance
+  if (deviceTier === 'low') {
+    moonLight.intensity = 0.05;  // Reduce night-time lighting
+    moonLight.range = 500;  // Limit light range on mobile
+  } else {
+    moonLight.range = 1000;
+  }
 
   // Shadows - configure based on device tier
   const shadowConfig = CONFIG.mobile.shadowConfig[deviceTier] || CONFIG.mobile.shadowConfig.mid;
@@ -107,23 +136,32 @@ export function createScene(canvas, providedEngine, deviceTier = 'mid') {
   shadows.blurKernel = shadowConfig.blurKernel;
   console.log(`[BOOT] Shadow quality set to ${deviceTier} tier (map size: ${shadowConfig.mapSize}, blur kernel: ${shadowConfig.blurKernel})`);
 
-  // Glow effects - disable for low-end devices
-  const glow = new GlowLayer('glow', scene);
+  // Glow effects - disable or reduce for mobile devices
+  let glow = null;
   if (deviceTier === 'low') {
-    glow.intensity = 0.15;
+    // Disable glow entirely for low-end devices
+    glow = new GlowLayer('glow', scene);
+    glow.intensity = 0;  // Disabled for mobile performance
+    console.log('[BOOT] Glow layer disabled for low-end device');
   } else if (deviceTier === 'mid') {
-    glow.intensity = 0.28;
+    glow = new GlowLayer('glow', scene);
+    glow.intensity = 0.15;  // Reduced for mobile
   } else {
+    glow = new GlowLayer('glow', scene);
     glow.intensity = 0.4;
   }
 
   console.log('[BOOT] Initializing sky and celestial objects');
 
-  // Initialize sky with sun/moon
-  const { skybox, skyMaterial, sunSphere, moonSphere, cloudLayers } = initSky(scene, sun);
+  // Initialize sky with sun/moon - pass device tier for optimization
+  const { skybox, skyMaterial, sunSphere, moonSphere, cloudLayers } = initSky(scene, sun, deviceTier);
   skybox.renderingGroupId = -1;  // Render skybox first, as background
-  glow.addIncludedOnlyMesh(sunSphere);
-  glow.addIncludedOnlyMesh(moonSphere);
+
+  // Add glow to celestial bodies only if glow layer is enabled
+  if (glow && glow.intensity > 0) {
+    glow.addIncludedOnlyMesh(sunSphere);
+    glow.addIncludedOnlyMesh(moonSphere);
+  }
 
   // Apply readability enhancements
   applyReadabilityEnhancements(scene, {
