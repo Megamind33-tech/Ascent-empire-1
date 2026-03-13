@@ -7,13 +7,18 @@
 import { SkyMaterial } from '@babylonjs/materials';
 import { Vector3, Color3, MeshBuilder, StandardMaterial, DynamicTexture, Mesh } from '@babylonjs/core';
 
-export function initSky(scene, sun) {
+export function initSky(scene, sun, deviceTier = 'mid') {
   const skyMaterial = new SkyMaterial("skyMaterial", scene);
   skyMaterial.backFaceCulling = false;
 
-  // Cinematic / Realistic Settings
-  skyMaterial.turbidity = 1.5;   // Reduced haze for clearer visibility
-  skyMaterial.luminance = 1.0;   // Standard brightness (was 1.1)
+  // Mobile optimization: reduce turbidity for better clarity
+  if (deviceTier === 'low') {
+    skyMaterial.turbidity = 1.2;   // Slightly clearer for mobile
+  } else {
+    skyMaterial.turbidity = 1.5;   // Reduced haze for clearer visibility
+  }
+
+  skyMaterial.luminance = 1.0;   // Standard brightness
   skyMaterial.inclination = 0.5; // Day/Night
   skyMaterial.azimuth = 0.25;
 
@@ -26,22 +31,32 @@ export function initSky(scene, sun) {
   skybox.infiniteDistance = true;
   skybox.material = skyMaterial;
 
-  // Create celestial bodies (sun and moon)
-  const { sunSphere, moonSphere } = createCelestialBodies(scene);
+  // Create celestial bodies (sun and moon) - optimized for device tier
+  const { sunSphere, moonSphere } = createCelestialBodies(scene, deviceTier);
 
-  // Create animated clouds
-  const cloudLayers = createAnimatedClouds(scene);
+  // Create animated clouds - optimized for device tier
+  const cloudLayers = createAnimatedClouds(scene, deviceTier);
 
-  // Sync sun position with sky inclination
+  // Get camera to position celestial bodies relative to it
+  const camera = scene.activeCamera;
+
+  // Sync sun position with sky inclination and position celestial bodies correctly
   scene.onBeforeRenderObservable.add(() => {
     const sunPos = sun.direction.scale(-100);
     skyMaterial.sunPosition = sunPos;
 
-    // Update celestial bodies position
-    sunSphere.position = sun.position.scale(0.8);
+    // Position celestial bodies relative to camera at a fixed distance in the sky
+    // This prevents them from appearing in front of the camera or interfering with gameplay
+    if (camera && sunSphere && moonSphere) {
+      const cameraPos = camera.position.clone();
+      const distanceFromCamera = 500; // Position far away to be in the sky
 
-    // Moon is opposite the sun
-    moonSphere.position = sun.position.scale(-0.8);
+      // Sun position: in the direction of the sun light, far from camera
+      sunSphere.position = cameraPos.add(sun.direction.scale(-distanceFromCamera));
+
+      // Moon position: opposite the sun
+      moonSphere.position = cameraPos.add(sun.direction.scale(distanceFromCamera));
+    }
 
     // Animate clouds
     animateCloudLayers(cloudLayers, scene.getEngine().frameId);
@@ -50,40 +65,70 @@ export function initSky(scene, sun) {
   return { skybox, skyMaterial, sunSphere, moonSphere, cloudLayers };
 }
 
-function createCelestialBodies(scene) {
+function createCelestialBodies(scene, deviceTier = 'mid') {
+  // Reduce polygon count for mobile devices to improve performance
+  let segments = 32;
+  if (deviceTier === 'low') {
+    segments = 12;  // Low-end: minimal polygons
+  } else if (deviceTier === 'mid') {
+    segments = 16;  // Mid-range: reduced for mobile
+  }
+
   // Create Sun sphere with glow
-  const sunSphere = MeshBuilder.CreateSphere("sun", { diameter: 60, segments: 32 }, scene);
+  const sunSphere = MeshBuilder.CreateSphere("sun", { diameter: 60, segments }, scene);
   const sunMaterial = new StandardMaterial("sunMaterial", scene);
   sunMaterial.emissiveColor = new Color3(1, 0.9, 0.3);
   sunMaterial.backFaceCulling = false;
+  sunMaterial.disableLighting = true;  // Sun doesn't need lighting calculations
   sunSphere.material = sunMaterial;
-  sunSphere.renderingGroupId = 0;
+  sunSphere.renderingGroupId = 2;  // Render after skybox and clouds, before UI
 
   // Create Moon sphere with softer glow
-  const moonSphere = MeshBuilder.CreateSphere("moon", { diameter: 50, segments: 32 }, scene);
+  const moonSphere = MeshBuilder.CreateSphere("moon", { diameter: 50, segments }, scene);
   const moonMaterial = new StandardMaterial("moonMaterial", scene);
   moonMaterial.emissiveColor = new Color3(0.8, 0.8, 0.8);
   moonMaterial.specularColor = new Color3(0.3, 0.3, 0.3);
   moonMaterial.backFaceCulling = false;
+  moonMaterial.disableLighting = true;  // Moon doesn't need lighting calculations
   moonSphere.material = moonMaterial;
-  moonSphere.renderingGroupId = 0;
+  moonSphere.renderingGroupId = 2;  // Render after skybox and clouds, before UI
+
+  // Disable unnecessary features for mobile performance
+  sunSphere.isPickable = false;
+  moonSphere.isPickable = false;
 
   return { sunSphere, moonSphere };
 }
 
-function createAnimatedClouds(scene) {
+function createAnimatedClouds(scene, deviceTier = 'mid') {
   const cloudLayers = [];
 
-  // Create 3 cloud layers at different heights for depth and movement variety
-  // Keep clouds well above gameplay camera to avoid "gray wall" occluding the city.
-  const cloudHeights = [500, 600, 700];
-  const cloudSpeeds = [0.0008, 0.0006, 0.0004]; // Even slower wind at higher altitudes
-  const cloudDensities = [0.6, 0.4, 0.5];
+  // Mobile optimization: reduce cloud layers and density
+  let cloudHeights, cloudSpeeds, cloudDensities, numPlanes;
+
+  if (deviceTier === 'low') {
+    // Low-end: single cloud layer, minimal density
+    cloudHeights = [600];
+    cloudSpeeds = [0.0004];
+    cloudDensities = [0.25];  // Much lower density
+    numPlanes = 1;  // Only 1 plane per layer
+  } else if (deviceTier === 'mid') {
+    // Mid-range: 2 cloud layers
+    cloudHeights = [500, 650];
+    cloudSpeeds = [0.0006, 0.0003];
+    cloudDensities = [0.4, 0.3];  // Reduced density
+    numPlanes = 2;
+  } else {
+    // High-end: full 3 layers
+    cloudHeights = [500, 600, 700];
+    cloudSpeeds = [0.0008, 0.0006, 0.0004];
+    cloudDensities = [0.6, 0.4, 0.5];
+    numPlanes = 2;
+  }
 
   cloudHeights.forEach((height, index) => {
-    // Create multiple cloud planes for continuous movement effect
     const planes = [];
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < numPlanes; i++) {
       const cloudPlane = MeshBuilder.CreatePlane(`cloudLayer${index}_${i}`, { width: 1200, height: 600 }, scene);
       cloudPlane.position.y = height;
       cloudPlane.position.x = i * 1200 - 600; // Tile clouds
@@ -92,8 +137,10 @@ function createAnimatedClouds(scene) {
       cloudPlane.billboardMode = 0; // Don't auto-billboard
 
       // Create dynamic cloud texture with Perlin-like noise
-      const cloudTexture = new DynamicTexture(`cloudTexture${index}_${i}`, 256, scene);
-      generateCloudPattern(cloudTexture.getContext(), 256, cloudDensities[index]);
+      // Use lower resolution for mobile devices to save memory
+      const textureRes = deviceTier === 'low' ? 128 : 256;
+      const cloudTexture = new DynamicTexture(`cloudTexture${index}_${i}`, textureRes, scene);
+      generateCloudPattern(cloudTexture.getContext(), textureRes, cloudDensities[index]);
       cloudTexture.update();
 
       // Create material with proper alpha handling
@@ -102,12 +149,12 @@ function createAnimatedClouds(scene) {
       cloudMaterial.diffuseTexture = cloudTexture;
       cloudMaterial.opacityTexture = cloudTexture;
       cloudMaterial.useAlphaFromDiffuseTexture = true;
-      cloudMaterial.disableLighting = false;
+      cloudMaterial.disableLighting = true;  // Disable lighting calculations for clouds
       cloudMaterial.specularColor = new Color3(0, 0, 0);
       cloudMaterial.emissiveColor = new Color3(1, 1, 1);
       cloudMaterial.backFaceCulling = false;
       cloudMaterial.transparencyMode = 2; // ALPHA_BLEND
-      cloudMaterial.alpha = 0.04; // Significantly reduced opacity to avoid grey overlay
+      cloudMaterial.alpha = deviceTier === 'low' ? 0.02 : 0.04; // Even lower for low-end
       cloudMaterial.disableDepthWrite = false;
       cloudPlane.isPickable = false;
       cloudPlane.renderingGroupId = 1;  // Render after world, with proper depth ordering
