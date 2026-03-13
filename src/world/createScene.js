@@ -42,17 +42,23 @@ export function createScene(canvas, providedEngine) {
 
   // Create and configure camera
   const camera = new ArcRotateCamera('camera', -Math.PI / 2.2, 1.05, 190, new Vector3(0, 5, 0), scene);
-  camera.lowerRadiusLimit = 55;
-  camera.upperRadiusLimit = 600;
-  camera.lowerBetaLimit = 0.5;
-  camera.upperBetaLimit = 1.3;
-  camera.wheelDeltaPercentage = 0.012;
-  camera.panningSensibility = 80;
+  camera.lowerRadiusLimit = 30;
+  camera.upperRadiusLimit = 1200;
+  camera.lowerBetaLimit = 0.1;
+  camera.upperBetaLimit = Math.PI / 2.2;
+  camera.wheelDeltaPercentage = 0.015;
+  camera.panningSensibility = 60;
+  camera.inertia = 0.7;
+  camera.angularSensibility = 300;
 
   // Ensure camera has proper defaults
   if (!camera.target) {
     camera.target = new Vector3(0, 5, 0);
   }
+
+  // Enable collision detection to prevent camera clipping through objects
+  camera.collisionRadius = new Vector3(10, 10, 10);
+  camera.checkCollisions = true;
 
   // Attach camera controls to canvas
   try {

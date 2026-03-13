@@ -14,9 +14,9 @@
 
 import { Vector3 } from '@babylonjs/core';
 
-const ZOOM_SENSITIVITY = 0.008;   // radius change per pixel of pinch delta
-const ROTATE_SENSITIVITY = 0.005; // radians per pixel of two-finger twist delta
-const PAN_SENSITIVITY = 0.45;     // panning speed multiplier
+const ZOOM_SENSITIVITY = 0.01;    // radius change per pixel of pinch delta
+const ROTATE_SENSITIVITY = 0.008; // radians per pixel of two-finger twist delta
+const PAN_SENSITIVITY = 0.5;      // panning speed multiplier
 
 export function initMobileControls(canvas, camera) {
   // Validate inputs before initializing
