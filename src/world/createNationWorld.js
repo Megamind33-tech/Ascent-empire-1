@@ -82,9 +82,10 @@ export function createNationWorld(scene, shadows, state) {
     if (Math.abs(a) > 60 && rand() > 0.4) {
       const bb = instantiateModel('billboard', scene);
       if (bb) {
+        const s = getModelScale('billboard');
         bb.position.set(a + (a > 0 ? 15 : -15), 0.1, a + 12);
         bb.rotation.y = a > 0 ? Math.PI / 2 : -Math.PI / 2;
-        bb.scaling.set(0.09, 0.09, 0.09);
+        bb.scaling.set(s, s, s);
         bb.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
         meshes.push(bb);
       }
@@ -392,13 +393,16 @@ export function createNationWorld(scene, shadows, state) {
     _worldDecorations.push({ key: 'waterfall', pos: new Vector3(-200, 0.1, 100) });
   }
 
-  for (const { key, pos, rotY } of _worldDecorations) {
+  for (const decoration of _worldDecorations) {
+    const { key, pos, rotY } = decoration;
     const dm = instantiateModel(key, scene);
     if (dm) {
       const s = getModelScale(key);
       dm.scaling.set(s, s, s);
       dm.position.copyFrom(pos);
-      if (rotY !== undefined) dm.rotation.y = rotY;
+      if (rotY !== undefined) {
+        dm.rotation.y = rotY;
+      }
       dm.metadata = { type: key, onFire: false };
       // Only cast shadows for sizeable objects; skip tiny props to save GPU bandwidth
       const skipShadow = key === 'stop_sign' || key === 'cat' || key === 'road_bits';
