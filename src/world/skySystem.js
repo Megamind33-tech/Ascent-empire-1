@@ -107,7 +107,7 @@ function createAnimatedClouds(scene) {
       cloudMaterial.emissiveColor = new Color3(1, 1, 1);
       cloudMaterial.backFaceCulling = false;
       cloudMaterial.transparencyMode = 2; // ALPHA_BLEND
-      cloudMaterial.alpha = 0.12;
+      cloudMaterial.alpha = 0.04; // Significantly reduced opacity to avoid grey overlay
       cloudMaterial.disableDepthWrite = false;
       cloudPlane.isPickable = false;
       cloudPlane.renderingGroupId = 1;  // Render after world, with proper depth ordering
@@ -230,18 +230,18 @@ export function updateSkyIntensity(skyMaterial, daylight, sunSphere, moonSphere,
         if (mat) {
           // Clouds are white during day, darker and more orange during sunset, blue-gray at night
           if (daylight > 0.5) {
-            // Day: bright white clouds
+            // Day: bright white clouds - much more transparent
             mat.emissiveColor = new Color3(1, 1, 1);
-            mat.alpha = 0.12 + daylight * 0.04;
+            mat.alpha = 0.04 + daylight * 0.02;
           } else if (daylight > 0.2) {
-            // Sunset/sunrise: orange-tinted clouds
+            // Sunset/sunrise: orange-tinted clouds - very light
             const sunsetFactor = (0.5 - daylight) / 0.3;
             mat.emissiveColor = new Color3(1, 0.7 - sunsetFactor * 0.2, 0.4 - sunsetFactor * 0.2);
-            mat.alpha = 0.10;
+            mat.alpha = 0.03;
           } else {
-            // Night: dark blue-gray clouds
+            // Night: dark blue-gray clouds - minimal visibility to prevent grey overlay
             mat.emissiveColor = new Color3(0.2, 0.25, 0.35);
-            mat.alpha = 0.08;
+            mat.alpha = 0.02;
           }
         }
       });
