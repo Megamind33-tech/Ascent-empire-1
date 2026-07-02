@@ -140,7 +140,7 @@ export function createLifeSimOverlay(sim, hooks = {}) {
       return;
     }
 
-    if (ui.targeting === 'network') {
+    if (ui.targeting === 'relationship') {
       inner += '<div class="ls-hint">Network with whom?</div><div class="ls-target-menu">';
       for (const r of sim.state.relationships) {
         inner += `<button class="ls-btn" data-act="action" data-id="network" data-target="${r.id}">${r.name}</button>`;
@@ -150,7 +150,7 @@ export function createLifeSimOverlay(sim, hooks = {}) {
       return;
     }
 
-    if (ui.targeting === 'diplomacy') {
+    if (ui.targeting === 'nation') {
       inner += '<div class="ls-hint">Visit which nation?</div><div class="ls-target-menu">';
       for (const n of sim.state.nations) {
         inner += `<button class="ls-btn" data-act="action" data-id="diplomacy" data-target="${n.name}">${n.name}</button>`;
