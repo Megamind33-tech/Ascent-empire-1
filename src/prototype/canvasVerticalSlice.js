@@ -1,8 +1,13 @@
+import { createPoliticalLifeSim, DAILY_ACTIONS } from './politicalLifeSim.js';
+import { createLifeSimOverlay } from './lifeSimOverlay.js';
+
 const TILE_W = 96;
 const TILE_H = 48;
 const MAP_W = 28;
 const MAP_H = 28;
 const SIM_TICK_MS = 250;
+const POLITICS_SAVE_KEY = 'ascent-canvas-politics-save';
+const PLAYER_HOME = { x: Math.floor(MAP_W / 2), y: Math.floor(MAP_H / 2) };
 
 const TILE_TYPES = {
   GRASS: 'grass',
@@ -41,12 +46,33 @@ const TERRAIN_PALETTE = {
   [TERRAIN_TYPES.MOUNTAIN]: '#7a7a7b'
 };
 
-const BUILDING_STYLE = {
-  [TILE_TYPES.HOUSING]: { h: 24, w: 0.58, d: 0.52, roof: '#d4d8de', left: '#8e99a8', right: '#6f7d8f' },
-  [TILE_TYPES.FARM]: { h: 15, w: 0.68, d: 0.55, roof: '#ba7f44', left: '#8b6134', right: '#734d26' },
-  [TILE_TYPES.FACTORY]: { h: 31, w: 0.66, d: 0.58, roof: '#9a9fa7', left: '#6d737d', right: '#555c66' },
-  [TILE_TYPES.POWER]: { h: 28, w: 0.63, d: 0.58, roof: '#b6a369', left: '#8d7946', right: '#77653b' },
-  [TILE_TYPES.WATER]: { h: 19, w: 0.62, d: 0.56, roof: '#79a9d0', left: '#4f7f9e', right: '#3f6883' }
+// Height of one storey (in px at zoom 1). Buildings stack many of these so a
+// dense downtown reads as a real skyline rather than isolated little boxes.
+const FLOOR_H = 6.4;
+
+// Rich building profiles. Each placed tile deterministically varies its floor
+// count (and can spawn a high-rise tower) so a zone looks organic and immense.
+const BUILDING_PROFILES = {
+  [TILE_TYPES.HOUSING]: {
+    footprint: 0.92, minFloors: 3, maxFloors: 9, towerChance: 0.28, towerFloors: [12, 24],
+    wall: '#c6ccd6', wallDark: '#9aa3b2', roof: '#7f8896', window: '#38445a', accent: '#e7edf5'
+  },
+  [TILE_TYPES.FARM]: {
+    footprint: 0.96, minFloors: 1, maxFloors: 2, towerChance: 0,
+    wall: '#c17a44', wallDark: '#8f5a30', roof: '#6f4322', window: '#3a2a1c', accent: '#d8ba85', fields: true
+  },
+  [TILE_TYPES.FACTORY]: {
+    footprint: 0.95, minFloors: 2, maxFloors: 4, towerChance: 0.12, towerFloors: [5, 7],
+    wall: '#9aa0aa', wallDark: '#71777f', roof: '#6a707a', window: '#40464e', accent: '#c7ccd4', chimney: true
+  },
+  [TILE_TYPES.POWER]: {
+    footprint: 0.9, minFloors: 3, maxFloors: 5, towerChance: 0,
+    wall: '#b7aa86', wallDark: '#8b7f5e', roof: '#7d7454', window: '#4a4636', accent: '#e2d7a8', cooling: true
+  },
+  [TILE_TYPES.WATER]: {
+    footprint: 0.74, minFloors: 2, maxFloors: 3, towerChance: 0,
+    wall: '#7fb0d4', wallDark: '#557f9e', roof: '#4a7590', window: '#bfe6f6', accent: '#d5edf8', tank: true
+  }
 };
 
 export function runCanvasVerticalSlice(canvas) {
@@ -55,6 +81,27 @@ export function runCanvasVerticalSlice(canvas) {
 
   const state = createInitialState();
   hydrateState(state);
+
+  // Political life-sim: the player rises from citizen to president.
+  const sim = createPoliticalLifeSim();
+  const savedPolitics = localStorage.getItem(POLITICS_SAVE_KEY);
+  if (savedPolitics) sim.hydrate(savedPolitics);
+
+  function persistPolitics() {
+    localStorage.setItem(POLITICS_SAVE_KEY, sim.serialize());
+  }
+
+  const overlay = createLifeSimOverlay(sim, {
+    actions: DAILY_ACTIONS,
+    onChange: persistPolitics,
+    onRestart() {
+      localStorage.removeItem(POLITICS_SAVE_KEY);
+      localStorage.removeItem('ascent-canvas-prototype-save');
+      window.location.reload();
+    }
+  });
+
+  const citizens = createCitizens(18);
 
   const camera = {
     x: 0,
@@ -67,8 +114,53 @@ export function runCanvasVerticalSlice(canvas) {
 
   let currentToolIndex = 0;
   let simAccumulator = 0;
+  let overlayAccumulator = 0;
   let previousTs = performance.now();
   let dayClock = 0.22;
+  let daylightLevel = 1;
+
+  function isWalkable(tileX, tileY) {
+    if (!inBounds(tileX, tileY)) return false;
+    return canBuildOnTerrain(state.terrain[tileY][tileX]);
+  }
+
+  function createCitizens(count) {
+    const shirts = ['#d15f5f', '#5f8fd1', '#5fd18f', '#d1b45f', '#b45fd1', '#d1855f', '#5fd1c7'];
+    const people = [];
+    let guard = 0;
+    while (people.length < count && guard < count * 40) {
+      guard += 1;
+      const tx = Math.floor(MAP_W * 0.35 + Math.random() * MAP_W * 0.3);
+      const ty = Math.floor(MAP_H * 0.35 + Math.random() * MAP_H * 0.3);
+      if (!isWalkable(tx, ty)) continue;
+      const angle = Math.random() * Math.PI * 2;
+      people.push({
+        x: tx + 0.5,
+        y: ty + 0.5,
+        vx: Math.cos(angle) * 0.35,
+        vy: Math.sin(angle) * 0.35,
+        color: shirts[people.length % shirts.length],
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+    return people;
+  }
+
+  function updateCitizens(deltaMs) {
+    const dt = Math.min(deltaMs, 60) / 1000;
+    for (const c of citizens) {
+      const nx = c.x + c.vx * dt;
+      const ny = c.y + c.vy * dt;
+      if (isWalkable(Math.floor(nx), Math.floor(c.y))) c.x = nx; else c.vx *= -1;
+      if (isWalkable(Math.floor(c.x), Math.floor(ny))) c.y = ny; else c.vy *= -1;
+      c.phase += dt * 6;
+      if (Math.random() < 0.01) {
+        const angle = Math.random() * Math.PI * 2;
+        c.vx = Math.cos(angle) * 0.35;
+        c.vy = Math.sin(angle) * 0.35;
+      }
+    }
+  }
 
   function resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -121,20 +213,32 @@ export function runCanvasVerticalSlice(canvas) {
       return;
     }
 
+    const previous = state.map[y][x];
     state.map[y][x] = type;
     state.stats.treasury -= type === TILE_TYPES.ROAD ? 12 : 55;
     state.stats.debt = Math.max(0, state.stats.debt + (state.stats.treasury < 0 ? 2 : 0));
+
+    // Developing the city builds the player's political standing.
+    const isBuilding = type !== TILE_TYPES.ROAD && type !== TILE_TYPES.GRASS;
+    if (isBuilding && previous !== type && sim.state.status === 'playing') {
+      sim.state.player.influence = clamp(sim.state.player.influence + 0.6, 0, 100);
+      sim.state.player.reputation = clamp(sim.state.player.reputation + 0.3, 0, 100);
+      overlay.render();
+      persistPolitics();
+    }
   }
 
-  function drawDiamond(x, y, color, alpha = 1) {
+  function drawDiamond(x, y, color, alpha = 1, scale = 1) {
+    const hw = TILE_W * camera.zoom * 0.5 * scale;
+    const hh = TILE_H * camera.zoom * 0.5 * scale;
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.moveTo(x, y - TILE_H * camera.zoom * 0.5);
-    ctx.lineTo(x + TILE_W * camera.zoom * 0.5, y);
-    ctx.lineTo(x, y + TILE_H * camera.zoom * 0.5);
-    ctx.lineTo(x - TILE_W * camera.zoom * 0.5, y);
+    ctx.moveTo(x, y - hh);
+    ctx.lineTo(x + hw, y);
+    ctx.lineTo(x, y + hh);
+    ctx.lineTo(x - hw, y);
     ctx.closePath();
     ctx.fill();
     ctx.restore();
@@ -145,13 +249,22 @@ export function runCanvasVerticalSlice(canvas) {
     return v - Math.floor(v);
   }
 
-  function shadeHex(hex, amount) {
-    const value = hex.replace('#', '');
-    const n = parseInt(value, 16);
-    const r = clamp(((n >> 16) & 255) + amount, 0, 255);
-    const g = clamp(((n >> 8) & 255) + amount, 0, 255);
-    const b = clamp((n & 255) + amount, 0, 255);
-    return `rgb(${r}, ${g}, ${b})`;
+  function shadeHex(color, amount) {
+    let r;
+    let g;
+    let b;
+    if (color[0] === '#') {
+      const n = parseInt(color.slice(1), 16);
+      r = (n >> 16) & 255;
+      g = (n >> 8) & 255;
+      b = n & 255;
+    } else {
+      const m = color.match(/\d+/g) || [0, 0, 0];
+      r = +m[0];
+      g = +m[1];
+      b = +m[2];
+    }
+    return `rgb(${clamp(r + amount, 0, 255)}, ${clamp(g + amount, 0, 255)}, ${clamp(b + amount, 0, 255)})`;
   }
 
   function drawValleyFace(points, baseHex, depth, orientation, unit) {
@@ -305,42 +418,16 @@ export function runCanvasVerticalSlice(canvas) {
   }
 
 
-  function drawLotFoundation(x, y) {
-    drawDiamond(x, y - 2 * camera.zoom, '#6a6f78', 0.55);
-    drawDiamond(x, y, '#5d6670', 0.85);
-  }
-
   function drawRoadMarkings(x, y) {
     ctx.save();
-    ctx.strokeStyle = 'rgba(244, 230, 164, 0.8)';
-    ctx.lineWidth = Math.max(1.2, 2.2 * camera.zoom);
+    ctx.strokeStyle = 'rgba(244, 230, 164, 0.75)';
+    ctx.lineWidth = Math.max(1, 1.8 * camera.zoom);
     ctx.setLineDash([5 * camera.zoom, 6 * camera.zoom]);
     ctx.beginPath();
-    ctx.moveTo(x - TILE_W * camera.zoom * 0.22, y + 1 * camera.zoom);
-    ctx.lineTo(x + TILE_W * camera.zoom * 0.22, y - 1 * camera.zoom);
+    ctx.moveTo(x - TILE_W * camera.zoom * 0.24, y + 1 * camera.zoom);
+    ctx.lineTo(x + TILE_W * camera.zoom * 0.24, y - 1 * camera.zoom);
     ctx.stroke();
     ctx.restore();
-  }
-
-  function drawIsoPrism(cx, cy, style) {
-    const halfW = TILE_W * camera.zoom * style.w * 0.5;
-    const halfD = TILE_H * camera.zoom * style.d * 0.5;
-    const h = style.h * camera.zoom;
-
-    const top = { x: cx, y: cy - h };
-    const east = { x: cx + halfW, y: cy - halfD - h * 0.12 };
-    const south = { x: cx, y: cy - h * 0.24 };
-    const west = { x: cx - halfW, y: cy - halfD - h * 0.12 };
-
-    const eastBase = { x: east.x, y: east.y + h };
-    const southBase = { x: south.x, y: south.y + h };
-    const westBase = { x: west.x, y: west.y + h };
-
-    drawPoly([west, top, east, south], style.roof);
-    drawPoly([west, south, southBase, westBase], style.left);
-    drawPoly([south, east, eastBase, southBase], style.right);
-
-    return { top, south };
   }
 
   function drawPoly(points, color) {
@@ -352,104 +439,367 @@ export function runCanvasVerticalSlice(canvas) {
     ctx.fill();
   }
 
-  function drawBuildingDetails(type, x, y, shell) {
-    const unit = camera.zoom;
-    if (type === TILE_TYPES.HOUSING) {
-      ctx.fillStyle = '#f4c75f';
-      ctx.fillRect(x - 12 * unit, shell.south.y + 4 * unit, 6 * unit, 4 * unit);
-      ctx.fillRect(x + 5 * unit, shell.south.y + 4 * unit, 6 * unit, 4 * unit);
-      ctx.fillStyle = '#4f5a6a';
-      ctx.fillRect(x - 3 * unit, shell.top.y + 6 * unit, 8 * unit, 3 * unit);
+  // Fill a quad with a vertical gradient (top brighter, bottom darker) to sell
+  // sunlight falloff and ambient occlusion down the facade.
+  function fillFace(corners, topColor, bottomColor) {
+    let minY = Infinity;
+    let maxY = -Infinity;
+    for (const p of corners) {
+      if (p.y < minY) minY = p.y;
+      if (p.y > maxY) maxY = p.y;
     }
+    const grad = ctx.createLinearGradient(0, minY, 0, maxY + 0.001);
+    grad.addColorStop(0, topColor);
+    grad.addColorStop(1, bottomColor);
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(corners[0].x, corners[0].y);
+    for (let i = 1; i < corners.length; i += 1) ctx.lineTo(corners[i].x, corners[i].y);
+    ctx.closePath();
+    ctx.fill();
+  }
 
-    if (type === TILE_TYPES.FARM) {
-      ctx.fillStyle = 'rgba(189, 233, 122, 0.8)';
-      for (let i = -2; i <= 2; i += 1) ctx.fillRect(x + i * 7 * unit, y + 7 * unit, 2 * unit, 8 * unit);
-      ctx.fillStyle = '#d8ba85';
-      ctx.fillRect(x - 5 * unit, shell.south.y + 2 * unit, 10 * unit, 6 * unit);
-    }
+  function bilerp(tl, tr, br, bl, u, v) {
+    const tx = tl.x + (tr.x - tl.x) * u;
+    const ty = tl.y + (tr.y - tl.y) * u;
+    const bx = bl.x + (br.x - bl.x) * u;
+    const by = bl.y + (br.y - bl.y) * u;
+    return { x: tx + (bx - tx) * v, y: ty + (by - ty) * v };
+  }
 
-    if (type === TILE_TYPES.FACTORY) {
-      ctx.fillStyle = '#afb5bf';
-      ctx.fillRect(x + 9 * unit, shell.top.y - 10 * unit, 5 * unit, 15 * unit);
-      ctx.fillStyle = 'rgba(130, 130, 130, 0.35)';
-      ctx.beginPath();
-      ctx.ellipse(x + 11 * unit, shell.top.y - 14 * unit, 8 * unit, 4 * unit, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#f8dc8d';
-      ctx.fillRect(x - 12 * unit, shell.south.y + 3 * unit, 9 * unit, 4 * unit);
-    }
-
-    if (type === TILE_TYPES.POWER) {
-      ctx.strokeStyle = '#b8c1cd';
-      ctx.lineWidth = Math.max(1, 2 * unit);
-      ctx.beginPath();
-      ctx.moveTo(x - 11 * unit, shell.top.y - 1 * unit);
-      ctx.lineTo(x - 11 * unit, shell.south.y + 10 * unit);
-      ctx.lineTo(x - 5 * unit, shell.south.y + 5 * unit);
-      ctx.lineTo(x - 17 * unit, shell.south.y + 5 * unit);
-      ctx.closePath();
-      ctx.stroke();
-      ctx.fillStyle = '#e2b555';
-      ctx.fillRect(x + 3 * unit, shell.top.y + 3 * unit, 10 * unit, 4 * unit);
-    }
-
-    if (type === TILE_TYPES.WATER) {
-      ctx.fillStyle = '#d5edf8';
-      ctx.beginPath();
-      ctx.arc(x, shell.top.y + 8 * unit, 6 * unit, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = '#8bc9e4';
-      ctx.lineWidth = Math.max(1, 2 * unit);
-      ctx.beginPath();
-      ctx.moveTo(x - 7 * unit, shell.south.y + 5 * unit);
-      ctx.lineTo(x + 7 * unit, shell.south.y + 5 * unit);
-      ctx.stroke();
+  // Draw a perspective-correct grid of windows across an iso facade defined by
+  // its four screen-space corners (top-left, top-right, bottom-right, bottom-left).
+  function drawFacade(tl, tr, br, bl, rows, cols, glassColor, seedX, seedY) {
+    const night = 1 - daylightLevel;
+    const mu = 0.12;
+    const mv = 0.08;
+    const cw = (1 - 2 * mu) / cols;
+    const ch = (1 - 2 * mv) / rows;
+    const gx = cw * 0.34;
+    const gy = ch * 0.3;
+    for (let r = 0; r < rows; r += 1) {
+      for (let c = 0; c < cols; c += 1) {
+        const u0 = mu + c * cw + gx * 0.5;
+        const u1 = mu + (c + 1) * cw - gx * 0.5;
+        const v0 = mv + r * ch + gy * 0.5;
+        const v1 = mv + (r + 1) * ch - gy * 0.5;
+        const p0 = bilerp(tl, tr, br, bl, u0, v0);
+        const p1 = bilerp(tl, tr, br, bl, u1, v0);
+        const p2 = bilerp(tl, tr, br, bl, u1, v1);
+        const p3 = bilerp(tl, tr, br, bl, u0, v1);
+        const lit = night > 0.22 && hashNoise(seedX + c * 2.3 + r * 5.1, seedY + r * 1.7) > 0.5;
+        ctx.fillStyle = lit ? `rgba(255, 226, 150, ${0.5 + night * 0.45})` : glassColor;
+        ctx.beginPath();
+        ctx.moveTo(p0.x, p0.y);
+        ctx.lineTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.lineTo(p3.x, p3.y);
+        ctx.closePath();
+        ctx.fill();
+      }
     }
   }
 
-  function drawTile(x, y, type) {
-    const pos = worldToScreen(x, y);
-    const terrain = state.terrain[y][x];
-    const groundY = drawTerrainTile(x, y, pos.x, pos.y, terrain);
+  function drawRoad(cx, groundY) {
+    drawDiamond(cx, groundY, '#7b828c', 0.95);          // sidewalk / kerb
+    drawDiamond(cx, groundY, '#3b4048', 1, 0.8);        // asphalt inset
+    drawRoadMarkings(cx, groundY);
+    if (daylightLevel < 0.42 && hashNoise(cx, groundY) > 0.55) {
+      const glow = ctx.createRadialGradient(cx, groundY - 2, 1, cx, groundY - 2, 16 * camera.zoom);
+      glow.addColorStop(0, 'rgba(255, 226, 150, 0.4)');
+      glow.addColorStop(1, 'rgba(255, 226, 150, 0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(cx, groundY - 2, 16 * camera.zoom, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
 
+  function buildingFloors(x, y, profile) {
+    const n = hashNoise(x * 1.7 + 3.1, y * 2.3 + 1.9);
+    if (profile.towerChance && hashNoise(x * 4.2 + 31, y * 3.7 + 17) < profile.towerChance) {
+      const [a, b] = profile.towerFloors;
+      return a + Math.round(hashNoise(x + 5, y + 9) * (b - a));
+    }
+    return profile.minFloors + Math.round(n * (profile.maxFloors - profile.minFloors));
+  }
+
+  // Alternate residential palettes so a housing district mixes glass, brick and
+  // stone towers instead of one monotonous colour.
+  const HOUSING_PALETTES = [
+    { wall: '#c6ccd6', wallDark: '#9aa3b2', roof: '#7f8896', window: '#38445a' },
+    { wall: '#b98f6e', wallDark: '#8f6a4d', roof: '#6f4f38', window: '#3a2c22' },
+    { wall: '#8fa9bd', wallDark: '#6a8497', roof: '#556d7e', window: '#2c4152' },
+    { wall: '#cdbf9a', wallDark: '#a29470', roof: '#7f7452', window: '#40392a' }
+  ];
+
+  function drawBuilding(x, y, type, cx, groundY) {
+    let profile = BUILDING_PROFILES[type] || BUILDING_PROFILES[TILE_TYPES.HOUSING];
+    if (type === TILE_TYPES.HOUSING) {
+      const pal = HOUSING_PALETTES[Math.floor(hashNoise(x * 5.3 + 2, y * 6.7 + 4) * HOUSING_PALETTES.length) % HOUSING_PALETTES.length];
+      profile = { ...profile, ...pal };
+    }
+    // Subtle per-building brightness jitter for organic variety.
+    const jitter = Math.round((hashNoise(x * 2.9 + 1, y * 4.4 + 6) - 0.5) * 16);
+    profile = {
+      ...profile,
+      wall: shadeHex(profile.wall, jitter),
+      wallDark: shadeHex(profile.wallDark, jitter),
+      roof: shadeHex(profile.roof, jitter)
+    };
+    const zoom = camera.zoom;
+    const floors = buildingFloors(x, y, profile);
+    const H = floors * FLOOR_H * zoom;
+
+    const fw = TILE_W * zoom * 0.5 * profile.footprint;
+    const fh = TILE_H * zoom * 0.5 * profile.footprint;
+
+    // Ground footprint (W,S,E,N) and raised top corners.
+    const W = { x: cx - fw, y: groundY };
+    const S = { x: cx, y: groundY + fh };
+    const E = { x: cx + fw, y: groundY };
+    const N = { x: cx, y: groundY - fh };
+    const Wt = { x: W.x, y: W.y - H };
+    const St = { x: S.x, y: S.y - H };
+    const Et = { x: E.x, y: E.y - H };
+    const Nt = { x: N.x, y: N.y - H };
+
+    // Long cast shadow toward the lower-left (light comes from upper-right).
+    const sx = -H * 0.42;
+    const sy = H * 0.12;
+    ctx.fillStyle = 'rgba(12, 20, 30, 0.22)';
+    ctx.beginPath();
+    ctx.moveTo(N.x, N.y);
+    ctx.lineTo(W.x, W.y);
+    ctx.lineTo(W.x + sx, W.y + sy);
+    ctx.lineTo(S.x + sx, S.y + sy);
+    ctx.lineTo(E.x + sx, E.y + sy);
+    ctx.lineTo(E.x, E.y);
+    ctx.closePath();
+    ctx.fill();
+
+    if (profile.fields) {
+      ctx.fillStyle = 'rgba(150, 196, 92, 0.85)';
+      for (let i = -3; i <= 3; i += 1) {
+        drawDiamond(cx + i * 3 * zoom, groundY, 'rgba(120, 170, 74, 0.5)', 0.5, 0.9 - Math.abs(i) * 0.04);
+      }
+    }
+
+    // Base plinth so the tower reads as grounded on its lot.
+    drawPoly([N, E, S, W], shadeHex(profile.wallDark, -34));
+
+    // Left (shaded) and right (sunlit) facades.
+    fillFace([Wt, St, S, W], shadeHex(profile.wallDark, 6), shadeHex(profile.wallDark, -30));
+    fillFace([St, Et, E, S], shadeHex(profile.wall, 20), shadeHex(profile.wall, -14));
+
+    // Window grids following the iso perspective of each face.
+    const cols = Math.max(2, Math.round(profile.footprint * 3));
+    drawFacade(Wt, St, S, W, floors, cols, shadeHex(profile.window, -12), x * 3.1, y * 2.7);
+    drawFacade(St, Et, E, S, floors, cols, profile.window, x * 2.3 + 7, y * 3.9 + 3);
+
+    // Corner pilaster to define the building edge.
+    ctx.strokeStyle = 'rgba(20, 28, 38, 0.35)';
+    ctx.lineWidth = Math.max(1, 1.2 * zoom);
+    ctx.beginPath();
+    ctx.moveTo(S.x, S.y);
+    ctx.lineTo(St.x, St.y);
+    ctx.stroke();
+
+    // Roof: top diamond plus a raised parapet rim.
+    drawPoly([Nt, Et, St, Wt], profile.roof);
+    ctx.strokeStyle = shadeHex(profile.roof, 22);
+    ctx.lineWidth = Math.max(1, 1.4 * zoom);
+    ctx.beginPath();
+    ctx.moveTo(Wt.x, Wt.y);
+    ctx.lineTo(Nt.x, Nt.y);
+    ctx.lineTo(Et.x, Et.y);
+    ctx.stroke();
+
+    drawRoofDetails(type, profile, cx, (Nt.y + St.y) / 2, zoom, floors);
+  }
+
+  function drawRoofDetails(type, profile, cx, roofY, zoom, floors) {
+    const u = zoom;
+    // Generic rooftop mechanical box.
+    ctx.fillStyle = shadeHex(profile.roof, -22);
+    ctx.fillRect(cx - 6 * u, roofY - 3 * u, 12 * u, 5 * u);
+    ctx.fillStyle = shadeHex(profile.roof, 14);
+    ctx.fillRect(cx - 6 * u, roofY - 3 * u, 12 * u, 1.6 * u);
+
+    if (floors >= 8) {
+      ctx.strokeStyle = 'rgba(210, 218, 228, 0.85)';
+      ctx.lineWidth = Math.max(1, 1.3 * u);
+      ctx.beginPath();
+      ctx.moveTo(cx + 3 * u, roofY - 3 * u);
+      ctx.lineTo(cx + 3 * u, roofY - 18 * u);
+      ctx.stroke();
+      if (daylightLevel < 0.45) {
+        ctx.fillStyle = 'rgba(255, 90, 90, 0.95)';
+        ctx.beginPath();
+        ctx.arc(cx + 3 * u, roofY - 18 * u, 1.7 * u, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    if (profile.chimney) {
+      ctx.fillStyle = '#5c626b';
+      ctx.fillRect(cx + 9 * u, roofY - 14 * u, 4.5 * u, 16 * u);
+      ctx.fillStyle = 'rgba(160, 160, 168, 0.28)';
+      ctx.beginPath();
+      ctx.ellipse(cx + 11 * u, roofY - 18 * u, 8 * u, 4 * u, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    if (profile.tank) {
+      ctx.fillStyle = '#cfe6f2';
+      ctx.beginPath();
+      ctx.arc(cx, roofY - 4 * u, 6 * u, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#8bc9e4';
+      ctx.lineWidth = Math.max(1, 1.4 * u);
+      ctx.stroke();
+    }
+
+    if (profile.cooling) {
+      ctx.fillStyle = shadeHex(profile.accent, -6);
+      ctx.beginPath();
+      ctx.moveTo(cx - 9 * u, roofY - 2 * u);
+      ctx.lineTo(cx - 4 * u, roofY - 16 * u);
+      ctx.lineTo(cx + 1 * u, roofY - 16 * u);
+      ctx.lineTo(cx + 6 * u, roofY - 2 * u);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = 'rgba(230, 235, 240, 0.35)';
+      ctx.beginPath();
+      ctx.ellipse(cx - 1.5 * u, roofY - 17 * u, 6 * u, 3 * u, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawPerson(cx, groundY, scale, color, phase) {
+    const unit = camera.zoom * scale;
+    const bob = Math.sin(phase) * 1.2 * unit;
+    const legSwing = Math.sin(phase) * 2.2 * unit;
+    const baseY = groundY - bob;
+
+    // shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.28)';
+    ctx.beginPath();
+    ctx.ellipse(cx, groundY + 2 * unit, 5 * unit, 2.4 * unit, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // legs
+    ctx.strokeStyle = '#2c3340';
+    ctx.lineWidth = Math.max(1, 1.8 * unit);
+    ctx.beginPath();
+    ctx.moveTo(cx, baseY - 6 * unit);
+    ctx.lineTo(cx - 2 * unit + legSwing, baseY);
+    ctx.moveTo(cx, baseY - 6 * unit);
+    ctx.lineTo(cx + 2 * unit - legSwing, baseY);
+    ctx.stroke();
+
+    // torso
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(cx - 3.2 * unit, baseY - 6 * unit);
+    ctx.lineTo(cx + 3.2 * unit, baseY - 6 * unit);
+    ctx.lineTo(cx + 2.6 * unit, baseY - 13 * unit);
+    ctx.lineTo(cx - 2.6 * unit, baseY - 13 * unit);
+    ctx.closePath();
+    ctx.fill();
+
+    // head
+    ctx.fillStyle = '#e8c39a';
+    ctx.beginPath();
+    ctx.arc(cx, baseY - 16 * unit, 3 * unit, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawCitizens() {
+    const sorted = [...citizens].sort((a, b) => (a.x + a.y) - (b.x + b.y));
+    for (const c of sorted) {
+      const pos = worldToScreen(c.x, c.y);
+      const h = sampleTerrainHeight(Math.floor(c.x), Math.floor(c.y));
+      drawPerson(pos.x, pos.y - h * 8 * camera.zoom, 0.85, c.color, c.phase);
+    }
+  }
+
+  function drawPlayerAvatar() {
+    const pos = worldToScreen(PLAYER_HOME.x + 0.5, PLAYER_HOME.y + 0.5);
+    const h = sampleTerrainHeight(PLAYER_HOME.x, PLAYER_HOME.y);
+    const groundY = pos.y - h * 8 * camera.zoom;
+    const unit = camera.zoom;
+
+    // highlight ring
+    ctx.strokeStyle = 'rgba(255, 214, 102, 0.9)';
+    ctx.lineWidth = Math.max(1.5, 2.2 * unit);
+    ctx.beginPath();
+    ctx.ellipse(pos.x, groundY + 2 * unit, 9 * unit, 4.5 * unit, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    drawPerson(pos.x, groundY, 1.35, '#2f6fd0', dayClock * 30);
+
+    // "YOU" banner
+    ctx.fillStyle = 'rgba(9,14,22,0.85)';
+    const label = `YOU · ${sim.state.player.name}`;
+    ctx.font = `600 ${Math.max(10, 12 * unit)}px Inter, system-ui, sans-serif`;
+    const w = ctx.measureText(label).width + 12 * unit;
+    ctx.fillRect(pos.x - w / 2, groundY - 42 * unit, w, 18 * unit);
+    ctx.fillStyle = '#ffd37a';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, pos.x, groundY - 29 * unit);
+    ctx.textAlign = 'left';
+  }
+
+  function drawToolIndicator() {
+    const label = `Build: ${BUILD_TOOL_ORDER[currentToolIndex].toUpperCase()}  ·  Tab to cycle  ·  LMB build  ·  RMB drag  ·  Wheel zoom`;
+    ctx.font = '600 13px Inter, system-ui, sans-serif';
+    const w = ctx.measureText(label).width + 28;
+    const x = window.innerWidth / 2 - w / 2;
+    ctx.fillStyle = 'rgba(9,14,22,0.8)';
+    ctx.fillRect(x, window.innerHeight - 44, w, 30);
+    ctx.fillStyle = '#8fd8ff';
+    ctx.fillText(label, x + 14, window.innerHeight - 24);
+  }
+
+  // Pass A: terrain only (so tall buildings drawn later never get clipped by
+  // terrain tiles that sit visually behind them).
+  function drawTerrainCell(x, y) {
+    const pos = worldToScreen(x, y);
+    drawTerrainTile(x, y, pos.x, pos.y, state.terrain[y][x]);
+  }
+
+  // Pass B: roads and buildings, drawn back-to-front for a correct skyline.
+  function drawStructureCell(x, y) {
+    const type = state.map[y][x];
     if (type === TILE_TYPES.GRASS) return;
+    const terrain = state.terrain[y][x];
     if (!canBuildOnTerrain(terrain)) return;
 
+    const pos = worldToScreen(x, y);
+    const groundY = pos.y - (terrain.height ?? 0) * 8 * camera.zoom;
+
     if (type === TILE_TYPES.ROAD) {
-      drawDiamond(pos.x, groundY, '#454a51', 0.9);
-      drawRoadMarkings(pos.x, groundY);
+      drawRoad(pos.x, groundY);
       return;
     }
+    drawBuilding(x, y, type, pos.x, groundY);
+  }
 
-    drawLotFoundation(pos.x, groundY);
-    const style = BUILDING_STYLE[type];
-    if (!style) return;
-
-    drawDiamond(pos.x + 12 * camera.zoom, groundY + 15 * camera.zoom, 'rgba(0,0,0,0.26)', 0.5);
-    const shell = drawIsoPrism(pos.x, groundY - 2 * camera.zoom, style);
-
-    const annexNoise = hashNoise(x + 17, y + 9);
-    if (annexNoise > 0.48) {
-      const annexStyle = {
-        ...style,
-        h: style.h * 0.45,
-        w: style.w * 0.44,
-        d: style.d * 0.42,
-        roof: shadeHex(style.roof, -10),
-        left: shadeHex(style.left, -10),
-        right: shadeHex(style.right, -10)
-      };
-      drawIsoPrism(pos.x - 13 * camera.zoom, groundY + 3 * camera.zoom, annexStyle);
+  // Iterate tiles in painter's order (back-to-front along screen depth x+y).
+  function forEachTileByDepth(cb) {
+    for (let s = 0; s <= MAP_W + MAP_H - 2; s += 1) {
+      const xStart = Math.max(0, s - (MAP_H - 1));
+      const xEnd = Math.min(MAP_W - 1, s);
+      for (let x = xStart; x <= xEnd; x += 1) cb(x, s - x);
     }
-
-    drawBuildingDetails(type, pos.x, groundY, shell);
   }
 
   function drawSkyAndSun(deltaMs) {
     dayClock = (dayClock + deltaMs * 0.000008) % 1;
     const angle = dayClock * Math.PI * 2;
     const daylight = clamp(Math.sin(angle - Math.PI * 0.5) * 0.5 + 0.5, 0, 1);
+    daylightLevel = daylight;
 
     const topColor = blendRgb([18, 35, 76], [82, 168, 255], daylight);
     const midColor = blendRgb([38, 63, 110], [143, 208, 255], daylight);
@@ -607,22 +957,6 @@ export function runCanvasVerticalSlice(canvas) {
     }
   }
 
-  function drawHud() {
-    ctx.fillStyle = 'rgba(6, 10, 14, 0.85)';
-    ctx.fillRect(14, 14, 560, 84);
-
-    ctx.fillStyle = '#f0f6fc';
-    ctx.font = '600 14px Inter, system-ui, sans-serif';
-    ctx.fillText(`Tool: ${BUILD_TOOL_ORDER[currentToolIndex].toUpperCase()} (Tab to cycle)`, 26, 40);
-    ctx.fillText(`Treasury: ${Math.round(state.stats.treasury)} | Inflation: ${state.stats.inflation.toFixed(1)}%`, 26, 62);
-    ctx.fillText(`Unemployment: ${state.stats.unemployment.toFixed(1)}% | Popularity: ${state.stats.popularity.toFixed(0)}%`, 26, 84);
-
-    ctx.fillStyle = 'rgba(6, 10, 14, 0.85)';
-    ctx.fillRect(14, window.innerHeight - 62, 760, 42);
-    ctx.fillStyle = '#8fd8ff';
-    ctx.fillText('LMB: place | RMB drag: pan | Wheel: zoom | S: save | L: load | E: election trigger | Natural terrain is protected', 26, window.innerHeight - 34);
-  }
-
   function updateSimulation() {
     const counts = countTiles(state.map);
     const employmentBoost = counts.factory * 0.05 + counts.farm * 0.02;
@@ -650,19 +984,6 @@ export function runCanvasVerticalSlice(canvas) {
     }
   }
 
-  function drawEvents() {
-    ctx.fillStyle = 'rgba(6, 10, 14, 0.8)';
-    ctx.fillRect(window.innerWidth - 470, 14, 450, 136);
-    ctx.fillStyle = '#ffd37a';
-    ctx.font = '600 13px Inter, system-ui, sans-serif';
-    ctx.fillText('National Event Feed', window.innerWidth - 450, 36);
-
-    ctx.fillStyle = '#d4dbe3';
-    state.events.forEach((event, index) => {
-      ctx.fillText(`• ${event}`, window.innerWidth - 450, 58 + index * 20);
-    });
-  }
-
   function render(ts) {
     const delta = ts - previousTs;
     previousTs = ts;
@@ -673,18 +994,23 @@ export function runCanvasVerticalSlice(canvas) {
       simAccumulator -= SIM_TICK_MS;
     }
 
-    drawSkyAndSun(delta);
-
-    for (let y = 0; y < MAP_H; y += 1) {
-      for (let x = 0; x < MAP_W; x += 1) {
-        drawTile(x, y, state.map[y][x]);
-      }
+    overlayAccumulator += delta;
+    if (overlayAccumulator >= 700) {
+      overlayAccumulator = 0;
+      if (!sim.state.pendingChoice && sim.state.status === 'playing') overlay.render();
     }
 
+    drawSkyAndSun(delta);
+
+    forEachTileByDepth(drawTerrainCell);
     drawContinuousGroundOverlays();
+    forEachTileByDepth(drawStructureCell);
+
+    updateCitizens(delta);
+    drawCitizens();
+    drawPlayerAvatar();
     drawWorldDepthFog();
-    drawHud();
-    drawEvents();
+    drawToolIndicator();
     requestAnimationFrame(render);
   }
 
