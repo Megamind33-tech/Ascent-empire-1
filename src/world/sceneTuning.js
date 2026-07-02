@@ -42,14 +42,6 @@ export function applyReadabilityEnhancements(scene, options = {}) {
   // Make terrain, roads, and buildings more distinct visually
   if (improveContrast) {
     scene.fogColor = new Color3(0.78, 0.85, 0.92);
-    // Slightly warmer neutral ambient so surfaces are not flat/grey
-    scene.ambientColor = new Color3(0.32, 0.34, 0.38);
-    if ('imageProcessingConfiguration' in scene) {
-      const ip = scene.imageProcessingConfiguration;
-      ip.contrast = 1.15;
-      ip.exposure = 1.05;
-      ip.toneMappingEnabled = true;
-    }
   }
 
   // ── Lighting Balance ────────────────────────────────────────────
