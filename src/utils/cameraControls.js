@@ -12,16 +12,18 @@ export function handleCameraAction(camera, action) {
   else if (action === 'zoomIn') camera.radius = Math.max(camera.lowerRadiusLimit, camera.radius - 10);
   else if (action === 'zoomOut') camera.radius = Math.min(camera.upperRadiusLimit, camera.radius + 10);
   else if (action === 'fitAll') {
-    // Full reset (angles + zoom + target) so the player can always recover a
+    // Full reset (target + angles + zoom) so the player can always recover a
     // clean overhead view of the city, even after panning/rotating away.
-    camera.alpha = HOME_VIEW.alpha;
-    camera.beta = HOME_VIEW.beta;
-    camera.radius = HOME_VIEW.radius;
+    // NOTE: ArcRotateCamera.setTarget() recomputes alpha/beta/radius from the
+    // current position, so it MUST run before we set the desired angles/zoom.
     if (typeof camera.setTarget === 'function') {
       camera.setTarget(new Vector3(0, 5, 0));
     } else {
       camera.target = new Vector3(0, 5, 0);
     }
+    camera.alpha = HOME_VIEW.alpha;
+    camera.beta = HOME_VIEW.beta;
+    camera.radius = HOME_VIEW.radius;
   }
 }
 
