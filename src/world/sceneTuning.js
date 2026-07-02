@@ -29,20 +29,27 @@ export function applyReadabilityEnhancements(scene, options = {}) {
   // ── Fog Tuning ──────────────────────────────────────────────────
   // Make the city more visible while preventing fog from occluding it
   if (reduceFog) {
-    // Fog positioned to enhance atmosphere without obscuring world
+    // Fog positioned to add gentle aerial depth without a "milky" haze over
+    // the city. Pushed well past the buildable core so the open world reads
+    // cleanly, only softening the far horizon.
     scene.fogMode = 1; // LINEAR
-    scene.fogStart = 800;    // Start fog further away from camera
-    scene.fogEnd = 2000;     // Extended visibility range for far objects
-    scene.fogColor = new Color3(0.75, 0.82, 0.90); // Match sky color
+    scene.fogStart = 1400;   // Keep the whole city crisp
+    scene.fogEnd = 3400;     // Only the distant horizon fades
+    scene.fogColor = new Color3(0.78, 0.85, 0.92); // Match sky color
   }
 
   // ── Color/Contrast Tuning ───────────────────────────────────────
   // Make terrain, roads, and buildings more distinct visually
   if (improveContrast) {
-    // Slightly warmer, clearer atmosphere
-    // This is typically done through lighting and sky adjustments
-    // For now, we enhance fog color
-    scene.fogColor = new Color3(0.75, 0.82, 0.90);
+    scene.fogColor = new Color3(0.78, 0.85, 0.92);
+    // Slightly warmer neutral ambient so surfaces are not flat/grey
+    scene.ambientColor = new Color3(0.32, 0.34, 0.38);
+    if ('imageProcessingConfiguration' in scene) {
+      const ip = scene.imageProcessingConfiguration;
+      ip.contrast = 1.15;
+      ip.exposure = 1.05;
+      ip.toneMappingEnabled = true;
+    }
   }
 
   // ── Lighting Balance ────────────────────────────────────────────
