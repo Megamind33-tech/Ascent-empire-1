@@ -29,12 +29,12 @@ export function applyReadabilityEnhancements(scene, options = {}) {
   // ── Fog Tuning ──────────────────────────────────────────────────
   // Make the city more visible while preventing fog from occluding it
   if (reduceFog) {
-    // Fog positioned to add gentle aerial depth without a "milky" haze over
-    // the city. Pushed well past the buildable core so the open world reads
-    // cleanly, only softening the far horizon.
+    // Keep the entire play area completely crisp. The camera is capped at a
+    // radius of ~520, so starting fog past that guarantees the world is never
+    // hazy/blurred; fog only ever touches the far background terrain.
     scene.fogMode = 1; // LINEAR
-    scene.fogStart = 1400;   // Keep the whole city crisp
-    scene.fogEnd = 3400;     // Only the distant horizon fades
+    scene.fogStart = 2600;   // Beyond max zoom-out — no haze on the city
+    scene.fogEnd = 6000;     // Very soft, distant horizon fade only
     scene.fogColor = new Color3(0.78, 0.85, 0.92); // Match sky color
   }
 

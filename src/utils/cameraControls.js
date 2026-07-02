@@ -1,7 +1,7 @@
 import { Vector3 } from '@babylonjs/core';
 
 // A dependable "home" framing that cleanly overlooks the city core.
-const HOME_VIEW = { alpha: -Math.PI / 2.2, beta: 1.02, radius: 240 };
+const HOME_VIEW = { alpha: -Math.PI / 2.2, beta: 0.85, radius: 200 };
 
 /**
  * Camera action API used by HUD and keyboard shortcuts.

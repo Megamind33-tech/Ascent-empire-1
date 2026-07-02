@@ -96,8 +96,8 @@ export function startGameLoop({
         // camera drifted into during boot.
         if (typeof camera.alpha === 'number') {
           camera.alpha = -Math.PI / 2.2;
-          camera.beta = 1.02;
-          camera.radius = 240;
+          camera.beta = 0.85;
+          camera.radius = 200;
         }
 
         // Show HUD after first frame is rendered

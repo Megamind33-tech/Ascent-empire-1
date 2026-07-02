@@ -57,16 +57,19 @@ export function createScene(canvas, providedEngine, deviceTier = 'mid') {
 
   console.log('[BOOT] Scene created, setting up camera');
 
-  // Create and configure camera
-  const camera = new ArcRotateCamera('camera', -Math.PI / 2.2, 1.05, 190, new Vector3(0, 5, 0), scene);
-  camera.lowerRadiusLimit = 30;
-  camera.upperRadiusLimit = 1200;
-  camera.lowerBetaLimit = 0.1;
-  camera.upperBetaLimit = Math.PI / 2.2;
-  camera.wheelDeltaPercentage = 0.015;
-  camera.panningSensibility = 60;
+  // Create and configure camera — a clear, close overhead view of the city.
+  // beta ~0.85 keeps the camera well above the horizon so the world (not the
+  // sky) fills the frame; the tilt is capped so the player can't rotate down
+  // into a sky-only view.
+  const camera = new ArcRotateCamera('camera', -Math.PI / 2.2, 0.85, 200, new Vector3(0, 5, 0), scene);
+  camera.lowerRadiusLimit = 40;
+  camera.upperRadiusLimit = 520;
+  camera.lowerBetaLimit = 0.15;
+  camera.upperBetaLimit = 1.15;
+  camera.wheelDeltaPercentage = 0.02;
+  camera.panningSensibility = 45;
   camera.inertia = 0.7;
-  camera.angularSensibility = 300;
+  camera.angularSensibility = 400;
 
   // Ensure camera has proper defaults
   if (!camera.target) {
