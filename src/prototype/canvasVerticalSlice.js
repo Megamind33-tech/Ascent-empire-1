@@ -1,8 +1,13 @@
+import { createPoliticalLifeSim, DAILY_ACTIONS } from './politicalLifeSim.js';
+import { createLifeSimOverlay } from './lifeSimOverlay.js';
+
 const TILE_W = 96;
 const TILE_H = 48;
 const MAP_W = 28;
 const MAP_H = 28;
 const SIM_TICK_MS = 250;
+const POLITICS_SAVE_KEY = 'ascent-canvas-politics-save';
+const PLAYER_HOME = { x: Math.floor(MAP_W / 2), y: Math.floor(MAP_H / 2) };
 
 const TILE_TYPES = {
   GRASS: 'grass',
@@ -56,6 +61,27 @@ export function runCanvasVerticalSlice(canvas) {
   const state = createInitialState();
   hydrateState(state);
 
+  // Political life-sim: the player rises from citizen to president.
+  const sim = createPoliticalLifeSim();
+  const savedPolitics = localStorage.getItem(POLITICS_SAVE_KEY);
+  if (savedPolitics) sim.hydrate(savedPolitics);
+
+  function persistPolitics() {
+    localStorage.setItem(POLITICS_SAVE_KEY, sim.serialize());
+  }
+
+  const overlay = createLifeSimOverlay(sim, {
+    actions: DAILY_ACTIONS,
+    onChange: persistPolitics,
+    onRestart() {
+      localStorage.removeItem(POLITICS_SAVE_KEY);
+      localStorage.removeItem('ascent-canvas-prototype-save');
+      window.location.reload();
+    }
+  });
+
+  const citizens = createCitizens(18);
+
   const camera = {
     x: 0,
     y: 0,
@@ -67,8 +93,53 @@ export function runCanvasVerticalSlice(canvas) {
 
   let currentToolIndex = 0;
   let simAccumulator = 0;
+  let overlayAccumulator = 0;
   let previousTs = performance.now();
   let dayClock = 0.22;
+  let daylightLevel = 1;
+
+  function isWalkable(tileX, tileY) {
+    if (!inBounds(tileX, tileY)) return false;
+    return canBuildOnTerrain(state.terrain[tileY][tileX]);
+  }
+
+  function createCitizens(count) {
+    const shirts = ['#d15f5f', '#5f8fd1', '#5fd18f', '#d1b45f', '#b45fd1', '#d1855f', '#5fd1c7'];
+    const people = [];
+    let guard = 0;
+    while (people.length < count && guard < count * 40) {
+      guard += 1;
+      const tx = Math.floor(MAP_W * 0.35 + Math.random() * MAP_W * 0.3);
+      const ty = Math.floor(MAP_H * 0.35 + Math.random() * MAP_H * 0.3);
+      if (!isWalkable(tx, ty)) continue;
+      const angle = Math.random() * Math.PI * 2;
+      people.push({
+        x: tx + 0.5,
+        y: ty + 0.5,
+        vx: Math.cos(angle) * 0.35,
+        vy: Math.sin(angle) * 0.35,
+        color: shirts[people.length % shirts.length],
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+    return people;
+  }
+
+  function updateCitizens(deltaMs) {
+    const dt = Math.min(deltaMs, 60) / 1000;
+    for (const c of citizens) {
+      const nx = c.x + c.vx * dt;
+      const ny = c.y + c.vy * dt;
+      if (isWalkable(Math.floor(nx), Math.floor(c.y))) c.x = nx; else c.vx *= -1;
+      if (isWalkable(Math.floor(c.x), Math.floor(ny))) c.y = ny; else c.vy *= -1;
+      c.phase += dt * 6;
+      if (Math.random() < 0.01) {
+        const angle = Math.random() * Math.PI * 2;
+        c.vx = Math.cos(angle) * 0.35;
+        c.vy = Math.sin(angle) * 0.35;
+      }
+    }
+  }
 
   function resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -121,9 +192,19 @@ export function runCanvasVerticalSlice(canvas) {
       return;
     }
 
+    const previous = state.map[y][x];
     state.map[y][x] = type;
     state.stats.treasury -= type === TILE_TYPES.ROAD ? 12 : 55;
     state.stats.debt = Math.max(0, state.stats.debt + (state.stats.treasury < 0 ? 2 : 0));
+
+    // Developing the city builds the player's political standing.
+    const isBuilding = type !== TILE_TYPES.ROAD && type !== TILE_TYPES.GRASS;
+    if (isBuilding && previous !== type && sim.state.status === 'playing') {
+      sim.state.player.influence = clamp(sim.state.player.influence + 0.6, 0, 100);
+      sim.state.player.reputation = clamp(sim.state.player.reputation + 0.3, 0, 100);
+      overlay.render();
+      persistPolitics();
+    }
   }
 
   function drawDiamond(x, y, color, alpha = 1) {
@@ -352,9 +433,24 @@ export function runCanvasVerticalSlice(canvas) {
     ctx.fill();
   }
 
+  function drawWindows(x, topY, rows, cols, unit) {
+    const night = 1 - daylightLevel;
+    const lit = `rgba(255, 224, 140, ${0.25 + night * 0.7})`;
+    const dark = 'rgba(40, 52, 66, 0.85)';
+    for (let r = 0; r < rows; r += 1) {
+      for (let c = 0; c < cols; c += 1) {
+        const wx = x - (cols - 1) * 2 * unit + c * 4 * unit;
+        const wy = topY + 3 * unit + r * 4.5 * unit;
+        ctx.fillStyle = hashNoise(c + r * 3 + x, wy) > 0.45 && night > 0.25 ? lit : dark;
+        ctx.fillRect(wx, wy, 2.4 * unit, 3 * unit);
+      }
+    }
+  }
+
   function drawBuildingDetails(type, x, y, shell) {
     const unit = camera.zoom;
     if (type === TILE_TYPES.HOUSING) {
+      drawWindows(x, shell.top.y + 4 * unit, 2, 3, unit);
       ctx.fillStyle = '#f4c75f';
       ctx.fillRect(x - 12 * unit, shell.south.y + 4 * unit, 6 * unit, 4 * unit);
       ctx.fillRect(x + 5 * unit, shell.south.y + 4 * unit, 6 * unit, 4 * unit);
@@ -370,6 +466,7 @@ export function runCanvasVerticalSlice(canvas) {
     }
 
     if (type === TILE_TYPES.FACTORY) {
+      drawWindows(x - 3 * unit, shell.top.y + 6 * unit, 2, 2, unit);
       ctx.fillStyle = '#afb5bf';
       ctx.fillRect(x + 9 * unit, shell.top.y - 10 * unit, 5 * unit, 15 * unit);
       ctx.fillStyle = 'rgba(130, 130, 130, 0.35)';
@@ -406,6 +503,92 @@ export function runCanvasVerticalSlice(canvas) {
       ctx.lineTo(x + 7 * unit, shell.south.y + 5 * unit);
       ctx.stroke();
     }
+  }
+
+  function drawPerson(cx, groundY, scale, color, phase) {
+    const unit = camera.zoom * scale;
+    const bob = Math.sin(phase) * 1.2 * unit;
+    const legSwing = Math.sin(phase) * 2.2 * unit;
+    const baseY = groundY - bob;
+
+    // shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.28)';
+    ctx.beginPath();
+    ctx.ellipse(cx, groundY + 2 * unit, 5 * unit, 2.4 * unit, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // legs
+    ctx.strokeStyle = '#2c3340';
+    ctx.lineWidth = Math.max(1, 1.8 * unit);
+    ctx.beginPath();
+    ctx.moveTo(cx, baseY - 6 * unit);
+    ctx.lineTo(cx - 2 * unit + legSwing, baseY);
+    ctx.moveTo(cx, baseY - 6 * unit);
+    ctx.lineTo(cx + 2 * unit - legSwing, baseY);
+    ctx.stroke();
+
+    // torso
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(cx - 3.2 * unit, baseY - 6 * unit);
+    ctx.lineTo(cx + 3.2 * unit, baseY - 6 * unit);
+    ctx.lineTo(cx + 2.6 * unit, baseY - 13 * unit);
+    ctx.lineTo(cx - 2.6 * unit, baseY - 13 * unit);
+    ctx.closePath();
+    ctx.fill();
+
+    // head
+    ctx.fillStyle = '#e8c39a';
+    ctx.beginPath();
+    ctx.arc(cx, baseY - 16 * unit, 3 * unit, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawCitizens() {
+    const sorted = [...citizens].sort((a, b) => (a.x + a.y) - (b.x + b.y));
+    for (const c of sorted) {
+      const pos = worldToScreen(c.x, c.y);
+      const h = sampleTerrainHeight(Math.floor(c.x), Math.floor(c.y));
+      drawPerson(pos.x, pos.y - h * 8 * camera.zoom, 0.85, c.color, c.phase);
+    }
+  }
+
+  function drawPlayerAvatar() {
+    const pos = worldToScreen(PLAYER_HOME.x + 0.5, PLAYER_HOME.y + 0.5);
+    const h = sampleTerrainHeight(PLAYER_HOME.x, PLAYER_HOME.y);
+    const groundY = pos.y - h * 8 * camera.zoom;
+    const unit = camera.zoom;
+
+    // highlight ring
+    ctx.strokeStyle = 'rgba(255, 214, 102, 0.9)';
+    ctx.lineWidth = Math.max(1.5, 2.2 * unit);
+    ctx.beginPath();
+    ctx.ellipse(pos.x, groundY + 2 * unit, 9 * unit, 4.5 * unit, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    drawPerson(pos.x, groundY, 1.35, '#2f6fd0', dayClock * 30);
+
+    // "YOU" banner
+    ctx.fillStyle = 'rgba(9,14,22,0.85)';
+    const label = `YOU · ${sim.state.player.name}`;
+    ctx.font = `600 ${Math.max(10, 12 * unit)}px Inter, system-ui, sans-serif`;
+    const w = ctx.measureText(label).width + 12 * unit;
+    ctx.fillRect(pos.x - w / 2, groundY - 42 * unit, w, 18 * unit);
+    ctx.fillStyle = '#ffd37a';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, pos.x, groundY - 29 * unit);
+    ctx.textAlign = 'left';
+  }
+
+  function drawToolIndicator() {
+    const label = `Build: ${BUILD_TOOL_ORDER[currentToolIndex].toUpperCase()}  ·  Tab to cycle  ·  LMB build  ·  RMB drag  ·  Wheel zoom`;
+    ctx.font = '600 13px Inter, system-ui, sans-serif';
+    const w = ctx.measureText(label).width + 28;
+    const x = window.innerWidth / 2 - w / 2;
+    ctx.fillStyle = 'rgba(9,14,22,0.8)';
+    ctx.fillRect(x, window.innerHeight - 44, w, 30);
+    ctx.fillStyle = '#8fd8ff';
+    ctx.fillText(label, x + 14, window.innerHeight - 24);
   }
 
   function drawTile(x, y, type) {
@@ -450,6 +633,7 @@ export function runCanvasVerticalSlice(canvas) {
     dayClock = (dayClock + deltaMs * 0.000008) % 1;
     const angle = dayClock * Math.PI * 2;
     const daylight = clamp(Math.sin(angle - Math.PI * 0.5) * 0.5 + 0.5, 0, 1);
+    daylightLevel = daylight;
 
     const topColor = blendRgb([18, 35, 76], [82, 168, 255], daylight);
     const midColor = blendRgb([38, 63, 110], [143, 208, 255], daylight);
@@ -607,22 +791,6 @@ export function runCanvasVerticalSlice(canvas) {
     }
   }
 
-  function drawHud() {
-    ctx.fillStyle = 'rgba(6, 10, 14, 0.85)';
-    ctx.fillRect(14, 14, 560, 84);
-
-    ctx.fillStyle = '#f0f6fc';
-    ctx.font = '600 14px Inter, system-ui, sans-serif';
-    ctx.fillText(`Tool: ${BUILD_TOOL_ORDER[currentToolIndex].toUpperCase()} (Tab to cycle)`, 26, 40);
-    ctx.fillText(`Treasury: ${Math.round(state.stats.treasury)} | Inflation: ${state.stats.inflation.toFixed(1)}%`, 26, 62);
-    ctx.fillText(`Unemployment: ${state.stats.unemployment.toFixed(1)}% | Popularity: ${state.stats.popularity.toFixed(0)}%`, 26, 84);
-
-    ctx.fillStyle = 'rgba(6, 10, 14, 0.85)';
-    ctx.fillRect(14, window.innerHeight - 62, 760, 42);
-    ctx.fillStyle = '#8fd8ff';
-    ctx.fillText('LMB: place | RMB drag: pan | Wheel: zoom | S: save | L: load | E: election trigger | Natural terrain is protected', 26, window.innerHeight - 34);
-  }
-
   function updateSimulation() {
     const counts = countTiles(state.map);
     const employmentBoost = counts.factory * 0.05 + counts.farm * 0.02;
@@ -650,19 +818,6 @@ export function runCanvasVerticalSlice(canvas) {
     }
   }
 
-  function drawEvents() {
-    ctx.fillStyle = 'rgba(6, 10, 14, 0.8)';
-    ctx.fillRect(window.innerWidth - 470, 14, 450, 136);
-    ctx.fillStyle = '#ffd37a';
-    ctx.font = '600 13px Inter, system-ui, sans-serif';
-    ctx.fillText('National Event Feed', window.innerWidth - 450, 36);
-
-    ctx.fillStyle = '#d4dbe3';
-    state.events.forEach((event, index) => {
-      ctx.fillText(`• ${event}`, window.innerWidth - 450, 58 + index * 20);
-    });
-  }
-
   function render(ts) {
     const delta = ts - previousTs;
     previousTs = ts;
@@ -671,6 +826,12 @@ export function runCanvasVerticalSlice(canvas) {
     while (simAccumulator >= SIM_TICK_MS) {
       updateSimulation();
       simAccumulator -= SIM_TICK_MS;
+    }
+
+    overlayAccumulator += delta;
+    if (overlayAccumulator >= 700) {
+      overlayAccumulator = 0;
+      if (!sim.state.pendingChoice && sim.state.status === 'playing') overlay.render();
     }
 
     drawSkyAndSun(delta);
@@ -682,9 +843,11 @@ export function runCanvasVerticalSlice(canvas) {
     }
 
     drawContinuousGroundOverlays();
+    updateCitizens(delta);
+    drawCitizens();
+    drawPlayerAvatar();
     drawWorldDepthFog();
-    drawHud();
-    drawEvents();
+    drawToolIndicator();
     requestAnimationFrame(render);
   }
 
