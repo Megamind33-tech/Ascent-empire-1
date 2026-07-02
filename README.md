@@ -1,46 +1,28 @@
-# Ascent Realms
+# Ascent Empire
 
-Ascent Realms is evolving into **ASCENT: Nation Builder / Political RTS / City-Builder Backbone** with a web-first architecture:
+**ASCENT: Nation Builder / Political RTS / City-Builder** — a web-first, fully 3D political simulation:
 
 - Runtime: Vite + browser platform
-- Rendering: HTML5 Canvas 2D (2.5D isometric illusion)
+- Rendering: Babylon.js (real-time 3D) with Rapier physics
 - UI: HTML/CSS overlays
 - Long-term mobile packaging: Capacitor
 
-## Current Prototype Modes
+## Gameplay
 
-### 1) Legacy runtime (existing Babylon-based implementation)
-```bash
-npm run dev
-```
+You build a nation and climb the political ladder inside a living 3D city:
 
-### 2) Canvas vertical-slice prototype (new direction)
-Open the dev app with this query parameter:
-
-```text
-?mode=canvas-prototype
-```
-
-Example local URL:
-
-```text
-http://localhost:5173/?mode=canvas-prototype
-```
-
-The Canvas prototype currently validates key phase-1 goals:
-- Isometric map rendering with natural terrain (organic coastlines, oceans, rivers, hills, mountains, plains) plus natural props, terrain lighting, cliff relief, and ground-matched valley texturing and continuous river/ground overlays
-- Realistic-style isometric buildings with layered masses, roof/side shading, and grounded shadows
-- Blue-sky atmosphere layer with moving sun/daylight cycle, horizon mountain silhouettes, haze, and mountain fog
-- Camera pan and zoom
-- Tile placement loop (road/housing/farm/factory/power/water) on buildable land
-- Basic economy indicators (treasury, inflation, unemployment)
-- Political pressure signal (popularity)
-- Election/protest event feed
+- Explore a clean, open 3D world with an orbit/pan camera (mouse or `WASD`; `Home` to fit view)
+- Place institutions (housing, schools, stores, police, mines, refineries, barracks, stadiums, and more) on buildable land
+- Grow an economy (treasury, population, food, steel, fuel, research)
+- Manage political pressure (approval, legitimacy, corruption, security)
+- Run for office (Councilor → Mayor → MP → Vice President → President), enact laws, and react to rivals, factions, and crises
+- Day/night atmosphere, traffic, and pedestrians bring the world to life
 - Save/load through localStorage
 
 ## Run
 ```bash
 npm install
-npm run dev
-npm run build
+npm run dev     # development server (http://localhost:5173)
+npm run build   # production build
+npm run preview # serve the production build
 ```

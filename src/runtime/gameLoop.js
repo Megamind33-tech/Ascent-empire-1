@@ -90,6 +90,16 @@ export function startGameLoop({
         globalThis.__ASCENT_FIRST_FRAME_RENDERED__ = true;
         console.log('[BOOT] First frame rendered successfully');
 
+        // Guarantee a clean opening overview of the city. The world is built
+        // asynchronously after the camera is created, so re-assert a known-good
+        // framing on the first real frame instead of trusting whatever state the
+        // camera drifted into during boot.
+        if (typeof camera.alpha === 'number') {
+          camera.alpha = -Math.PI / 2.2;
+          camera.beta = 1.02;
+          camera.radius = 240;
+        }
+
         // Show HUD after first frame is rendered
         import('../ui/hud.js').then(({ showHUD }) => {
           showHUD();

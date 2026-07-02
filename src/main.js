@@ -1,5 +1,4 @@
 import { runGameBootstrap } from './runtime/runGameBootstrap.js';
-import { runCanvasVerticalSlice } from './prototype/canvasVerticalSlice.js';
 
 console.log('[BOOT] Loading main entry point');
 
@@ -66,15 +65,6 @@ function startBoot() {
     document.body.appendChild(errorDiv);
 
     throw new Error(error);
-  }
-
-  const params = new URLSearchParams(window.location.search);
-  const mode = params.get('mode');
-
-  if (mode === 'canvas-prototype') {
-    console.log('[BOOT] Starting Canvas vertical slice prototype');
-    runCanvasVerticalSlice(canvas);
-    return;
   }
 
   console.log('[BOOT] Canvas element found, starting bootstrap');
